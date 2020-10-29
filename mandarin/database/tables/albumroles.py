@@ -15,7 +15,7 @@ class AlbumRole(Base):
 
     name = s.Column(s.String, nullable=False)
 
-    involvements = o.relationship("AlbumInvolvements", back_populates="role")
+    involvements = o.relationship("AlbumInvolvement", back_populates="role")
 
 
 __all__ = ("AlbumRole",)

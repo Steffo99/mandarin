@@ -3,6 +3,7 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 
 from ..base import Base
+from .songgenres import songgenres
 
 
 class Song(Base):
@@ -15,13 +16,13 @@ class Song(Base):
 
     title = s.Column(s.String)
 
-    layers = o.relationship("Layer", back_populates="song")
+    layers = o.relationship("SongLayer", back_populates="song")
 
     _album = s.Column(s.Integer, s.ForeignKey("albums.id"))
     album = o.relationship("Album", back_populates="songs")
 
-    involvements = o.relationship("SongInvolvement", back_populates="songs")
-    genres = o.relationship("MusicGenre", secondary="SongGenres", back_populates="songs")
+    involvements = o.relationship("SongInvolvement", back_populates="song")
+    genres = o.relationship("MusicGenre", secondary=songgenres, back_populates="songs")
 
     year = s.Column(s.Integer)
 

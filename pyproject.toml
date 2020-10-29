@@ -7,9 +7,13 @@ license = "AGPL-3.0-or-later"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-royalnet = "6.0.0a1"
+royalnet = "6.0.0a4"
 psycopg2 = "^2.8.6"
 mutagen = "^1.45.1"
+python-jose = {extras = ["cryptography"], version = "^3.2.0"}
+requests = "^2.24.0"
+uvicorn = "^0.12.2"
+fastapi = "^0.61.1"
 
 [tool.poetry.dev-dependencies]
 

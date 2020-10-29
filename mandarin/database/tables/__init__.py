@@ -9,3 +9,4 @@ from .songinvolvements import *
 from .songlayers import *
 from .songroles import *
 from .songs import *
+from .users import *

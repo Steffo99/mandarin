@@ -14,8 +14,8 @@ class Person(Base):
     id = s.Column(s.Integer, primary_key=True)
     name = s.Column(s.String, nullable=False)
 
-    song_involvements = o.relationship("SongInvolvements", back_populates="person")
-    album_involvements = o.relationship("AlbumInvolvements", back_populates="person")
+    song_involvements = o.relationship("SongInvolvement", back_populates="person")
+    album_involvements = o.relationship("AlbumInvolvement", back_populates="person")
 
 
 __all__ = ("Person",)
