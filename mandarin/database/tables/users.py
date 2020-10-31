@@ -19,5 +19,7 @@ class User(Base):
     email_verified = s.Column(s.String, nullable=False)
     updated_at = s.Column(s.String, nullable=False)
 
+    uploads = o.relationship("SongLayer", back_populates="uploader")
+
 
 __all__ = ("User",)

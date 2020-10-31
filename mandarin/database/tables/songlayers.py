@@ -16,6 +16,9 @@ class SongLayer(Base):
     _song = s.Column(s.Integer, s.ForeignKey("songs.id"), nullable=False)
     song = o.relationship("Song", back_populates="layers")
 
+    _uploader = s.Column(s.String, s.ForeignKey("users.sub"))
+    uploader = o.relationship("User", back_populates="uploads")
+
     filename = s.Column(s.String)
 
 
