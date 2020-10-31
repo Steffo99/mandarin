@@ -11,10 +11,12 @@ class SongLayer(Base):
     """
     __tablename__ = "songlayers"
 
-    id = s.Column(s.String, primary_key=True)
+    id = s.Column(s.Integer, primary_key=True)
 
     _song = s.Column(s.Integer, s.ForeignKey("songs.id"), nullable=False)
     song = o.relationship("Song", back_populates="layers")
+
+    filename = s.Column(s.String)
 
 
 __all__ = ("SongLayer",)

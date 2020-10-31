@@ -11,13 +11,15 @@ class AlbumInvolvement(Base):
     """
     __tablename__ = "albuminvolvements"
 
-    _person = s.Column(s.Integer, s.ForeignKey("people.id"), primary_key=True)
+    id = s.Column(s.Integer, primary_key=True)
+
+    _person = s.Column(s.Integer, s.ForeignKey("people.id"))
     person = o.relationship("Person", back_populates="album_involvements")
 
-    _album = s.Column(s.Integer, s.ForeignKey("albums.id"), primary_key=True)
+    _album = s.Column(s.Integer, s.ForeignKey("albums.id"))
     album = o.relationship("Album", back_populates="involvements")
 
-    _role = s.Column(s.Integer, s.ForeignKey("albumroles.id"), primary_key=True)
+    _role = s.Column(s.Integer, s.ForeignKey("albumroles.id"))
     role = o.relationship("AlbumRole", back_populates="involvements")
 
 

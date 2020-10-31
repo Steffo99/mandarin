@@ -24,6 +24,8 @@ class Song(Base):
     involvements = o.relationship("SongInvolvement", back_populates="song")
     genres = o.relationship("MusicGenre", secondary=songgenres, back_populates="songs")
 
+    disc_number = s.Column(s.Integer)
+    track_number = s.Column(s.Integer)
     year = s.Column(s.Integer)
 
 

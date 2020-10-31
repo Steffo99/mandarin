@@ -13,6 +13,7 @@ class Album(Base):
     __tablename__ = "albums"
 
     id = s.Column(s.Integer, primary_key=True)
+    title = s.Column(s.String, nullable=False)
 
     involvements = o.relationship("AlbumInvolvement", back_populates="album")
 

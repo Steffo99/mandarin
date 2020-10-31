@@ -174,6 +174,17 @@ version = "*"
 optional = true
 
 [[package]]
+name = "python-multipart"
+version = "0.0.5"
+description = "A streaming multipart parser for Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+six = ">=1.4.0"
+
+[[package]]
 name = "redis"
 version = "3.5.3"
 description = "Python client for Redis key-value store"
@@ -305,7 +316,7 @@ h11 = ">=0.8"
 [metadata]
 lock-version = "1.0"
 python-versions = "^3.8"
-content-hash = "bb7cbed388b4df4ef49e7b797ddaa50e5060a41de9a2c387c5893daf217c56cc"
+content-hash = "3dfeac3c102a6a0f920e02cd33778713700b1ab61ea919a9d86c42e4266e91d8"
 
 [metadata.files]
 certifi = [
@@ -511,6 +522,9 @@ pydantic = [
 python-jose = [
     {file = "python-jose-3.2.0.tar.gz", hash = "sha256:4e4192402e100b5fb09de5a8ea6bcc39c36ad4526341c123d401e2561720335b"},
     {file = "python_jose-3.2.0-py2.py3-none-any.whl", hash = "sha256:67d7dfff599df676b04a996520d9be90d6cdb7e6dd10b4c7cacc0c3e2e92f2be"},
+]
+python-multipart = [
+    {file = "python-multipart-0.0.5.tar.gz", hash = "sha256:f7bb5f611fc600d15fa47b3974c8aa16e93724513b49b5f95c81e6624c83fa43"},
 ]
 redis = [
     {file = "redis-3.5.3-py2.py3-none-any.whl", hash = "sha256:432b788c4530cfe16d8d943a09d40ca6c16149727e4afe8c2c9d5580c59d9f24"},

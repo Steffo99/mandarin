@@ -3,9 +3,9 @@ import fastapi as f
 import fastapi.security as fs
 import requests
 
-from ..config import *
-from ..database.tables import *
-from .database import *
+from mandarin.config import *
+from mandarin.database.tables import *
+from mandarin.database.engine import *
 
 
 auth0_scheme = fs.OAuth2AuthorizationCodeBearer(
@@ -41,6 +41,7 @@ def find_or_create_user(payload: JSON = f.Depends(validate_access_token)) -> Use
 
 
 __all__ = (
+    "auth0_scheme",
     "validate_access_token",
     "find_or_create_user",
 )
