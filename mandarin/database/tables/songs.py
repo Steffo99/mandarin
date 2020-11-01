@@ -4,6 +4,11 @@ import sqlalchemy.orm as o
 
 from ..base import Base
 from .songgenres import songgenres
+from .songinvolvements import SongInvolvement
+
+if TYPE_CHECKING:
+    from .people import Person
+    from .songroles import SongRole
 
 
 class Song(Base):
@@ -27,6 +32,21 @@ class Song(Base):
     disc_number = s.Column(s.Integer)
     track_number = s.Column(s.Integer)
     year = s.Column(s.Integer)
+
+    def involve(self, people: Iterable["Person"], role: "SongRole") -> List["SongInvolvement"]:
+        """Involve a list of people with this song, and return the resulting involvements."""
+        # TODO: should it check for duplicate involvements?
+
+        session = o.session.Session.object_session(self)
+
+        involvements = []
+
+        for person in people:
+            involvement = SongInvolvement(song=self, person=person, role=role)
+            session.add(involvement)
+            involvements.append(involvement)
+
+        return involvements
 
 
 __all__ = ("Song",)

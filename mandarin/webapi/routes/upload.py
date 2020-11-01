@@ -5,141 +5,33 @@ import hashlib
 import os
 import mutagen
 import sqlalchemy.orm.session
-import copy
-import dataclasses
+import pydantic
+import royalnet.alchemist as a
 
 from ...config import *
 from ...database import *
-from ...exc import FileAlreadyExistsError
 from ..utils.auth import *
 
 
 router_upload = f.APIRouter()
 
 
-def save_file(file: f.UploadFile) -> Tuple[str, mutagen.Tags]:
-    """
-    Parse a UploadFile with mutagen, then store it in the music directory.
-
-    :param file: The UploadFile to store.
-    :return: The name of the resulting file, and its tags.
-    """
-
-    # Find the file extension
-    _, ext = os.path.splitext(file.filename)
-
-    # Parse the audio file
-    mutated: mutagen.File = mutagen.File(fileobj=file.file, easy=True)
-
-    # Create a copy of the tags dictionary
-    tags: mutagen.Tags = copy.deepcopy(mutated.tags)
-
-    # Seek back to the beginning
-    file.file.seek(0)
-
-    # Clear all tags
-    mutated.delete(fileobj=file.file)
-
-    # Seek back to the beginning
-    file.file.seek(0)
-
-    # Calculate the hash of the file object
-    h = hashlib.sha512()
-    while chunk := file.file.read(8192):
-        h.update(chunk)
-
-    # Seek back to the beginning
-    file.file.seek(0)
-
-    # Find the final filename
-    filename = os.path.join(config["storage.music.dir"], f"{h.hexdigest()}{ext}")
-
-    # Ensure a file with that hash doesn't exist
-    if os.path.exists(filename):
-        raise FileAlreadyExistsError("A file with that name already exists.")
-
-    # Create the required directories
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-
-    # Save the file
-    with open(filename, "wb") as result:
-        while chunk := file.file.read(8192):
-            result.write(chunk)
-
-    return filename, tags
-
-
-def album_involve(session: sqlalchemy.orm.session.Session, album: Album, role_name: str, people_names: List[str]) -> \
-        List[AlbumInvolvement]:
-    """Involve a list of people with an album."""
-    # Ensure the song role exists
-    arole = get_arole(session=session, name=role_name)
-
-    # Create a list containing the involvements that will be returned
-    involvements = []
-
-    # Try to find the people
-    for person_name in people_names:
-        person = get_person(session=session, name=person_name)
-
-        # Involve the artist with the song
-        involvement = AlbumInvolvement(person=person, album=album, role=arole)
-        session.add(involvement)
-
-        # Add the involvement to the list
-        involvements.append(involvement)
-
-    return involvements
-
-
-def song_involve(session: sqlalchemy.orm.session.Session, song: Song, role_name: str, people_names: List[str]) -> \
-        List[SongInvolvement]:
-    """Involve a list of people with a song."""
-    # Ensure the song role exists
-    srole = get_srole(session=session, name=role_name)
-
-    # Create a list containing the involvements that will be returned
-    involvements = []
-
-    # Try to find the people
-    for person_name in people_names:
-        person = get_person(session=session, name=person_name)
-
-        # Involve the artist with the song
-        involvement = SongInvolvement(person=person, song=song, role=srole)
-        session.add(involvement)
-
-        # Add the involvement to the list
-        involvements.append(involvement)
-
-    return involvements
-
-
-def ieq(one, two):
-    """Create a case-insensitive equality filter for SQLAlchemy."""
-    return sqlalchemy.func.lower(one) == sqlalchemy.func.lower(two)
-
-
-def ineq(one, two):
-    """Create a case-insensitive inequality filter for SQLAlchemy."""
-    return sqlalchemy.func.lower(one) != sqlalchemy.func.lower(two)
-
-
-@dataclasses.dataclass()
-class ParseAlbum:
+class ParseAlbum(pydantic.BaseModel):
+    """Information about the album of a parsed audio file."""
     title: str
     artists: List[str]
 
     @classmethod
     def from_tags(cls, tags: mutagen.Tags) -> ParseAlbum:
+        """Create a new Parse object from a mutagen.Tags object."""
         return cls(
             title=Parse.single(tags=tags, key="album"),
             artists=Parse.multi(tags=tags, key="albumartists")
         )
 
 
-@dataclasses.dataclass()
-class ParseSong:
+class ParseSong(pydantic.BaseModel):
+    """Information about the song of a parsed audio file."""
     genre: str
     title: str
     year: int
@@ -151,6 +43,7 @@ class ParseSong:
 
     @classmethod
     def from_tags(cls, tags: mutagen.Tags) -> ParseSong:
+        """Create a new Parse object from a mutagen.Tags object."""
         return cls(
             genre=Parse.single(tags=tags, key="genre"),
             title=Parse.single(tags=tags, key="title"),
@@ -163,8 +56,9 @@ class ParseSong:
         )
 
 
-@dataclasses.dataclass()
-class Parse:
+class Parse(pydantic.BaseModel):
+    """Information about a parsed audio file."""
+    filename: Optional[str]
     album: ParseAlbum
     song: ParseSong
 
@@ -208,156 +102,145 @@ class Parse:
         else:
             return [item.strip() for item in value.split("/")]
 
-    @classmethod
-    def from_tags(cls, tags: mutagen.Tags):
-        return cls(
-            album=ParseAlbum.from_tags(tags),
-            song=ParseSong.from_tags(tags)
-        )
+
+def save_file(file: f.UploadFile, overwrite: bool = False) -> Parse:
+    """
+    Parse a UploadFile with mutagen, then store it in the music directory.
+
+    :param file: The UploadFile to store.
+    :param overwrite: Overwrite the file instead of skipping if it already exists.
+    :return: The parsing result.
+    """
+
+    # Find the file extension
+    _, ext = os.path.splitext(file.filename)
+
+    # Parse the audio file
+    mutated: mutagen.File = mutagen.File(fileobj=file.file, easy=True)
+
+    # Create a Parse object from the tags
+    # The filename will be set later
+    parse: Parse = Parse(album=ParseAlbum.from_tags(mutated.tags),
+                         song=ParseSong.from_tags(mutated.tags),
+                         filename=None)
+
+    # Seek back to the beginning
+    file.file.seek(0)
+
+    # Clear all tags
+    mutated.delete(fileobj=file.file)
+
+    # Seek back to the beginning
+    file.file.seek(0)
+
+    # Calculate the hash of the file object
+    h = hashlib.sha512()
+    while chunk := file.file.read(8192):
+        h.update(chunk)
+
+    # Seek back to the beginning
+    file.file.seek(0)
+
+    # Find the final filename
+    parse.filename = os.path.join(config["storage.music.dir"], f"{h.hexdigest()}{ext}")
+
+    # Ensure a file with that hash doesn't exist
+    if not os.path.exists(parse.filename) or overwrite:
+        # Create the required directories
+        os.makedirs(os.path.dirname(parse.filename), exist_ok=True)
+
+        # Save the file
+        with open(parse.filename, "wb") as result:
+            while chunk := file.file.read(8192):
+                result.write(chunk)
+
+    return parse
 
 
-def get_srole(session: sqlalchemy.orm.session.Session, name: str) -> SongRole:
-    """Get the SongRole with the specified name, or create one and add it to the session."""
-    role = (
-        session.query(SongRole)
-            .filter(SongRole.name == name)
-            .one_or_none()
-    )
+def make_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum) -> Album:
+    """Get the album of the parsed song, or create it and add it to the session if it doesn't exist."""
+    artist_arole = AlbumRole.make(session, config["apps.files.roles.album.artist"])
 
-    if role is None:
-        role = SongRole(name=name)
-        session.add(role)
-
-    return role
-
-
-def get_arole(session: sqlalchemy.orm.session.Session, name: str) -> AlbumRole:
-    """Get the AlbumRole with the specified name, or create one and add it to the session."""
-    role = (
-        session.query(AlbumRole)
-               .filter(AlbumRole.name == name)
+    # Search for an album + role + artists match
+    album: Optional[Album] = (
+        session.query(Album)
+               .filter(a.ieq(Album.title, parse_album.title))
+               .join(AlbumInvolvement)
+               .filter(AlbumInvolvement.role == artist_arole)
+               .join(Person)
+               .filter(*[a.ieq(Person.name, artist) for artist in parse_album.artists])
                .one_or_none()
     )
 
-    if role is None:
-        role = AlbumRole(name=name)
-        session.add(role)
+    # Create a new album if possible
+    if album is None:
+        album = Album(title=parse_album.title)
+        session.add(album)
 
-    return role
+        album.involve(people=(Person.make(session=session, name=name) for name in parse_album.artists),
+                      role=artist_arole)
+
+    return album
 
 
-def get_person(session: sqlalchemy.orm.session.Session, name: str) -> Person:
-    """Get the Person with the specified name, or create one and add it to the session."""
-    role = (
-        session.query(Person)
-               .filter(ieq(Person.name, name))
-               .one_or_none()
+def make_song(session: sqlalchemy.orm.session.Session, parse: Parse) -> Song:
+    """Get the song of the parsed song, or create it and add it to the session if it doesn't exist."""
+    # Create the new song
+    song = Song(
+        title=parse.song.title,
+        year=parse.song.year,
+        disc_number=parse.song.disc_number,
+        track_number=parse.song.track_number,
+        album=make_album(session=session, parse_album=parse.album) if parse.album.title else None,
+        genres=[MusicGenre.make(session=session, name=parse.song.genre)] if parse.song.genre else [],
     )
+    session.add(song)
 
-    if role is None:
-        role = Person(name=name)
-        session.add(role)
+    # Involve artists
+    song.involve(people=(Person.make(session=session, name=name) for name in parse.song.artists),
+                 role=SongRole.make(session=session, name=config["apps.files.roles.song.artist"]))
 
-    return role
+    # Involve composers
+    song.involve(people=(Person.make(session=session, name=name) for name in parse.song.composers),
+                 role=SongRole.make(session=session, name=config["apps.files.roles.song.composer"]))
+
+    # Involve performers
+    song.involve(people=(Person.make(session=session, name=name) for name in parse.song.performers),
+                 role=SongRole.make(session=session, name=config["apps.files.roles.song.performer"]))
+
+    return song
 
 
-@router_upload.post("/auto/singlelayer")
-def auto_singlelayer(user: User = f.Depends(find_or_create_user), file: f.UploadFile = f.File(...)):
-    """Upload a single-layer audio track."""
+@router_upload.post("/auto/song", summary="Upload a new song.")
+def auto(user: User = f.Depends(find_or_create_user), files: List[f.UploadFile] = f.File(...)):
+    """
+    Upload a new audio track, try to match or create its corresponding metadata database entries.
 
-    if file.file is None:
-        raise f.HTTPException(500, "No file was uploaded")
+    The metadata will be based on the first file sent, the metadata of the following files is ignored.
+    """
 
-    try:
-        filename, tags = save_file(file)
-    except FileAlreadyExistsError:
-        raise f.HTTPException(422, "The file was already uploaded.")
+    # Ensure at least a song was uploaded
+    if len(files) == 0:
+        raise f.HTTPException(500, "No files were uploaded")
+
+    # Parse and save all files
+    parses = [save_file(file) for file in files]
 
     # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
     # (*ahem* Funkwhale *ahem*)
     session: sqlalchemy.orm.session.Session = Session()
     session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
-    # Make shortcuts for tags_single and tags_multi
-    p: Parse = Parse.from_tags(tags=tags)
+    # Use the first parse to create the metadata
+    song = make_song(session=session, parse=parses[0])
 
-    # If the album has a title...
-    if p.album.title:
-        artist_arole = get_arole(session, config["apps.files.roles.album.artist"])
-
-        # Search for an album + role + artists match
-        album: Optional[Album] = (
-            session.query(Album)
-                   .filter(ieq(Album.title, p.album.title))
-                   .join(AlbumInvolvement)
-                   .filter(AlbumInvolvement.role == artist_arole)
-                   .join(Person)
-                   .filter(*[ieq(Person.name, artist) for artist in p.album.artists])
-                   .one_or_none()
-        )
-
-        # Create a new album if possible
-        if album is None:
-            album = Album(title=p.album.title)
-            session.add(album)
-
-            album_involve(session=session,
-                          album=album,
-                          role_name=config["apps.files.roles.album.artist"],
-                          people_names=p.album.artists)
-
-    # If the album DOES NOT have a title
-    else:
-        album = None
-
-    # Create and associate genres
-    if p.song.genre:
-        genre = (
-            session.query(MusicGenre)
-                   .filter(ieq(MusicGenre.name, p.song.genre))
-                   .one_or_none()
-        )
-
-        if genre is None:
-            genre = MusicGenre(name=p.song.genre)
-            session.add(genre)
-
-        genres = [genre]
-    else:
-        genres = []
-
-    # Create the new song
-    song = Song(
-        title=p.song.title,
-        year=p.song.year,
-        disc_number=p.song.disc_number,
-        track_number=p.song.track_number,
-        album=album,
-        genres=genres,
-    )
-
-    # Involve artists, composers and performer
-    song_involve(session=session,
-                 song=song,
-                 role_name=config["apps.files.roles.album.artist"],
-                 people_names=p.song.artists)
-    song_involve(session=session,
-                 song=song,
-                 role_name=config["apps.files.roles.album.composer"],
-                 people_names=p.song.composers)
-    song_involve(session=session,
-                 song=song,
-                 role_name=config["apps.files.roles.album.performer"],
-                 people_names=p.song.performers)
-
-    # Create the layer
-    layer = SongLayer(song=song, filename=filename, uploader=user)
-    session.add(layer)
+    # Create the layers
+    for parse in parses:
+        layer = SongLayer(song=song, filename=parse.filename, uploader=user)
+        session.add(layer)
 
     session.commit()
     session.close()
-
-    return "Success!"
 
 
 __all__ = (
