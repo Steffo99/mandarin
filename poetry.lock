@@ -151,6 +151,21 @@ email = ["email-validator (>=1.0.3)"]
 typing_extensions = ["typing-extensions (>=3.7.2)"]
 
 [[package]]
+name = "pydantic-sqlalchemy"
+version = "0.0.7"
+description = "Tools to convert SQLAlchemy models to Pydantic models"
+category = "main"
+optional = false
+python-versions = ">=3.6,<4.0"
+
+[package.extras]
+dev = ["jupyter (>=1.0.0,<2.0.0)", "autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.7.9,<4.0.0)"]
+
+[package.dependencies]
+pydantic = ">=1.5.1,<2.0.0"
+sqlalchemy = ">=1.3.16,<2.0.0"
+
+[[package]]
 name = "python-jose"
 version = "3.2.0"
 description = "JOSE implementation in Python"
@@ -316,7 +331,7 @@ h11 = ">=0.8"
 [metadata]
 lock-version = "1.0"
 python-versions = "^3.8"
-content-hash = "bea649b061e2aef051e3bcada5cf1dd1f7ce3ac8775f6abc0d868bcea96f8063"
+content-hash = "e031653f2d0fcc2c4969b51e32053f3b64472bdf90f0a75a9ebb99d631e4a1a2"
 
 [metadata.files]
 certifi = [
@@ -518,6 +533,10 @@ pydantic = [
     {file = "pydantic-1.7.1-cp39-cp39-win_amd64.whl", hash = "sha256:21598ed52336ac62aa233e40dfef569ea36eacb16ddb8eb4c4bf7b35289523a1"},
     {file = "pydantic-1.7.1-py3-none-any.whl", hash = "sha256:7c49dfebdd213eee43b55dc847b105dd0558de23adce8b49e8181ac656b91565"},
     {file = "pydantic-1.7.1.tar.gz", hash = "sha256:bc66dba824948b28919049aafc5866083e71ec284c188e8def41aff4bcf06139"},
+]
+pydantic-sqlalchemy = [
+    {file = "pydantic-sqlalchemy-0.0.7.tar.gz", hash = "sha256:d518cfd2d61390bc214dfe7fae3c415685f213a6fd205e32aff03916a045d69a"},
+    {file = "pydantic_sqlalchemy-0.0.7-py3-none-any.whl", hash = "sha256:fcc082cd58f6f6c6a54d3b01a291e6cdb6cbf2c7291843085d2bf067c5dcaca7"},
 ]
 python-jose = [
     {file = "python-jose-3.2.0.tar.gz", hash = "sha256:4e4192402e100b5fb09de5a8ea6bcc39c36ad4526341c123d401e2561720335b"},

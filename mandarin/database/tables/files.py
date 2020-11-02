@@ -29,4 +29,4 @@ class File(Base):
         return cls(name=name, mime_type=mimetypes.guess_type(name, strict=False), uploader=uploader)
 
 
-__all__ = (File,)
+__all__ = ("File",)
