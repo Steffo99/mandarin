@@ -2,6 +2,7 @@ from .albumgenres import *
 from .albuminvolvements import *
 from .albumroles import *
 from .albums import *
+from .files import *
 from .musicgenres import *
 from .people import *
 from .songgenres import *

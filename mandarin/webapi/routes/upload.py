@@ -18,25 +18,25 @@ router_upload = f.APIRouter()
 
 class ParseAlbum(pydantic.BaseModel):
     """Information about the album of a parsed audio file."""
-    title: str
+    title: Optional[str]
     artists: List[str]
 
     @classmethod
     def from_tags(cls, tags: mutagen.Tags) -> ParseAlbum:
         """Create a new Parse object from a mutagen.Tags object."""
         return cls(
-            title=Parse.single(tags=tags, key="album"),
-            artists=Parse.multi(tags=tags, key="albumartists")
+            title=ParseData.single(tags=tags, key="album"),
+            artists=ParseData.multi(tags=tags, key="albumartists")
         )
 
 
 class ParseSong(pydantic.BaseModel):
     """Information about the song of a parsed audio file."""
-    genre: str
-    title: str
-    year: int
-    disc_number: int
-    track_number: int
+    genre: Optional[str]
+    title: Optional[str]
+    year: Optional[int]
+    disc_number: Optional[int]
+    track_number: Optional[int]
     artists: List[str]
     composers: List[str]
     performers: List[str]
@@ -45,20 +45,19 @@ class ParseSong(pydantic.BaseModel):
     def from_tags(cls, tags: mutagen.Tags) -> ParseSong:
         """Create a new Parse object from a mutagen.Tags object."""
         return cls(
-            genre=Parse.single(tags=tags, key="genre"),
-            title=Parse.single(tags=tags, key="title"),
-            year=Parse.integer(tags=tags, key="date"),
-            disc_number=Parse.integer(tags=tags, key="discnumber"),
-            track_number=Parse.integer(tags=tags, key="tracknumber"),
-            artists=Parse.multi(tags=tags, key="artist"),
-            composers=Parse.multi(tags=tags, key="composer"),
-            performers=Parse.multi(tags=tags, key="performer"),
+            genre=ParseData.single(tags=tags, key="genre"),
+            title=ParseData.single(tags=tags, key="title"),
+            year=ParseData.integer(tags=tags, key="date"),
+            disc_number=ParseData.integer(tags=tags, key="discnumber"),
+            track_number=ParseData.integer(tags=tags, key="tracknumber"),
+            artists=ParseData.multi(tags=tags, key="artist"),
+            composers=ParseData.multi(tags=tags, key="composer"),
+            performers=ParseData.multi(tags=tags, key="performer"),
         )
 
 
-class Parse(pydantic.BaseModel):
+class ParseData(pydantic.BaseModel):
     """Information about a parsed audio file."""
-    filename: Optional[str]
     album: ParseAlbum
     song: ParseSong
 
@@ -78,7 +77,7 @@ class Parse(pydantic.BaseModel):
     @staticmethod
     def integer(tags: mutagen.Tags, key: str, default: Any = None, error: Any = None) -> Any:
         """Get the full value contained inside a specific tag, as int"""
-        value = Parse.single(tags=tags, key=key)
+        value = ParseData.single(tags=tags, key=key)
 
         if value is None:
             return default
@@ -91,7 +90,7 @@ class Parse(pydantic.BaseModel):
     @staticmethod
     def multi(tags: mutagen.Tags, key: str) -> List[str]:
         """Get all the values (slash-separated) contained inside a specific tag."""
-        value = Parse.single(tags=tags, key=key)
+        value = ParseData.single(tags=tags, key=key)
 
         if value is None:
             return []
@@ -102,59 +101,92 @@ class Parse(pydantic.BaseModel):
         else:
             return [item.strip() for item in value.split("/")]
 
+    @classmethod
+    def from_tags(cls, tags: mutagen.Tags) -> ParseData:
+        return ParseData(
+            album=ParseAlbum.from_tags(tags),
+            song=ParseSong.from_tags(tags),
+            file=None
+        )
 
-def save_file(file: f.UploadFile, overwrite: bool = False) -> Parse:
+
+class ParseResult(pydantic.BaseModel):
+    """Information about the results of a file parse."""
+    data: ParseData
+    file: File
+
+
+def hash_file(file: IO[bytes]) -> hashlib.sha512:
     """
-    Parse a UploadFile with mutagen, then store it in the music directory.
-
-    :param file: The UploadFile to store.
-    :param overwrite: Overwrite the file instead of skipping if it already exists.
-    :return: The parsing result.
+    Calculate the SHA512 hash of a file-like object.
     """
 
-    # Find the file extension
-    _, ext = os.path.splitext(file.filename)
+    file.seek(0)
 
-    # Parse the audio file
-    mutated: mutagen.File = mutagen.File(fileobj=file.file, easy=True)
-
-    # Create a Parse object from the tags
-    # The filename will be set later
-    parse: Parse = Parse(album=ParseAlbum.from_tags(mutated.tags),
-                         song=ParseSong.from_tags(mutated.tags),
-                         filename=None)
-
-    # Seek back to the beginning
-    file.file.seek(0)
-
-    # Clear all tags
-    mutated.delete(fileobj=file.file)
-
-    # Seek back to the beginning
-    file.file.seek(0)
-
-    # Calculate the hash of the file object
     h = hashlib.sha512()
-    while chunk := file.file.read(8192):
+    while chunk := file.read(8192):
         h.update(chunk)
 
+    return h
+
+
+def split_file_tags(file: IO[bytes]) -> ParseData:
+    """
+    Parse the tags of a file, then strip them from the file object.
+
+    Warning: This affects the file object permanently!
+    """
     # Seek back to the beginning
-    file.file.seek(0)
+    file.seek(0)
 
-    # Find the final filename
-    parse.filename = os.path.join(config["storage.music.dir"], f"{h.hexdigest()}{ext}")
+    # Parse the audio file
+    mutated: mutagen.File = mutagen.File(fileobj=file, easy=True)
 
-    # Ensure a file with that hash doesn't exist
-    if not os.path.exists(parse.filename) or overwrite:
-        # Create the required directories
-        os.makedirs(os.path.dirname(parse.filename), exist_ok=True)
+    # Create a Parse object from the tags
+    # The file will be set later
+    parse: ParseData = ParseData.from_tags(mutated.tags)
 
-        # Save the file
-        with open(parse.filename, "wb") as result:
-            while chunk := file.file.read(8192):
-                result.write(chunk)
+    # Clear all tags
+    mutated.delete(fileobj=file)
 
     return parse
+
+
+def determine_filename(file: f.UploadFile) -> str:
+    # Calculate the hash of the file object
+    h = hash_file(file.file)
+
+    # Determine the new filename
+    _, ext = os.path.splitext(file.filename)
+
+    # Return the path
+    return os.path.join(config["storage.music.dir"], f"{h.hexdigest()}{ext}")
+
+
+def save_uploadfile(upload_file: f.UploadFile, overwrite: bool = False) -> ParseResult:
+    """Parse a UploadFile with mutagen, then store it in the music directory."""
+
+    # Split the tags from the file
+    data = split_file_tags(upload_file.file)
+
+    # Create a new File object
+    file = File.guess(determine_filename(upload_file))
+
+    # Ensure a file with that hash doesn't exist
+    if not os.path.exists(file.name) or overwrite:
+
+        # Create the required directories
+        os.makedirs(os.path.dirname(file.name), exist_ok=True)
+
+        # Save the file
+        with open(file.name, "wb") as result:
+            while chunk := upload_file.file.read(8192):
+                result.write(chunk)
+
+    return ParseResult(
+        file=file,
+        data=data,
+    )
 
 
 def make_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum) -> Album:
@@ -183,7 +215,7 @@ def make_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum)
     return album
 
 
-def make_song(session: sqlalchemy.orm.session.Session, parse: Parse) -> Song:
+def make_song(session: sqlalchemy.orm.session.Session, parse: ParseData) -> Song:
     """Get the song of the parsed song, or create it and add it to the session if it doesn't exist."""
     # Create the new song
     song = Song(
@@ -224,7 +256,7 @@ def auto(user: User = f.Depends(find_or_create_user), files: List[f.UploadFile] 
         raise f.HTTPException(500, "No files were uploaded")
 
     # Parse and save all files
-    parses = [save_file(file) for file in files]
+    parses = [save_uploadfile(file) for file in files]
 
     # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
     # (*ahem* Funkwhale *ahem*)
