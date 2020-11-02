@@ -163,14 +163,14 @@ def determine_filename(file: f.UploadFile) -> str:
     return os.path.join(config["storage.music.dir"], f"{h.hexdigest()}{ext}")
 
 
-def save_uploadfile(upload_file: f.UploadFile, overwrite: bool = False) -> ParseResult:
+def save_uploadfile(upload_file: f.UploadFile, uploader: User, overwrite: bool = False) -> ParseResult:
     """Parse a UploadFile with mutagen, then store it in the music directory."""
 
     # Split the tags from the file
     data = split_file_tags(upload_file.file)
 
     # Create a new File object
-    file = File.guess(determine_filename(upload_file))
+    file = File.guess(determine_filename(upload_file), uploader=uploader)
 
     # Ensure a file with that hash doesn't exist
     if not os.path.exists(file.name) or overwrite:
@@ -256,7 +256,7 @@ def auto(user: User = f.Depends(find_or_create_user), files: List[f.UploadFile] 
         raise f.HTTPException(500, "No files were uploaded")
 
     # Parse and save all files
-    parses = [save_uploadfile(file) for file in files]
+    parses = [save_uploadfile(file, uploader=user) for file in files]
 
     # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
     # (*ahem* Funkwhale *ahem*)
@@ -264,11 +264,12 @@ def auto(user: User = f.Depends(find_or_create_user), files: List[f.UploadFile] 
     session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
     # Use the first parse to create the metadata
-    song = make_song(session=session, parse=parses[0])
+    song = make_song(session=session, parse=parses[0].data)
 
     # Create the layers
     for parse in parses:
-        layer = SongLayer(song=song, filename=parse.filename, uploader=user)
+        session.add(parse.file)
+        layer = SongLayer(song=song, file=parse.file)
         session.add(layer)
 
     session.commit()

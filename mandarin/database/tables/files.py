@@ -6,6 +6,9 @@ import mimetypes
 
 from ..base import Base
 
+if TYPE_CHECKING:
+    from .users import User
+
 
 class File(Base):
     """
@@ -22,8 +25,8 @@ class File(Base):
     uploader = o.relationship("User", back_populates="uploads")
 
     @classmethod
-    def guess(cls, name: str) -> File:
-        return cls(name=name, mime_type=mimetypes.guess_type(name, strict=False))
+    def guess(cls, name: str, uploader: User) -> File:
+        return cls(name=name, mime_type=mimetypes.guess_type(name, strict=False), uploader=uploader)
 
 
 __all__ = (File,)
