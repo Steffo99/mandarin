@@ -1,11 +1,12 @@
 from royalnet.typing import *
 import sqlalchemy as s
 import sqlalchemy.orm as o
+import royalnet.alchemist as a
 
 from ..base import Base
 
 
-class User(Base):
+class User(Base, a.ColRepr):
     """
     An user, as returned by OAuth2.
     """

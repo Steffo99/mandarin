@@ -1,7 +1,10 @@
 from __future__ import annotations
 from royalnet.typing import *
 import pydantic
+import pydantic_sqlalchemy
 import mutagen
+
+from ...database import *
 
 
 class ParseAlbum(pydantic.BaseModel):
@@ -97,8 +100,29 @@ class ParseData(pydantic.BaseModel):
         )
 
 
+PAlbum = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Album)
+PSong = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Song)
+PLayer = pydantic_sqlalchemy.sqlalchemy_to_pydantic(SongLayer)
+PFile = pydantic_sqlalchemy.sqlalchemy_to_pydantic(File)
+
+
+class PPSong(PSong):
+    album: PAlbum
+
+
+class PPLayer(PLayer):
+    song: PPSong
+    file: PFile
+
+
+class ParseResult(pydantic.BaseModel):
+    layer: PPLayer
+
+
 __all__ = (
     "ParseAlbum",
     "ParseSong",
     "ParseData",
+    "ParseResult",
+    "PPLayer",
 )

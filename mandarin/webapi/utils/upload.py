@@ -108,15 +108,17 @@ def auto_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum)
             query = subquery
         else:
             query = subquery.filter(AlbumInvolvement.person.in_(query.subquery()))
-    album = query.one_or_none() if query else None
+    album_involvement: Optional[AlbumInvolvement] = query.one_or_none() if query else None
 
     # Create a new album if needed
-    if album is None:
+    if album_involvement is None:
         album = Album(title=parse_album.title)
         session.add(album)
 
         album.involve(people=(Person.make(session=session, name=name) for name in parse_album.artists),
                       role=artist_arole)
+    else:
+        album = album_involvement.album
 
     return album
 
@@ -152,10 +154,10 @@ def auto_song(session: sqlalchemy.orm.session.Session, parse: ParseData) -> Song
         else:
             query = subquery.filter(SongInvolvement.person.in_(query.subquery()))
 
-    song = query.one_or_none()
+    song_involvement: SongInvolvement = query.one_or_none() if query else None
 
     # Create a new song if needed
-    if song is None:
+    if song_involvement is None:
         song = Song(
             title=parse.song.title,
             year=parse.song.year,
@@ -177,6 +179,8 @@ def auto_song(session: sqlalchemy.orm.session.Session, parse: ParseData) -> Song
         # Involve performers
         song.involve(people=(Person.make(session=session, name=name) for name in parse.song.performers),
                      role=performer_srole)
+    else:
+        song = song_involvement.song
 
     return song
 

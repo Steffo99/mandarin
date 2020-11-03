@@ -12,7 +12,7 @@ from ..utils.upload import *
 router_upload = f.APIRouter()
 
 
-@router_upload.post("/new", summary="Upload a audio track.")
+@router_upload.post("/new", summary="Upload a audio track.", response_model=ParseResult)
 def new(user: User = f.Depends(find_or_create_user), file: f.UploadFile = f.File(...)):
     """
     Upload a new audio track.
@@ -41,12 +41,18 @@ def new(user: User = f.Depends(find_or_create_user), file: f.UploadFile = f.File
     # Use the first parse to create the metadata
     song = auto_song(session=session, parse=parse)
 
-    # Create the layers
-    session.add(SongLayer(song=song, file=file))
+    # Create the layer
+    layer = SongLayer(song=song, file=file)
+    session.add(layer)
 
     # Commit the changes in the session
     session.commit()
+
+    result = ParseResult(layer=PPLayer.from_orm(layer))
+
     session.close()
+
+    return result
 
 
 __all__ = (

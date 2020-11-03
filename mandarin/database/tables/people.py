@@ -7,7 +7,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class Person(Base):
+class Person(Base, a.ColRepr):
     """
     A person who is referenced by at least one song in the catalog.
     """

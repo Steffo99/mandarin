@@ -1,6 +1,7 @@
 from royalnet.typing import *
 import sqlalchemy as s
 import sqlalchemy.orm as o
+import royalnet.alchemist as a
 
 from ..base import Base
 from .albumgenres import albumgenres
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from .albumroles import AlbumRole
 
 
-class Album(Base):
+class Album(Base, a.ColRepr):
     """
     An album, composed of multiple songs.
     """

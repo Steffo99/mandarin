@@ -1,11 +1,12 @@
 from royalnet.typing import *
 import sqlalchemy as s
 import sqlalchemy.orm as o
+import royalnet.alchemist as a
 
 from ..base import Base
 
 
-class SongInvolvement(Base):
+class SongInvolvement(Base, a.ColRepr):
     """
     The involment of a person in a song.
     """
