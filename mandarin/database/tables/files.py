@@ -29,7 +29,22 @@ class File(Base, a.ColRepr):
     used_in_songlayers = o.relationship("SongLayer", back_populates="file")
 
     @classmethod
-    def guess(cls, name: str, uploader: User) -> File:
+    def make(cls, session: o.session.Session, name: str, uploader: Optional[User] = None) -> File:
+        """Find the item with the specified name, or create it and add it to the session if it doesn't exist."""
+        item = (
+            session.query(cls)
+                   .filter(cls.name == name)
+                   .one_or_none()
+        )
+
+        if item is None:
+            item = cls(name=name, uploader=uploader)
+            session.add(item)
+
+        return item
+
+    @classmethod
+    def guess(cls, name: str, uploader: Optional[User] = None) -> File:
         mtype, msoftware = mimetypes.guess_type(name, strict=False)
         return cls(name=name, mime_type=mtype, mime_software=msoftware, uploader=uploader)
 

@@ -12,8 +12,13 @@ from ..utils.upload import *
 router_upload = f.APIRouter()
 
 
-@router_upload.post("/new", summary="Upload a audio track.", response_model=ParseResult)
-def new(user: User = f.Depends(find_or_create_user), file: f.UploadFile = f.File(...)):
+@router_upload.post(
+    "/auto",
+    summary="Upload a track, and infer its metadata automatically.",
+    response_model=ParseResult
+)
+def auto(file: f.UploadFile = f.File(...),
+         user: User = f.Depends(find_or_create_user),):
     """
     Upload a new audio track.
 
@@ -23,12 +28,8 @@ def new(user: User = f.Depends(find_or_create_user), file: f.UploadFile = f.File
     layer to it.
     """
 
-    # Ensure at least a song was uploaded
-    if file is None:
-        raise f.HTTPException(500, "No file was uploaded")
-
     # Parse and save the file
-    parse, file = save_uploadfile(file, uploader=user)
+    parse, filename = save_uploadfile(file)
 
     # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
     # (*ahem* Funkwhale *ahem*)
@@ -36,20 +37,70 @@ def new(user: User = f.Depends(find_or_create_user), file: f.UploadFile = f.File
     session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
     # Add the file to the session
-    session.add(file)
+    file_db = File.make(session=session, name=filename, uploader=user)
 
     # Use the first parse to create the metadata
     song = auto_song(session=session, parse=parse)
 
     # Create the layer
-    layer = SongLayer(song=song, file=file)
+    layer = SongLayer(song=song, file=file_db)
     session.add(layer)
 
     # Commit the changes in the session
     session.commit()
 
+    # Create the return value
     result = ParseResult(layer=PPLayer.from_orm(layer))
 
+    # Close the session
+    session.close()
+
+    return result
+
+
+@router_upload.post(
+    "/add",
+    summary="Upload a track, and add it as a new layer of a song.",
+    response_model=ParseResult
+)
+def auto(song_id: int,
+         file: f.UploadFile = f.File(...),
+         user: User = f.Depends(find_or_create_user)):
+    """
+    Upload a new audio track.
+
+    A new layer will be created for the song having the specified id.
+
+    The metadata of the track will be discarded.
+    """
+
+    # Parse and save the file
+    parse, filename = save_uploadfile(file)
+
+    # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
+    # (*ahem* Funkwhale *ahem*)
+    session: sqlalchemy.orm.session.Session = Session()
+    session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
+
+    # Add the file to the session
+    file_db = File.make(session=session, name=filename, uploader=user)
+
+    # Find the song
+    song: Optional[Song] = session.query(Song).get(song_id)
+    if song is None:
+        raise f.HTTPException(404, f"The id '{song_id}' does not match any song.")
+
+    # Create the layer
+    layer = SongLayer(song=song, file=file_db)
+    session.add(layer)
+
+    # Commit the changes in the session
+    session.commit()
+
+    # Create the return value
+    result = ParseResult(layer=PPLayer.from_orm(layer))
+
+    # Close the session
     session.close()
 
     return result

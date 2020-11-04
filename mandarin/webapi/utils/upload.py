@@ -59,7 +59,7 @@ def determine_filename(file: fastapi.UploadFile) -> str:
     return os.path.join(config["storage.music.dir"], f"{h.hexdigest()}{ext}")
 
 
-def save_uploadfile(upload_file: fastapi.UploadFile, uploader: User, overwrite: bool = False) -> Tuple[ParseData, File]:
+def save_uploadfile(upload_file: fastapi.UploadFile, overwrite: bool = False) -> Tuple[ParseData, str]:
     """
     Parse a UploadFile with mutagen, then store it in the music directory.
     """
@@ -67,21 +67,21 @@ def save_uploadfile(upload_file: fastapi.UploadFile, uploader: User, overwrite: 
     # Split the tags from the file
     data = split_file_tags(upload_file.file)
 
-    # Create a new File object
-    file = File.guess(determine_filename(upload_file), uploader=uploader)
+    # Find the filename
+    filename = determine_filename(upload_file)
 
     # Ensure a file with that hash doesn't exist
-    if not os.path.exists(file.name) or overwrite:
+    if not os.path.exists(filename) or overwrite:
 
         # Create the required directories
-        os.makedirs(os.path.dirname(file.name), exist_ok=True)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
 
         # Save the file
-        with open(file.name, "wb") as result:
+        with open(filename, "wb") as result:
             while chunk := upload_file.file.read(8192):
                 result.write(chunk)
 
-    return data, file
+    return data, filename
 
 
 def auto_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum) -> Album:

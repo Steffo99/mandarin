@@ -107,12 +107,12 @@ PFile = pydantic_sqlalchemy.sqlalchemy_to_pydantic(File)
 
 
 class PPSong(PSong):
-    album: PAlbum
+    album: Optional[PAlbum]
 
 
 class PPLayer(PLayer):
     song: PPSong
-    file: PFile
+    file: Optional[PFile]
 
 
 class ParseResult(pydantic.BaseModel):
