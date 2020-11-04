@@ -18,7 +18,7 @@ class SongLayer(Base, a.ColRepr):
     song = o.relationship("Song", back_populates="layers")
 
     _file = s.Column(s.Integer, s.ForeignKey("files.id"), nullable=False)
-    file = o.relationship("File", back_populates="used_in_songlayers")
+    file = o.relationship("File", back_populates="used_as_songlayer")
 
 
 __all__ = ("SongLayer",)

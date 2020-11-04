@@ -13,12 +13,14 @@ router_upload = f.APIRouter()
 
 
 @router_upload.post(
-    "/auto",
+    "/track/auto",
     summary="Upload a track, and infer its metadata automatically.",
     response_model=ParseResult
 )
-def auto(file: f.UploadFile = f.File(...),
-         user: User = f.Depends(find_or_create_user),):
+def track_auto(
+    file: f.UploadFile = f.File(...),
+    user: User = f.Depends(find_or_create_user),
+) -> ParseResult:
     """
     Upload a new audio track.
 
@@ -59,13 +61,15 @@ def auto(file: f.UploadFile = f.File(...),
 
 
 @router_upload.post(
-    "/add",
+    "/track/add",
     summary="Upload a track, and add it as a new layer of a song.",
     response_model=ParseResult
 )
-def auto(song_id: int,
-         file: f.UploadFile = f.File(...),
-         user: User = f.Depends(find_or_create_user)):
+def track_add(
+    song_id: int,
+    file: f.UploadFile = f.File(...),
+    user: User = f.Depends(find_or_create_user)
+) -> ParseResult:
     """
     Upload a new audio track.
 

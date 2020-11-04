@@ -26,7 +26,8 @@ class File(Base, a.ColRepr):
     _uploader = s.Column(s.String, s.ForeignKey("users.sub"))
     uploader = o.relationship("User", back_populates="uploads")
 
-    used_in_songlayers = o.relationship("SongLayer", back_populates="file")
+    used_as_songlayer = o.relationship("SongLayer", back_populates="file")
+    used_as_cover = o.relationship("Album", back_populates="cover")
 
     @classmethod
     def make(cls, session: o.session.Session, name: str, uploader: Optional[User] = None) -> File:
