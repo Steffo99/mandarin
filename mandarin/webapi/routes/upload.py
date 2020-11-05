@@ -4,7 +4,7 @@ import fastapi as f
 import sqlalchemy.orm.session
 
 from ...database import *
-from ..models.parse import *
+from ..models.upload import *
 from ..utils.auth import *
 from ..utils.upload import *
 

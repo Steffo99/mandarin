@@ -9,7 +9,7 @@ from .songgenres import songgenres
 from .albumgenres import albumgenres
 
 
-class MusicGenre(Base, a.ColRepr):
+class MusicGenre(Base, a.ColRepr, a.PyModel):
     """
     A genre of music.
     """

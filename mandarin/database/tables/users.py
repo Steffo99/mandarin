@@ -6,7 +6,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class User(Base, a.ColRepr):
+class User(Base, a.ColRepr, a.PyModel):
     """
     An user, as returned by OAuth2.
     """

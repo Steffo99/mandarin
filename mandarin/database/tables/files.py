@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .users import User
 
 
-class File(Base, a.ColRepr):
+class File(Base, a.ColRepr, a.PyModel):
     """
     A file that has been uploaded to Mandarin.
     """

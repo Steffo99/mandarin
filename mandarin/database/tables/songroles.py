@@ -7,7 +7,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class SongRole(Base, a.ColRepr):
+class SongRole(Base, a.ColRepr, a.PyModel):
     """
     A role for a person involved with a song.
     """

@@ -12,7 +12,8 @@ router_auth = f.APIRouter()
     summary="Validate the current access token.",
     responses={
         401: {"description": "Not logged in"},
-    }
+    },
+    response_model=dict
 )
 def access_token(payload: dict = f.Depends(validate_access_token)):
     return payload
@@ -23,10 +24,11 @@ def access_token(payload: dict = f.Depends(validate_access_token)):
     summary="Get info about the logged in user.",
     responses={
         401: {"description": "Not logged in"},
-    }
+    },
+    response_model=User.pydantic()
 )
 def current_user(user: User = f.Depends(find_or_create_user)):
-    return f"{user}"
+    return User.pydantic().from_orm(user)
 
 
 __all__ = (

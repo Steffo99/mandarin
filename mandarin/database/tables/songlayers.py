@@ -6,7 +6,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class SongLayer(Base, a.ColRepr):
+class SongLayer(Base, a.ColRepr, a.PyModel):
     """
     A single layer of a song.
     """

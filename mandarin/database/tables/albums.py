@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .albumroles import AlbumRole
 
 
-class Album(Base, a.ColRepr):
+class Album(Base, a.ColRepr, a.PyModel):
     """
     An album, composed of multiple songs.
     """
