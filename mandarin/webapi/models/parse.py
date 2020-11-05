@@ -100,29 +100,75 @@ class ParseData(pydantic.BaseModel):
         )
 
 
-PAlbum = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Album)
-PSong = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Song)
-PLayer = pydantic_sqlalchemy.sqlalchemy_to_pydantic(SongLayer)
-PFile = pydantic_sqlalchemy.sqlalchemy_to_pydantic(File)
+class UploadFile(pydantic_sqlalchemy.sqlalchemy_to_pydantic(File)):
+    """Information about the file that was uploaded and stored in Mandarin."""
 
 
-class PPSong(PSong):
-    album: Optional[PAlbum]
+class UploadPerson(pydantic_sqlalchemy.sqlalchemy_to_pydantic(Person)):
+    """A person that was involved with the uploaded song or album."""
 
 
-class PPLayer(PLayer):
-    song: PPSong
-    file: Optional[PFile]
+class UploadGenre(pydantic_sqlalchemy.sqlalchemy_to_pydantic(MusicGenre)):
+    """The music genre of the uploaded song or album."""
 
 
-class ParseResult(pydantic.BaseModel):
-    layer: PPLayer
+class UploadSongRole(pydantic_sqlalchemy.sqlalchemy_to_pydantic(SongRole)):
+    """The role with which a person was involved with the uploaded song."""
+
+
+class UploadAlbumRole(pydantic_sqlalchemy.sqlalchemy_to_pydantic(AlbumRole)):
+    """The role with which a person was involved with the uploaded album."""
+
+
+class UploadAlbumInvolvement(pydantic_sqlalchemy.sqlalchemy_to_pydantic(AlbumInvolvement)):
+    """The involvement of a specific person, having a role ("Artist"), with the uploaded album."""
+    person: UploadPerson
+    role: UploadAlbumRole
+
+
+class UploadAlbum(pydantic_sqlalchemy.sqlalchemy_to_pydantic(Album)):
+    """The album that was created during the upload, or that was associated with the new layer."""
+    genres: List[UploadGenre]
+    involvements: List[UploadAlbumInvolvement]
+
+
+class UploadSongInvolvement(pydantic_sqlalchemy.sqlalchemy_to_pydantic(SongInvolvement)):
+    """The involvement of a specific person, having a role ("Artist"), with the uploaded song."""
+    person: UploadPerson
+    role: UploadSongRole
+
+
+class UploadSong(pydantic_sqlalchemy.sqlalchemy_to_pydantic(Song)):
+    """The song that was created during the upload, or that was associated with the new layer."""
+    album: Optional[UploadAlbum]
+    involvements: List[UploadSongInvolvement]
+    genres: List[UploadGenre]
+
+
+class UploadLayer(pydantic_sqlalchemy.sqlalchemy_to_pydantic(SongLayer)):
+    """The layer that was created during the upload."""
+    song: UploadSong
+    file: Optional[UploadFile]
+
+
+class UploadResult(pydantic.BaseModel):
+    """The result of the upload of a track to Mandarin."""
+    layer: UploadLayer
 
 
 __all__ = (
     "ParseAlbum",
     "ParseSong",
     "ParseData",
-    "ParseResult",
-    "PPLayer",
+    "UploadFile",
+    "UploadPerson",
+    "UploadGenre",
+    "UploadSongRole",
+    "UploadAlbumRole",
+    "UploadAlbumInvolvement",
+    "UploadAlbum",
+    "UploadSongInvolvement",
+    "UploadSong",
+    "UploadLayer",
+    "UploadResult",
 )

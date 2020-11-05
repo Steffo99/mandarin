@@ -15,12 +15,16 @@ router_upload = f.APIRouter()
 @router_upload.post(
     "/track/auto",
     summary="Upload a track, and infer its metadata automatically.",
-    response_model=ParseResult
+    response_model=UploadResult,
+    status_code=201,
+    responses={
+        401: {"description": "Not logged in"},
+    }
 )
 def track_auto(
     file: f.UploadFile = f.File(...),
     user: User = f.Depends(find_or_create_user),
-) -> ParseResult:
+) -> UploadResult:
     """
     Upload a new audio track.
 
@@ -52,7 +56,7 @@ def track_auto(
     session.commit()
 
     # Create the return value
-    result = ParseResult(layer=PPLayer.from_orm(layer))
+    result = UploadResult(layer=UploadLayer.from_orm(layer))
 
     # Close the session
     session.close()
@@ -63,13 +67,18 @@ def track_auto(
 @router_upload.post(
     "/track/add",
     summary="Upload a track, and add it as a new layer of a song.",
-    response_model=ParseResult
+    response_model=UploadResult,
+    status_code=201,
+    responses={
+        401: {"description": "Not logged in"},
+        404: {"description": "Song not found"},
+    }
 )
 def track_add(
     song_id: int,
     file: f.UploadFile = f.File(...),
     user: User = f.Depends(find_or_create_user)
-) -> ParseResult:
+) -> UploadResult:
     """
     Upload a new audio track.
 
@@ -102,7 +111,7 @@ def track_add(
     session.commit()
 
     # Create the return value
-    result = ParseResult(layer=PPLayer.from_orm(layer))
+    result = UploadResult(layer=UploadLayer.from_orm(layer))
 
     # Close the session
     session.close()

@@ -107,7 +107,7 @@ def auto_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum)
         if query is None:
             query = subquery
         else:
-            query = subquery.filter(AlbumInvolvement.person.in_(query.subquery()))
+            query = subquery.filter(AlbumInvolvement._person.in_([person.id for person in query.all()]))
     album_involvement: Optional[AlbumInvolvement] = query.one_or_none() if query else None
 
     # Create a new album if needed
@@ -152,7 +152,7 @@ def auto_song(session: sqlalchemy.orm.session.Session, parse: ParseData) -> Song
         if query is None:
             query = subquery
         else:
-            query = subquery.filter(SongInvolvement.person.in_(query.subquery()))
+            query = subquery.filter(SongInvolvement._person.in_([person.id for person in query.all()]))
 
     song_involvement: SongInvolvement = query.one_or_none() if query else None
 
