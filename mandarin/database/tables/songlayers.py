@@ -13,6 +13,7 @@ class SongLayer(Base, a.ColRepr):
     __tablename__ = "songlayers"
 
     id = s.Column(s.Integer, primary_key=True)
+    name = s.Column(s.String, nullable=False, default="Default", server_default="Default")
 
     _song = s.Column(s.Integer, s.ForeignKey("songs.id"), nullable=False)
     song = o.relationship("Song", back_populates="layers")
