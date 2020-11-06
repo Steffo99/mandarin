@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .albumroles import AlbumRole
 
 
-class Album(Base, a.ColRepr, a.PyModel):
+class Album(Base, a.ColRepr):
     """
     An album, composed of multiple songs.
     """
@@ -24,10 +24,10 @@ class Album(Base, a.ColRepr, a.PyModel):
     involvements = o.relationship("AlbumInvolvement", back_populates="album")
 
     songs = o.relationship("Song", back_populates="album")
-    genres = o.relationship("MusicGenre", secondary=albumgenres, back_populates="albums")
+    genres = o.relationship("Genre", secondary=albumgenres, back_populates="albums")
 
     _cover = s.Column(s.Integer, s.ForeignKey("files.id"))
-    cover = o.relationship("File", back_populates="used_as_cover")
+    cover = o.relationship("File", back_populates="used_as_album_cover")
 
     def involve(self, people: Iterable["Person"], role: "AlbumRole") -> List[AlbumInvolvement]:
         """Involve a list of people with this album, and return the resulting involvements."""

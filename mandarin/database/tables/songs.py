@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .songroles import SongRole
 
 
-class Song(Base, a.ColRepr, a.PyModel):
+class Song(Base, a.ColRepr):
     """
     A single song, composed from multiple layers.
     """
@@ -22,13 +22,13 @@ class Song(Base, a.ColRepr, a.PyModel):
 
     title = s.Column(s.String)
 
-    layers = o.relationship("SongLayer", back_populates="song")
+    layers = o.relationship("Layer", back_populates="song")
 
     _album = s.Column(s.Integer, s.ForeignKey("albums.id"))
     album = o.relationship("Album", back_populates="songs")
 
     involvements = o.relationship("SongInvolvement", back_populates="song")
-    genres = o.relationship("MusicGenre", secondary=songgenres, back_populates="songs")
+    genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
     disc_number = s.Column(s.Integer)
     track_number = s.Column(s.Integer)

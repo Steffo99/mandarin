@@ -9,11 +9,11 @@ from .songgenres import songgenres
 from .albumgenres import albumgenres
 
 
-class MusicGenre(Base, a.ColRepr, a.PyModel):
+class Genre(Base, a.ColRepr):
     """
     A genre of music.
     """
-    __tablename__ = "musicgenres"
+    __tablename__ = "genres"
 
     id = s.Column(s.Integer, primary_key=True)
 
@@ -23,7 +23,7 @@ class MusicGenre(Base, a.ColRepr, a.PyModel):
     albums = o.relationship("Album", secondary=albumgenres, back_populates="genres")
 
     @classmethod
-    def make(cls, session: o.session.Session, name: str) -> MusicGenre:
+    def make(cls, session: o.session.Session, name: str) -> Genre:
         """Find the item with the specified name, or create it and add it to the session if it doesn't exist."""
         item = (
             session.query(cls)
@@ -40,4 +40,4 @@ class MusicGenre(Base, a.ColRepr, a.PyModel):
 
 
 
-__all__ = ("MusicGenre",)
+__all__ = ("Genre",)

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .users import User
 
 
-class File(Base, a.ColRepr, a.PyModel):
+class File(Base, a.ColRepr):
     """
     A file that has been uploaded to Mandarin.
     """
@@ -26,8 +26,8 @@ class File(Base, a.ColRepr, a.PyModel):
     _uploader = s.Column(s.String, s.ForeignKey("users.sub"))
     uploader = o.relationship("User", back_populates="uploads")
 
-    used_as_songlayer = o.relationship("SongLayer", back_populates="file")
-    used_as_cover = o.relationship("Album", back_populates="cover")
+    used_as_layer = o.relationship("Layer", back_populates="file")
+    used_as_album_cover = o.relationship("Album", back_populates="cover")
 
     @classmethod
     def make(cls, session: o.session.Session, name: str, uploader: Optional[User] = None) -> File:

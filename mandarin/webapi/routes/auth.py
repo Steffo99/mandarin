@@ -1,7 +1,8 @@
 import fastapi as f
 
 from ...database import *
-from ..utils.auth import *
+from ..models.database import *
+from mandarin.webapi.dependencies.auth import *
 
 
 router_auth = f.APIRouter()
@@ -25,10 +26,10 @@ def access_token(payload: dict = f.Depends(validate_access_token)):
     responses={
         401: {"description": "Not logged in"},
     },
-    response_model=User.pydantic()
+    response_model=MUser
 )
 def current_user(user: User = f.Depends(find_or_create_user)):
-    return User.pydantic().from_orm(user)
+    return MUser.from_orm(user)
 
 
 __all__ = (

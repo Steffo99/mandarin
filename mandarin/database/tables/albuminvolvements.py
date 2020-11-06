@@ -6,7 +6,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class AlbumInvolvement(Base, a.ColRepr, a.PyModel):
+class AlbumInvolvement(Base, a.ColRepr):
     """
     The involment of a person in an album.
     """

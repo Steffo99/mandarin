@@ -230,7 +230,7 @@ urllib3 = ">=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26"
 
 [[package]]
 name = "royalnet"
-version = "6.0.0a8"
+version = "6.0.0a9"
 description = "A multipurpose bot and web framework"
 category = "main"
 optional = false
@@ -332,7 +332,7 @@ h11 = ">=0.8"
 [metadata]
 lock-version = "1.0"
 python-versions = "^3.8"
-content-hash = "934fe30be71e278f9427ca3a0e0b90eecc8758f72fba33ff0e88c4d9c71b6e63"
+content-hash = "813a2327a416f66eb5327621a088e3b4553d713f19fbff3373178163f3d5d899"
 
 [metadata.files]
 certifi = [
@@ -557,8 +557,8 @@ requests = [
     {file = "requests-2.24.0.tar.gz", hash = "sha256:b3559a131db72c33ee969480840fff4bb6dd111de7dd27c8ee1f820f4f00231b"},
 ]
 royalnet = [
-    {file = "royalnet-6.0.0a8-py3-none-any.whl", hash = "sha256:635654634859a12ab6c8b51dc480e90a4734ee998a1a88e7887261b7aa4651d4"},
-    {file = "royalnet-6.0.0a8.tar.gz", hash = "sha256:da88b0fa0ef903ca987c684b297437f5fedbe71260a3440a67229670220c6654"},
+    {file = "royalnet-6.0.0a9-py3-none-any.whl", hash = "sha256:39659314668a7b9686a266c573c794650e062c0b645946cc927b8dc401b102a4"},
+    {file = "royalnet-6.0.0a9.tar.gz", hash = "sha256:7a4093ddfe463ef2be163d124ba0a664f963707ab711d276ff7fd9e8fa614c1f"},
 ]
 rsa = [
     {file = "rsa-4.6-py3-none-any.whl", hash = "sha256:6166864e23d6b5195a5cfed6cd9fed0fe774e226d8f854fcb23b7bbef0350233"},

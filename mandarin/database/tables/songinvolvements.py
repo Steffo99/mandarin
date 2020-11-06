@@ -6,7 +6,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class SongInvolvement(Base, a.ColRepr, a.PyModel):
+class SongInvolvement(Base, a.ColRepr):
     """
     The involment of a person in a song.
     """

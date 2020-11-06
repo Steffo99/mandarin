@@ -164,7 +164,7 @@ def auto_song(session: sqlalchemy.orm.session.Session, parse: ParseData) -> Song
             disc_number=parse.song.disc_number,
             track_number=parse.song.track_number,
             album=auto_album(session=session, parse_album=parse.album) if parse.album.title else None,
-            genres=[MusicGenre.make(session=session, name=parse.song.genre)] if parse.song.genre else [],
+            genres=[Genre.make(session=session, name=parse.song.genre)] if parse.song.genre else [],
         )
         session.add(song)
 

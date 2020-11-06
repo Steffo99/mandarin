@@ -3,11 +3,11 @@ from .albuminvolvements import *
 from .albumroles import *
 from .albums import *
 from .files import *
-from .musicgenres import *
+from .genres import *
 from .people import *
 from .songgenres import *
 from .songinvolvements import *
-from .songlayers import *
+from .layers import *
 from .songroles import *
 from .songs import *
 from .users import *

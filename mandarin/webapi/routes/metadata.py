@@ -2,9 +2,9 @@ from royalnet.typing import *
 import sqlalchemy.orm
 import fastapi as f
 
-from ..models.upload import *
 from ...database import *
-from ..utils.auth import *
+from ..models.database import *
+from ..dependencies.auth import *
 
 router_metadata = f.APIRouter()
 
@@ -12,7 +12,7 @@ router_metadata = f.APIRouter()
 @router_metadata.put(
     "/move/layers",
     summary="Move layers to a different song.",
-    response_model=List[UploadLayer],
+    response_model=List[MLayerFull],
     responses={
         401: {"description": "Not logged in"},
         404: {"description": "Song / layer not found"}
@@ -31,12 +31,12 @@ def move_layers(
 
     changed_layers = []
     for layer_id in layer_ids:
-        layer = session.query(SongLayer).get(layer_id)
+        layer = session.query(Layer).get(layer_id)
         if layer is None:
             raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
 
         layer.song = song
-        changed_layers.append(UploadLayer.from_orm(layer))
+        changed_layers.append(MLayerFull.from_orm(layer))
 
     session.commit()
     session.close()
@@ -47,7 +47,7 @@ def move_layers(
 @router_metadata.put(
     "/move/songs",
     summary="Move songs to a different album.",
-    response_model=List[UploadSong],
+    response_model=List[MSongFull],
     responses={
         401: {"description": "Not logged in"},
         404: {"description": "Album / song not found"}
@@ -72,7 +72,7 @@ def move_songs(
             raise f.HTTPException(404, f"The id '{song_id}' does not match any song.")
 
         song.album = album
-        changed_songs.append(UploadSong.from_orm(song))
+        changed_songs.append(MSongFull.from_orm(song))
 
     session.commit()
     session.close()
@@ -81,9 +81,9 @@ def move_songs(
 
 
 @router_metadata.post(
-    "/involve/album",
-    summary="Involve people with an album.",
-    response_model=UploadAlbum,
+    "/involve/albums",
+    summary="Involve people with albums.",
+    response_model=List[MAlbumFull],
     responses={
         401: {"description": "Not logged in"},
         404: {"description": "Album / role / person not found"}
@@ -91,34 +91,37 @@ def move_songs(
 )
 def involve_album(
     person_ids: List[int] = f.Query(...),
-    album_id: int = f.Query(...),
+    album_ids: List[int] = f.Query(...),
     role_id: int = f.Query(...),
     user: User = f.Depends(find_or_create_user),
 ):
     session: sqlalchemy.orm.session.Session = Session()
 
-    album = session.query(Album).get(album_id)
-    if album is None:
-        raise f.HTTPException(404, f"The id '{album_id}' does not match any album.")
+    result = []
+    for album_id in album_ids:
 
-    role = session.query(AlbumRole).get(role_id)
-    if role is None:
-        raise f.HTTPException(404, f"The id '{role_id}' does not match any album role.")
+        album = session.query(Album).get(album_id)
+        if album is None:
+            raise f.HTTPException(404, f"The id '{album_id}' does not match any album.")
 
-    for person_id in person_ids:
+        role = session.query(AlbumRole).get(role_id)
+        if role is None:
+            raise f.HTTPException(404, f"The id '{role_id}' does not match any album role.")
 
-        person = session.query(Person).get(person_id)
-        if person is None:
-            raise f.HTTPException(404, f"The id '{person_id}' does not match any person.")
+        for person_id in person_ids:
 
-        involvement = session.query(AlbumInvolvement).filter_by(album=album, role=role, person=person)
-        if involvement is None:
-            involvement = AlbumInvolvement(album=album, role=role, person=person)
-            session.add(involvement)
+            person = session.query(Person).get(person_id)
+            if person is None:
+                raise f.HTTPException(404, f"The id '{person_id}' does not match any person.")
+
+            involvement = session.query(AlbumInvolvement).filter_by(album=album, role=role, person=person)
+            if involvement is None:
+                involvement = AlbumInvolvement(album=album, role=role, person=person)
+                session.add(involvement)
+
+        result.append(MAlbumFull.from_orm(album))
 
     session.commit()
-
-    result = UploadAlbum.from_orm(album)
 
     session.close()
 
@@ -126,9 +129,9 @@ def involve_album(
 
 
 @router_metadata.post(
-    "/involve/song",
-    summary="Involve people with a song.",
-    response_model=UploadSong,
+    "/involve/songs",
+    summary="Involve people with songs.",
+    response_model=List[MSongFull],
     responses={
         401: {"description": "Not logged in"},
         404: {"description": "Song / role / person not found"}
@@ -136,44 +139,46 @@ def involve_album(
 )
 def involve_song(
     person_ids: List[int] = f.Query(...),
-    song_id: int = f.Query(...),
+    song_ids: List[int] = f.Query(...),
     role_id: int = f.Query(...),
     user: User = f.Depends(find_or_create_user),
 ):
     session: sqlalchemy.orm.session.Session = Session()
 
-    song = session.query(Song).get(song_id)
-    if song is None:
-        raise f.HTTPException(404, f"The id '{song_id}' does not match any album.")
+    result = []
+    for song_id in song_ids:
 
-    role = session.query(AlbumRole).get(role_id)
-    if role is None:
-        raise f.HTTPException(404, f"The id '{role_id}' does not match any album role.")
+        song = session.query(Song).get(song_id)
+        if song is None:
+            raise f.HTTPException(404, f"The id '{song_id}' does not match any album.")
 
-    for person_id in person_ids:
+        role = session.query(AlbumRole).get(role_id)
+        if role is None:
+            raise f.HTTPException(404, f"The id '{role_id}' does not match any album role.")
 
-        person = session.query(Person).get(person_id)
-        if person is None:
-            raise f.HTTPException(404, f"The id '{person_id}' does not match any person.")
+        for person_id in person_ids:
 
-        involvement = session.query(SongInvolvement).filter_by(song=song, role=role, person=person)
-        if involvement is None:
-            involvement = SongInvolvement(song=song, role=role, person=person)
-            session.add(involvement)
+            person = session.query(Person).get(person_id)
+            if person is None:
+                raise f.HTTPException(404, f"The id '{person_id}' does not match any person.")
+
+            involvement = session.query(SongInvolvement).filter_by(song=song, role=role, person=person)
+            if involvement is None:
+                involvement = SongInvolvement(song=song, role=role, person=person)
+                session.add(involvement)
+
+        result.append(MSongFull.from_orm(song))
 
     session.commit()
-
-    result = UploadSong.from_orm(song)
-
     session.close()
 
     return result
 
 
 @router_metadata.delete(
-    "/involve/album",
+    "/involve/albums",
     summary="Uninvolve people from an album.",
-    response_model=UploadAlbum,
+    response_model=List[MAlbumFull],
     responses={
         401: {"description": "Not logged in"},
         404: {"description": "Album / role / person not found"}
@@ -181,34 +186,36 @@ def involve_song(
 )
 def uninvolve_album(
     person_ids: List[int] = f.Query(...),
-    album_id: int = f.Query(...),
+    album_ids: List[int] = f.Query(...),
     role_id: int = f.Query(...),
     user: User = f.Depends(find_or_create_user),
 ):
     session: sqlalchemy.orm.session.Session = Session()
 
-    album = session.query(Album).get(album_id)
-    if album is None:
-        raise f.HTTPException(404, f"The id '{album_id}' does not match any album.")
+    result = []
+    for album_id in album_ids:
 
-    role = session.query(AlbumRole).get(role_id)
-    if role is None:
-        raise f.HTTPException(404, f"The id '{role_id}' does not match any album role.")
+        album = session.query(Album).get(album_id)
+        if album is None:
+            raise f.HTTPException(404, f"The id '{album_id}' does not match any album.")
 
-    for person_id in person_ids:
+        role = session.query(AlbumRole).get(role_id)
+        if role is None:
+            raise f.HTTPException(404, f"The id '{role_id}' does not match any album role.")
 
-        person = session.query(Person).get(person_id)
-        if person is None:
-            raise f.HTTPException(404, f"The id '{person_id}' does not match any person.")
+        for person_id in person_ids:
 
-        involvement = session.query(AlbumInvolvement).filter_by(album=album, role=role, person=person)
-        if involvement is not None:
-            session.delete(involvement)
+            person = session.query(Person).get(person_id)
+            if person is None:
+                raise f.HTTPException(404, f"The id '{person_id}' does not match any person.")
+
+            involvement = session.query(AlbumInvolvement).filter_by(album=album, role=role, person=person)
+            if involvement is not None:
+                session.delete(involvement)
+
+        result = MAlbumFull.from_orm(album)
 
     session.commit()
-
-    result = UploadAlbum.from_orm(album)
-
     session.close()
 
     return result
@@ -217,7 +224,7 @@ def uninvolve_album(
 @router_metadata.delete(
     "/involve/song",
     summary="Uninvolve people from a song.",
-    response_model=UploadSong,
+    response_model=List[MSongFull],
     responses={
         401: {"description": "Not logged in"},
         404: {"description": "Song / role / person not found"}
@@ -225,39 +232,40 @@ def uninvolve_album(
 )
 def uninvolve_song(
     person_ids: List[int] = f.Query(...),
-    song_id: int = f.Query(...),
+    song_ids: List[int] = f.Query(...),
     role_id: int = f.Query(...),
     user: User = f.Depends(find_or_create_user),
 ):
     session: sqlalchemy.orm.session.Session = Session()
 
-    song = session.query(Song).get(song_id)
-    if song is None:
-        raise f.HTTPException(404, f"The id '{song_id}' does not match any album.")
+    result = []
+    for song_id in song_ids:
 
-    role = session.query(AlbumRole).get(role_id)
-    if role is None:
-        raise f.HTTPException(404, f"The id '{role_id}' does not match any album role.")
+        song = session.query(Song).get(song_id)
+        if song is None:
+            raise f.HTTPException(404, f"The id '{song_id}' does not match any album.")
 
-    for person_id in person_ids:
+        role = session.query(AlbumRole).get(role_id)
+        if role is None:
+            raise f.HTTPException(404, f"The id '{role_id}' does not match any album role.")
 
-        person = session.query(Person).get(person_id)
-        if person is None:
-            raise f.HTTPException(404, f"The id '{person_id}' does not match any person.")
+        for person_id in person_ids:
 
-        involvement = session.query(SongInvolvement).filter_by(song=song, role=role, person=person)
-        if involvement is not None:
-            session.delete(involvement)
+            person = session.query(Person).get(person_id)
+            if person is None:
+                raise f.HTTPException(404, f"The id '{person_id}' does not match any person.")
 
-    session.commit()
+            involvement = session.query(SongInvolvement).filter_by(song=song, role=role, person=person)
+            if involvement is not None:
+                session.delete(involvement)
 
-    result = UploadSong.from_orm(song)
+        session.commit()
+
+        result.append(MSongFull.from_orm(song))
 
     session.close()
 
     return result
-
-
 
 
 __all__ = (

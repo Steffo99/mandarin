@@ -4,8 +4,8 @@ import fastapi as f
 import sqlalchemy.orm.session
 
 from ...database import *
-from ..models.upload import *
-from ..utils.auth import *
+from ..models.database import *
+from mandarin.webapi.dependencies.auth import *
 from ..utils.upload import *
 
 
@@ -15,7 +15,7 @@ router_upload = f.APIRouter()
 @router_upload.post(
     "/track/auto",
     summary="Upload a track, and infer its metadata automatically.",
-    response_model=UploadResult,
+    response_model=MLayerFull,
     status_code=201,
     responses={
         401: {"description": "Not logged in"},
@@ -24,7 +24,7 @@ router_upload = f.APIRouter()
 def track_auto(
     file: f.UploadFile = f.File(...),
     user: User = f.Depends(find_or_create_user),
-) -> UploadResult:
+) -> MLayerFull:
     """
     Upload a new audio track.
 
@@ -49,14 +49,14 @@ def track_auto(
     song = auto_song(session=session, parse=parse)
 
     # Create the layer
-    layer = SongLayer(song=song, file=file_db)
+    layer = Layer(song=song, file=file_db)
     session.add(layer)
 
     # Commit the changes in the session
     session.commit()
 
     # Create the return value
-    result = UploadResult(layer=UploadLayer.from_orm(layer))
+    result = MLayerFull.from_orm(layer)
 
     # Close the session
     session.close()
@@ -67,7 +67,7 @@ def track_auto(
 @router_upload.post(
     "/track/add",
     summary="Upload a track, and add it as a new layer of a song.",
-    response_model=UploadResult,
+    response_model=MLayerFull,
     status_code=201,
     responses={
         401: {"description": "Not logged in"},
@@ -78,7 +78,7 @@ def track_add(
     song_id: int,
     file: f.UploadFile = f.File(...),
     user: User = f.Depends(find_or_create_user)
-) -> UploadResult:
+) -> MLayerFull:
     """
     Upload a new audio track.
 
@@ -104,14 +104,14 @@ def track_add(
         raise f.HTTPException(404, f"The id '{song_id}' does not match any song.")
 
     # Create the layer
-    layer = SongLayer(song=song, file=file_db)
+    layer = Layer(song=song, file=file_db)
     session.add(layer)
 
     # Commit the changes in the session
     session.commit()
 
     # Create the return value
-    result = UploadResult(layer=UploadLayer.from_orm(layer))
+    result = MLayerFull.from_orm(layer)
 
     # Close the session
     session.close()
