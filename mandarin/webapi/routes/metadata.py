@@ -14,7 +14,7 @@ router_metadata = f.APIRouter()
     summary="Move layers to a different song.",
     response_model=List[MLayerFull],
     responses={
-        401: {"description": "Not logged in"},
+        **login_error,
         404: {"description": "Song / layer not found"}
     }
 )
@@ -49,7 +49,7 @@ def move_layers(
     summary="Move songs to a different album.",
     response_model=List[MSongFull],
     responses={
-        401: {"description": "Not logged in"},
+        **login_error,
         404: {"description": "Album / song not found"}
     }
 )
@@ -85,7 +85,7 @@ def move_songs(
     summary="Involve people with albums.",
     response_model=List[MAlbumFull],
     responses={
-        401: {"description": "Not logged in"},
+        **login_error,
         404: {"description": "Album / role / person not found"}
     }
 )
@@ -133,7 +133,7 @@ def involve_album(
     summary="Involve people with songs.",
     response_model=List[MSongFull],
     responses={
-        401: {"description": "Not logged in"},
+        **login_error,
         404: {"description": "Song / role / person not found"}
     }
 )
@@ -177,10 +177,10 @@ def involve_song(
 
 @router_metadata.delete(
     "/involve/albums",
-    summary="Uninvolve people from an album.",
+    summary="Uninvolve people from albums.",
     response_model=List[MAlbumFull],
     responses={
-        401: {"description": "Not logged in"},
+        **login_error,
         404: {"description": "Album / role / person not found"}
     }
 )
@@ -223,10 +223,10 @@ def uninvolve_album(
 
 @router_metadata.delete(
     "/involve/song",
-    summary="Uninvolve people from a song.",
+    summary="Uninvolve people from albums.",
     response_model=List[MSongFull],
     responses={
-        401: {"description": "Not logged in"},
+        **login_error,
         404: {"description": "Song / role / person not found"}
     }
 )
@@ -262,6 +262,36 @@ def uninvolve_song(
         session.commit()
 
         result.append(MSongFull.from_orm(song))
+
+    session.close()
+
+    return result
+
+
+@router_metadata.put(
+    "/edit/albumrole",
+    summary="Rename an album role.",
+    response_model=MAlbumRole,
+    responses={
+        **login_error,
+        404: {"description": "Role not found"}
+    }
+)
+def edit_albumrole(
+    albumrole: MAlbumRole = f.Body(...),
+    user: User = f.Depends(find_or_create_user),
+):
+    session: sqlalchemy.orm.session.Session = Session()
+
+    obj = session.query(AlbumRole).get(albumrole.id)
+    if obj is None:
+        raise f.HTTPException(404, f"The id '{albumrole.id}' does not match any album role.")
+
+    obj.update(**albumrole.__dict__)
+
+    session.commit()
+
+    result = MAlbumRole.from_orm(obj)
 
     session.close()
 

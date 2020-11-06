@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .songroles import SongRole
 
 
-class Song(Base, a.ColRepr):
+class Song(Base, a.ColRepr, a.Updatable):
     """
     A single song, composed from multiple layers.
     """

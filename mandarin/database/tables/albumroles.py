@@ -7,7 +7,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class AlbumRole(Base, a.ColRepr):
+class AlbumRole(Base, a.ColRepr, a.Updatable):
     """
     A role for a person involved with an album.
     """

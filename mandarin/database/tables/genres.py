@@ -9,7 +9,7 @@ from .songgenres import songgenres
 from .albumgenres import albumgenres
 
 
-class Genre(Base, a.ColRepr):
+class Genre(Base, a.ColRepr, a.Updatable):
     """
     A genre of music.
     """

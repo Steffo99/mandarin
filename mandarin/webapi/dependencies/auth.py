@@ -18,6 +18,10 @@ auth0_scheme = fs.OAuth2AuthorizationCodeBearer(
     }
 )
 
+login_error = {
+    401: {"description": "Not logged in"},
+}
+
 
 def validate_access_token(token: str = f.Depends(auth0_scheme)):
     # May want to cache this
@@ -42,6 +46,7 @@ def find_or_create_user(payload: JSON = f.Depends(validate_access_token)) -> Use
 
 __all__ = (
     "auth0_scheme",
+    "login_error",
     "validate_access_token",
     "find_or_create_user",
 )
