@@ -23,14 +23,14 @@ login_error = {
 }
 
 
-def validate_access_token(token: str = f.Depends(auth0_scheme)):
+def dependency_access_token(token: str = f.Depends(auth0_scheme)):
     # May want to cache this
     return requests.get(config["auth.userinfo"], headers={
         "Authorization": f"Bearer {token}"
     }).json()
 
 
-def find_or_create_user(payload: JSON = f.Depends(validate_access_token)) -> User:
+def dependency_valid_user(payload: JSON = f.Depends(dependency_access_token)) -> User:
     session = Session()
     user = session.query(User).filter_by(sub=payload["sub"]).one_or_none()
     if user is None:
@@ -47,6 +47,6 @@ def find_or_create_user(payload: JSON = f.Depends(validate_access_token)) -> Use
 __all__ = (
     "auth0_scheme",
     "login_error",
-    "validate_access_token",
-    "find_or_create_user",
+    "dependency_access_token",
+    "dependency_valid_user",
 )

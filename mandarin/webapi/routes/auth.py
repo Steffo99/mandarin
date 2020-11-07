@@ -16,7 +16,9 @@ router_auth = f.APIRouter()
     },
     response_model=dict
 )
-def access_token(payload: dict = f.Depends(validate_access_token)):
+def access_token(
+    payload: dict = f.Depends(dependency_access_token)
+):
     return payload
 
 
@@ -28,7 +30,9 @@ def access_token(payload: dict = f.Depends(validate_access_token)):
     },
     response_model=MUser
 )
-def current_user(user: User = f.Depends(find_or_create_user)):
+def current_user(
+    user: User = f.Depends(dependency_valid_user)
+):
     return MUser.from_orm(user)
 
 

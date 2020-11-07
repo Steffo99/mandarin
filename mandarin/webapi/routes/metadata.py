@@ -4,7 +4,7 @@ import fastapi as f
 
 from ...database import *
 from ..models.database import *
-from ..dependencies.auth import *
+from ..dependencies import *
 
 router_metadata = f.APIRouter()
 
@@ -21,10 +21,9 @@ router_metadata = f.APIRouter()
 def move_layers(
     layer_ids: List[int] = f.Query(...),
     song_id: int = f.Query(...),
-    user: User = f.Depends(find_or_create_user),
+    user: User = f.Depends(dependency_valid_user),
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
 ):
-    session: sqlalchemy.orm.session.Session = Session()
-
     song = session.query(Song).get(song_id)
     if song is None:
         raise f.HTTPException(404, f"The id '{song_id}' does not match any song.")
@@ -36,10 +35,9 @@ def move_layers(
             raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
 
         layer.song = song
-        changed_layers.append(MLayerFull.from_orm(layer))
 
+        changed_layers.append(MLayerFull.from_orm(layer))
     session.commit()
-    session.close()
 
     return changed_layers
 
@@ -56,15 +54,14 @@ def move_layers(
 def move_songs(
     song_ids: List[int] = f.Query(...),
     album_id: int = f.Query(...),
-    user: User = f.Depends(find_or_create_user),
+    user: User = f.Depends(dependency_valid_user),
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
 ):
-    session: sqlalchemy.orm.session.Session = Session()
-
     album = session.query(Album).get(album_id)
     if album is None:
         raise f.HTTPException(404, f"The id '{album_id}' does not match any album.")
 
-    changed_songs = []
+    result = []
     for song_id in song_ids:
 
         song = session.query(Song).get(song_id)
@@ -72,12 +69,11 @@ def move_songs(
             raise f.HTTPException(404, f"The id '{song_id}' does not match any song.")
 
         song.album = album
-        changed_songs.append(MSongFull.from_orm(song))
 
+        result.append(MSongFull.from_orm(song))
     session.commit()
-    session.close()
 
-    return changed_songs
+    return result
 
 
 @router_metadata.post(
@@ -93,10 +89,9 @@ def involve_album(
     person_ids: List[int] = f.Query(...),
     album_ids: List[int] = f.Query(...),
     role_id: int = f.Query(...),
-    user: User = f.Depends(find_or_create_user),
+    user: User = f.Depends(dependency_valid_user),
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
 ):
-    session: sqlalchemy.orm.session.Session = Session()
-
     result = []
     for album_id in album_ids:
 
@@ -120,10 +115,7 @@ def involve_album(
                 session.add(involvement)
 
         result.append(MAlbumFull.from_orm(album))
-
     session.commit()
-
-    session.close()
 
     return result
 
@@ -141,10 +133,9 @@ def involve_song(
     person_ids: List[int] = f.Query(...),
     song_ids: List[int] = f.Query(...),
     role_id: int = f.Query(...),
-    user: User = f.Depends(find_or_create_user),
+    user: User = f.Depends(dependency_valid_user),
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
 ):
-    session: sqlalchemy.orm.session.Session = Session()
-
     result = []
     for song_id in song_ids:
 
@@ -168,9 +159,7 @@ def involve_song(
                 session.add(involvement)
 
         result.append(MSongFull.from_orm(song))
-
     session.commit()
-    session.close()
 
     return result
 
@@ -188,10 +177,9 @@ def uninvolve_album(
     person_ids: List[int] = f.Query(...),
     album_ids: List[int] = f.Query(...),
     role_id: int = f.Query(...),
-    user: User = f.Depends(find_or_create_user),
+    user: User = f.Depends(dependency_valid_user),
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
 ):
-    session: sqlalchemy.orm.session.Session = Session()
-
     result = []
     for album_id in album_ids:
 
@@ -213,10 +201,8 @@ def uninvolve_album(
             if involvement is not None:
                 session.delete(involvement)
 
-        result = MAlbumFull.from_orm(album)
-
+        result.append(MAlbumFull.from_orm(album))
     session.commit()
-    session.close()
 
     return result
 
@@ -234,10 +220,9 @@ def uninvolve_song(
     person_ids: List[int] = f.Query(...),
     song_ids: List[int] = f.Query(...),
     role_id: int = f.Query(...),
-    user: User = f.Depends(find_or_create_user),
+    user: User = f.Depends(dependency_valid_user),
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
 ):
-    session: sqlalchemy.orm.session.Session = Session()
-
     result = []
     for song_id in song_ids:
 
@@ -259,11 +244,8 @@ def uninvolve_song(
             if involvement is not None:
                 session.delete(involvement)
 
-        session.commit()
-
         result.append(MSongFull.from_orm(song))
-
-    session.close()
+    session.commit()
 
     return result
 
@@ -279,23 +261,17 @@ def uninvolve_song(
 )
 def edit_albumrole(
     albumrole: MAlbumRole = f.Body(...),
-    user: User = f.Depends(find_or_create_user),
+    user: User = f.Depends(dependency_valid_user),
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
 ):
-    session: sqlalchemy.orm.session.Session = Session()
-
     obj = session.query(AlbumRole).get(albumrole.id)
     if obj is None:
         raise f.HTTPException(404, f"The id '{albumrole.id}' does not match any album role.")
 
     obj.update(**albumrole.__dict__)
-
     session.commit()
 
-    result = MAlbumRole.from_orm(obj)
-
-    session.close()
-
-    return result
+    return MAlbumRole.from_orm(obj)
 
 
 __all__ = (

@@ -5,7 +5,7 @@ import sqlalchemy.orm.session
 
 from ...database import *
 from ..models.database import *
-from mandarin.webapi.dependencies.auth import *
+from ..dependencies import *
 from ..utils.upload import *
 
 
@@ -23,7 +23,7 @@ router_upload = f.APIRouter()
 )
 def track_auto(
     file: f.UploadFile = f.File(...),
-    user: User = f.Depends(find_or_create_user),
+    user: User = f.Depends(dependency_valid_user),
 ) -> MLayerFull:
     """
     Upload a new audio track.
@@ -39,6 +39,7 @@ def track_auto(
 
     # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
     # (*ahem* Funkwhale *ahem*)
+    # Do not use the dependency for more control
     session: sqlalchemy.orm.session.Session = Session()
     session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
@@ -77,7 +78,7 @@ def track_auto(
 def track_add(
     song_id: int,
     file: f.UploadFile = f.File(...),
-    user: User = f.Depends(find_or_create_user)
+    user: User = f.Depends(dependency_valid_user)
 ) -> MLayerFull:
     """
     Upload a new audio track.
@@ -92,6 +93,7 @@ def track_add(
 
     # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
     # (*ahem* Funkwhale *ahem*)
+    # Do not use the dependency for more control
     session: sqlalchemy.orm.session.Session = Session()
     session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
