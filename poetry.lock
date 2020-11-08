@@ -65,7 +65,7 @@ six = "*"
 
 [[package]]
 name = "fastapi"
-version = "0.61.1"
+version = "0.61.2"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 category = "main"
 optional = false
@@ -230,7 +230,7 @@ urllib3 = ">=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26"
 
 [[package]]
 name = "royalnet"
-version = "6.0.0a10"
+version = "6.0.0a11"
 description = "A multipurpose bot and web framework"
 category = "main"
 optional = false
@@ -331,7 +331,7 @@ h11 = ">=0.8"
 [metadata]
 lock-version = "1.0"
 python-versions = "^3.8"
-content-hash = "f006f8f356633d5f38545a53ddf6f489a71a62e59e31c416bf1b0b5ed49b56ec"
+content-hash = "93708f9fab5829ad2fe1f73ebbf587befbd5173b09c7a8d7bb0001b2d7ff1edc"
 
 [metadata.files]
 certifi = [
@@ -413,8 +413,8 @@ ecdsa = [
     {file = "ecdsa-0.14.1.tar.gz", hash = "sha256:64c613005f13efec6541bb0a33290d0d03c27abab5f15fbab20fb0ee162bdd8e"},
 ]
 fastapi = [
-    {file = "fastapi-0.61.1-py3-none-any.whl", hash = "sha256:6cc31bb555dd8ca956d1d227477d661e4ac012337242a41d36214ffbda78bfe9"},
-    {file = "fastapi-0.61.1.tar.gz", hash = "sha256:61ed73b4304413a2ea618d1b95ea866ee386e0e62dd8659c4f5059286f4a39c2"},
+    {file = "fastapi-0.61.2-py3-none-any.whl", hash = "sha256:8c8517680a221e69eb34073adf46c503092db2f24845b7bdc7f85b54f24ff0df"},
+    {file = "fastapi-0.61.2.tar.gz", hash = "sha256:9e0494fcbba98f85b8cc9b2606bb6b625246e1b12f79ca61f508b0b00843eca6"},
 ]
 h11 = [
     {file = "h11-0.11.0-py2.py3-none-any.whl", hash = "sha256:ab6c335e1b6ef34b205d5ca3e228c9299cc7218b049819ec84a388c2525e5d87"},
@@ -556,8 +556,8 @@ requests = [
     {file = "requests-2.24.0.tar.gz", hash = "sha256:b3559a131db72c33ee969480840fff4bb6dd111de7dd27c8ee1f820f4f00231b"},
 ]
 royalnet = [
-    {file = "royalnet-6.0.0a10-py3-none-any.whl", hash = "sha256:37cd37ff29730bfb2234ad469af159e2bbb24cf63d32db3a7fbd38113a28c069"},
-    {file = "royalnet-6.0.0a10.tar.gz", hash = "sha256:2512d13260e13a8fa210929aa315d70182111162fc388388b27741cbf70e458c"},
+    {file = "royalnet-6.0.0a11-py3-none-any.whl", hash = "sha256:d379f787d626bbea132ac26824ff7bed16873b0f4ddefac8eb58aefc09a2b567"},
+    {file = "royalnet-6.0.0a11.tar.gz", hash = "sha256:046be7b02bcf9f61e38b99ac6ae505f4932b0708d582aed9a73da434c0f48041"},
 ]
 rsa = [
     {file = "rsa-4.6-py3-none-any.whl", hash = "sha256:6166864e23d6b5195a5cfed6cd9fed0fe774e226d8f854fcb23b7bbef0350233"},

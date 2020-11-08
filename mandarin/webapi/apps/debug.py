@@ -21,6 +21,5 @@ app.include_router(router_version, prefix="/version", tags=["Version"])
 
 
 if __name__ == "__main__":
-    Base.metadata.drop_all()
     Base.metadata.create_all()
     uvicorn.run(app, port=config["apps.files.port"])

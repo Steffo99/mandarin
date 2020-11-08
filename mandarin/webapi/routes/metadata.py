@@ -250,173 +250,102 @@ def uninvolve_song(
     return result
 
 
-@router_metadata.put(
-    "/edit/albumrole",
-    summary="Edit an album role.",
-    response_model=MAlbumRole,
-    responses={
-        **login_error,
-        404: {"description": "Role not found"}
-    }
-)
-def edit_albumrole(
-    model: MAlbumRole = f.Body(...),
-    user: User = f.Depends(dependency_valid_user),
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
-):
-    obj = session.query(AlbumRole).get(model.id)
-    if obj is None:
-        raise f.HTTPException(404, f"The id '{model.id}' does not match any album role.")
+def editable(table_type, input_model, response_model):
+    @router_metadata.post(
+        f"/table/{table_type.__tablename__}",
+        summary=f"Create a new {table_type.__name__}",
+        response_model=response_model,
+        responses={
+            **login_error,
+        }
+    )
+    def post(
+        model: input_model = f.Body(...),
+        user: User = f.Depends(dependency_valid_user),
+        session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
+    ):
+        obj = table_type(**model)
+        session.add(obj)
+        session.commit()
+        return response_model.from_orm(obj)
 
-    obj.update(**model.__dict__)
-    session.commit()
+    @router_metadata.put(
+        f"/table/{table_type.__tablename__}/{{obj_id}}",
+        summary=f"Edit a single {table_type.__name__}.",
+        response_model=response_model,
+        responses={
+            **login_error,
+            404: {"description": f"{table_type.__name__} not found"}
+        }
+    )
+    def put(
+        obj_id: int = f.Path(...),
+        model: input_model = f.Body(...),
+        user: User = f.Depends(dependency_valid_user),
+        session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
+    ):
+        obj = session.query(table_type).get(obj_id)
+        if obj is None:
+            raise f.HTTPException(404, f"The id '{model.id}' does not match any {table_type.__name__}.")
 
-    return MAlbumRole.from_orm(obj)
+        obj.update(**model.__dict__)
+        session.commit()
 
+        return response_model.from_orm(obj)
 
-@router_metadata.put(
-    "/edit/songrole",
-    summary="Edit a song role.",
-    response_model=MSongRole,
-    responses={
-        **login_error,
-        404: {"description": "Role not found"}
-    }
-)
-def edit_songrole(
-    model: MSongRole = f.Body(...),
-    user: User = f.Depends(dependency_valid_user),
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
-):
-    obj = session.query(SongRole).get(model.id)
-    if obj is None:
-        raise f.HTTPException(404, f"The id '{model.id}' does not match any song role.")
+    @router_metadata.patch(
+        f"/table/{table_type.__tablename__}",
+        summary=f"Edit multiple {table_type.__name__}s.",
+        response_model=List[response_model],
+        responses={
+            **login_error,
+        }
+    )
+    def patch(
+        ids: List[int] = f.Query(...),
+        model: dict = f.Body(...),
+        user: User = f.Depends(dependency_valid_user),
+        session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
+    ):
+        objs = session.query(table_type).filter(table_type.id.in_(ids)).all()
 
-    obj.update(**model.__dict__)
-    session.commit()
+        for obj in objs:
+            obj.update(**{key: value for key, value in model.items() if not (key == "id" or key.startswith("_"))})
+        session.commit()
 
-    return MSongRole.from_orm(obj)
+        return [response_model.from_orm(obj) for obj in objs]
 
+    @router_metadata.delete(
+        f"/table/{table_type.__tablename__}/{{obj_id}}",
+        summary=f"Delete a {table_type.__name__}.",
+        status_code=204,
+        responses={
+            **login_error,
+            404: {"description": f"{table_type.__name__} not found"}
+        }
+    )
+    def delete(
+        obj_id: int = f.Path(...),
+        user: User = f.Depends(dependency_valid_user),
+        session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
+    ):
+        obj = session.query(table_type).get(obj_id)
+        if obj is None:
+            raise f.HTTPException(404, f"The id '{obj_id}' does not match any {table_type.__name__}.")
 
-@router_metadata.put(
-    "/edit/album",
-    summary="Edit an album.",
-    response_model=MAlbum,
-    responses={
-        **login_error,
-        404: {"description": "Album not found"}
-    }
-)
-def edit_album(
-    model: MAlbum = f.Body(...),
-    user: User = f.Depends(dependency_valid_user),
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
-):
-    obj = session.query(Album).get(model.id)
-    if obj is None:
-        raise f.HTTPException(404, f"The id '{model.id}' does not match any album.")
+        session.delete(obj)
+        session.commit()
 
-    obj.update(**model.__dict__)
-    session.commit()
-
-    return MAlbum.from_orm(obj)
-
-
-@router_metadata.put(
-    "/edit/genre",
-    summary="Edit a genre.",
-    response_model=MGenre,
-    responses={
-        **login_error,
-        404: {"description": "Genre not found"}
-    }
-)
-def edit_genre(
-    model: MGenre = f.Body(...),
-    user: User = f.Depends(dependency_valid_user),
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
-):
-    obj = session.query(Genre).get(model.id)
-    if obj is None:
-        raise f.HTTPException(404, f"The id '{model.id}' does not match any genre.")
-
-    obj.update(**model.__dict__)
-    session.commit()
-
-    return MGenre.from_orm(obj)
+    return post, put, patch, delete
 
 
-@router_metadata.put(
-    "/edit/layer",
-    summary="Edit a layer.",
-    response_model=MLayer,
-    responses={
-        **login_error,
-        404: {"description": "Layer not found"}
-    }
-)
-def edit_layer(
-    model: MLayer = f.Body(...),
-    user: User = f.Depends(dependency_valid_user),
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
-):
-    obj = session.query(Layer).get(model.id)
-    if obj is None:
-        raise f.HTTPException(404, f"The id '{model.id}' does not match any layer.")
-
-    obj.update(**model.__dict__)
-    session.commit()
-
-    return MLayer.from_orm(obj)
-
-
-@router_metadata.put(
-    "/edit/person",
-    summary="Edit a person.",
-    response_model=MPerson,
-    responses={
-        **login_error,
-        404: {"description": "Person not found"}
-    }
-)
-def edit_person(
-    model: MPerson = f.Body(...),
-    user: User = f.Depends(dependency_valid_user),
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
-):
-    obj = session.query(Person).get(model.id)
-    if obj is None:
-        raise f.HTTPException(404, f"The id '{model.id}' does not match any person.")
-
-    obj.update(**model.__dict__)
-    session.commit()
-
-    return MPerson.from_orm(obj)
-
-
-@router_metadata.put(
-    "/edit/song",
-    summary="Edit a song.",
-    response_model=MSong,
-    responses={
-        **login_error,
-        404: {"description": "Role not found"}
-    }
-)
-def edit_song(
-    model: MSong = f.Body(...),
-    user: User = f.Depends(dependency_valid_user),
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
-):
-    obj = session.query(Song).get(model.id)
-    if obj is None:
-        raise f.HTTPException(404, f"The id '{model.id}' does not match any song.")
-
-    obj.update(**model.__dict__)
-    session.commit()
-
-    return MSong.from_orm(obj)
-
+editable(AlbumRole, MAlbumRoleWithoutId, MAlbumRole)
+editable(Album, MAlbumWithoutId, MAlbum)
+editable(Genre, MGenreWithoutId, MGenre)
+editable(Layer, MLayerWithoutId, MLayer)
+editable(Person, MPersonWithoutId, MPerson)
+editable(SongRole, MSongRoleWithoutId, MSongRole)
+editable(Song, MSongWithoutId, MSong)
 
 
 __all__ = (

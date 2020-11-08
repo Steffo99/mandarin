@@ -1,21 +1,80 @@
-from typing import List, Optional
+from typing import List, Optional, Type, Container
 import pydantic
 import pydantic_sqlalchemy
+from sqlalchemy.inspection import inspect
+from sqlalchemy.orm.properties import ColumnProperty
 
 from ...database import *
 
 
-MAlbumInvolvement = pydantic_sqlalchemy.sqlalchemy_to_pydantic(AlbumInvolvement)
-MAlbumRole = pydantic_sqlalchemy.sqlalchemy_to_pydantic(AlbumRole)
-MAlbum = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Album)
-MFile = pydantic_sqlalchemy.sqlalchemy_to_pydantic(File)
-MGenre = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Genre)
-MLayer = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Layer)
-MPerson = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Person)
-MSongInvolvement = pydantic_sqlalchemy.sqlalchemy_to_pydantic(SongInvolvement)
-MSongRole = pydantic_sqlalchemy.sqlalchemy_to_pydantic(SongRole)
-MSong = pydantic_sqlalchemy.sqlalchemy_to_pydantic(Song)
-MUser = pydantic_sqlalchemy.sqlalchemy_to_pydantic(User)
+# Copied from pydantic_sqlalchemy
+def sqlalchemy_to_pydantic(
+    db_model: Type, config: Type, exclude: Optional[Container[str]] = None
+) -> Type[pydantic.BaseModel]:
+    if exclude is None:
+        exclude = []
+    mapper = inspect(db_model)
+    fields = {}
+    for attr in mapper.attrs:
+        if isinstance(attr, ColumnProperty):
+            if attr.columns:
+                name = attr.key
+                if name in exclude:
+                    continue
+                column = attr.columns[0]
+                python_type: Optional[type] = None
+                if hasattr(column.type, "impl"):
+                    if hasattr(column.type.impl, "python_type"):
+                        python_type = column.type.impl.python_type
+                elif hasattr(column.type, "python_type"):
+                    python_type = column.type.python_type
+                assert python_type, f"Could not infer python_type for {column}"
+                default = None
+                if column.default is None and not column.nullable:
+                    default = ...
+                fields[name] = (python_type, default)
+    pydantic_model = pydantic.create_model(
+        config.title, __config__=config, **fields  # type: ignore
+    )
+    return pydantic_model
+
+
+def make_default_model(table):
+    class Config(pydantic.BaseConfig):
+        orm_mode = True
+        title = f"M{table.__name__}"
+    return sqlalchemy_to_pydantic(table, config=Config)
+
+
+def make_model_without_id(table):
+    class Config(pydantic.BaseConfig):
+        orm_mode = True
+        title = f"M{table.__name__}WithoutId"
+    return sqlalchemy_to_pydantic(table, config=Config, exclude=["id"])
+
+
+MAlbumInvolvement = make_default_model(AlbumInvolvement)
+MAlbumRole = make_default_model(AlbumRole)
+MAlbum = make_default_model(Album)
+MFile = make_default_model(File)
+MGenre = make_default_model(Genre)
+MLayer = make_default_model(Layer)
+MPerson = make_default_model(Person)
+MSongInvolvement = make_default_model(SongInvolvement)
+MSongRole = make_default_model(SongRole)
+MSong = make_default_model(Song)
+MUser = make_default_model(User)
+
+MAlbumInvolvementWithoutId = make_model_without_id(AlbumInvolvement)
+MAlbumRoleWithoutId = make_model_without_id(AlbumRole)
+MAlbumWithoutId = make_model_without_id(Album)
+MFileWithoutId = make_model_without_id(File)
+MGenreWithoutId = make_model_without_id(Genre)
+MLayerWithoutId = make_model_without_id(Layer)
+MPersonWithoutId = make_model_without_id(Person)
+MSongInvolvementWithoutId = make_model_without_id(SongInvolvement)
+MSongRoleWithoutId = make_model_without_id(SongRole)
+MSongWithoutId = make_model_without_id(Song)
 
 
 class MFileWithUploader(MFile):
@@ -200,6 +259,16 @@ __all__ = (
     "MSongRole",
     "MSong",
     "MUser",
+    "MAlbumInvolvementWithoutId",
+    "MAlbumRoleWithoutId",
+    "MAlbumWithoutId",
+    "MFileWithoutId",
+    "MGenreWithoutId",
+    "MLayerWithoutId",
+    "MPersonWithoutId",
+    "MSongInvolvementWithoutId",
+    "MSongRoleWithoutId",
+    "MSongWithoutId",
     "MFileWithUploader",
     "MFileFull",
     "MAlbumInvolvementFromAlbum",
