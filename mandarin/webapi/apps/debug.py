@@ -14,10 +14,11 @@ app = f.FastAPI(
                 "database!",
     version=pkg_resources.get_distribution("mandarin").version,
 )
-app.include_router(router_version, prefix="/v0/version", tags=["Version"])
-app.include_router(router_auth, prefix="/v0/auth", tags=["Authentication"])
-app.include_router(router_upload, prefix="/v0/upload", tags=["Upload"])
-app.include_router(router_layers, prefix="/v0/layers", tags=["Layers"])
+app.include_router(router_version, prefix="/version", tags=["Version"])
+app.include_router(router_auth, prefix="/auth", tags=["Authentication"])
+app.include_router(router_upload, prefix="/upload", tags=["Upload"])
+app.include_router(router_layers, prefix="/layers", tags=["Layers"])
+app.include_router(router_songs, prefix="/songs", tags=["Songs"])
 
 
 if __name__ == "__main__":

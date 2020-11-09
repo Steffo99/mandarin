@@ -27,26 +27,6 @@ def get_all(
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
     return ls.session.query(Layer).order_by(Layer.id).limit(limit).offset(offset).all()
-    # return [MLayer.from_orm(obj) for obj in objs]
-
-
-@router_layers.get(
-    "/{layer_id}",
-    summary="Get a single layer.",
-    responses={
-        401: {"description": "Not logged in"},
-        404: {"description": "Layer not found"},
-    },
-    response_model=MLayerFull
-)
-def get_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
-    layer_id: int = f.Path(..., description="The id of the layer to be retrieved.")
-):
-    layer = ls.session.query(Layer).get(layer_id)
-    if layer is None:
-        raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
-    return layer
 
 
 @router_layers.post(
@@ -55,7 +35,7 @@ def get_single(
     response_model=MLayerFull,
     status_code=201,
     responses={
-        401: {"description": "Not logged in"},
+        **login_error,
         404: {"description": "Song not found"},
     }
 )
@@ -109,28 +89,15 @@ def create_upload(
     return result
 
 
-@router_layers.put(
-    "/{layer_id}",
-    summary="Edit a layer.",
-    response_model=MLayerFull,
-    responses={
-        401: {"description": "Not logged in"},
-        404: {"description": "Layer not found"},
-    }
+@router_layers.get(
+    "/count",
+    summary="Get the number of layers currently in the database.",
+    response_model=int,
 )
-def edit_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
-    layer_id: int = f.Path(..., description="The id of the layer to be edited."),
-    data: MLayerWithoutId = f.Body(..., description="The new data the layer should have."),
+def count(
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
 ):
-    layer: Layer = ls.session.query(Layer).get(layer_id)
-    if layer is None:
-        raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
-
-    layer.update(**data.__dict__)
-    ls.user.log("layer.edit.single", obj=layer.id)
-    ls.session.commit()
-    return layer
+    return session.query(Layer).count()
 
 
 @router_layers.patch(
@@ -186,6 +153,49 @@ def edit_multiple_rename(
         ls.user.log("layer.edit.multiple.rename", obj=layer.id)
 
     ls.session.commit()
+
+
+@router_layers.get(
+    "/{layer_id}",
+    summary="Get a single layer.",
+    responses={
+        **login_error,
+        404: {"description": "Layer not found"},
+    },
+    response_model=MLayerFull
+)
+def get_single(
+    ls: LoginSession = f.Depends(dependency_login_session),
+    layer_id: int = f.Path(..., description="The id of the layer to be retrieved.")
+):
+    layer = ls.session.query(Layer).get(layer_id)
+    if layer is None:
+        raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
+    return layer
+
+
+@router_layers.put(
+    "/{layer_id}",
+    summary="Edit a layer.",
+    response_model=MLayerFull,
+    responses={
+        **login_error,
+        404: {"description": "Layer not found"},
+    }
+)
+def edit_single(
+    ls: LoginSession = f.Depends(dependency_login_session),
+    layer_id: int = f.Path(..., description="The id of the layer to be edited."),
+    data: MLayerWithoutId = f.Body(..., description="The new data the layer should have."),
+):
+    layer: Layer = ls.session.query(Layer).get(layer_id)
+    if layer is None:
+        raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
+
+    layer.update(**data.__dict__)
+    ls.user.log("layer.edit.single", obj=layer.id)
+    ls.session.commit()
+    return layer
 
 
 @router_layers.delete(

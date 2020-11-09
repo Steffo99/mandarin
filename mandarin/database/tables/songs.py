@@ -27,7 +27,7 @@ class Song(Base, a.ColRepr, a.Updatable):
     _album = s.Column(s.Integer, s.ForeignKey("albums.id"))
     album = o.relationship("Album", back_populates="songs")
 
-    involvements = o.relationship("SongInvolvement", back_populates="song")
+    involvements = o.relationship("SongInvolvement", back_populates="song", cascade="all, delete")
     genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
     disc_number = s.Column(s.Integer)

@@ -17,7 +17,7 @@ class SongRole(Base, a.ColRepr, a.Updatable):
 
     name = s.Column(s.String, nullable=False)
 
-    involvements = o.relationship("SongInvolvement", back_populates="role")
+    involvements = o.relationship("SongInvolvement", back_populates="role", cascade="all, delete")
 
     @classmethod
     def make(cls, session: o.session.Session, name: str) -> SongRole:

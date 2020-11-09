@@ -155,6 +155,13 @@ class MSongRoleFull(MSongRole):
     involvements: List[MSongInvolvement]
 
 
+class MSongBatch(MSong):
+    """
+    The properties for a song, and its album.
+    """
+    album: Optional[MAlbum]
+
+
 class MSongFromLayer(MSong):
     """
     All the properties for a song, except the layers.
@@ -285,6 +292,7 @@ __all__ = (
     "MSongInvolvementFromPerson",
     "MSongInvolvementFromRole",
     "MAlbumRoleFull",
+    "MSongBatch",
     "MSongRoleFull",
     "MSongFromLayer",
     "MSongFromAlbum",

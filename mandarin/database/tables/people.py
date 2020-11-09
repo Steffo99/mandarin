@@ -16,8 +16,8 @@ class Person(Base, a.ColRepr, a.Updatable):
     id = s.Column(s.Integer, primary_key=True)
     name = s.Column(s.String, nullable=False)
 
-    song_involvements = o.relationship("SongInvolvement", back_populates="person")
-    album_involvements = o.relationship("AlbumInvolvement", back_populates="person")
+    song_involvements = o.relationship("SongInvolvement", back_populates="person", cascade="all, delete")
+    album_involvements = o.relationship("AlbumInvolvement", back_populates="person", cascade="all, delete")
 
     @classmethod
     def make(cls, session: o.session.Session, name: str) -> Person:
