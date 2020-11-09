@@ -134,7 +134,7 @@ def edit_single(
 
 
 @router_layers.patch(
-    "/",
+    "/move",
     summary="Move some layers to a different song.",
     status_code=204,
     responses={
@@ -142,7 +142,7 @@ def edit_single(
         404: {"description": "Song not found"},
     },
 )
-def edit_multiple(
+def edit_multiple_move(
     ls: LoginSession = f.Depends(dependency_login_session),
     layer_ids: List[int] = f.Query(..., description="The ids of the layers that should be moved."),
     song_id: int = f.Query(...,  description="The id of the song the layers should be moved to."),
@@ -157,7 +157,33 @@ def edit_multiple(
     layers = ls.session.query(Layer).filter(Layer.id.in_(layer_ids)).all()
     for layer in layers:
         layer.song = song
-        ls.user.log("layer.edit.multiple", obj=layer.id)
+        ls.user.log("layer.edit.multiple.move", obj=layer.id)
+
+    ls.session.commit()
+
+
+@router_layers.patch(
+    "/rename",
+    summary="Rename some layers.",
+    status_code=204,
+    responses={
+        **login_error,
+        404: {"description": "Song not found"},
+    },
+)
+def edit_multiple_rename(
+    ls: LoginSession = f.Depends(dependency_login_session),
+    layer_ids: List[int] = f.Query(..., description="The ids of the layers that should be renamed."),
+    name: str = f.Query(...,  description="The name the layers should be renamed to."),
+):
+    """
+    Non-existing layer_ids will be ignored.
+    """
+
+    layers = ls.session.query(Layer).filter(Layer.id.in_(layer_ids)).all()
+    for layer in layers:
+        layer.name = name
+        ls.user.log("layer.edit.multiple.rename", obj=layer.id)
 
     ls.session.commit()
 
