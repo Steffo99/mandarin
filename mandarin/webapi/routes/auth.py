@@ -14,12 +14,12 @@ router_auth = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=dict
+    response_model=MUser
 )
 def access_token(
     payload: dict = f.Depends(dependency_access_token)
-):
-    return payload
+) -> MUser:
+    return MUser(**payload)
 
 
 @router_auth.get(
@@ -31,9 +31,9 @@ def access_token(
     response_model=MUser
 )
 def current_user(
-    user: User = f.Depends(dependency_valid_user)
-):
-    return MUser.from_orm(user)
+    ls: LoginSession = f.Depends(dependency_login_session)
+) -> MUser:
+    return MUser.from_orm(ls.user)
 
 
 __all__ = (

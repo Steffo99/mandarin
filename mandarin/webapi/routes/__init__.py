@@ -1,4 +1,4 @@
 from .auth import *
+from .layers import *
 from .upload import *
-from .metadata import *
 from .version import *

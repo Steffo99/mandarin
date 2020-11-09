@@ -2,10 +2,13 @@ from royalnet.typing import *
 import fastapi as f
 import fastapi.security as fs
 import requests
-
+import sqlalchemy.orm
+import dataclasses
 from mandarin.config import *
 from mandarin.database.tables import *
 from mandarin.database.engine import *
+
+from .db import *
 
 
 auth0_scheme = fs.OAuth2AuthorizationCodeBearer(
@@ -23,15 +26,25 @@ login_error = {
 }
 
 
-def dependency_access_token(token: str = f.Depends(auth0_scheme)):
+def dependency_access_token(
+    token: str = f.Depends(auth0_scheme)
+) -> JSON:
     # May want to cache this
     return requests.get(config["auth.userinfo"], headers={
         "Authorization": f"Bearer {token}"
     }).json()
 
 
-def dependency_valid_user(payload: JSON = f.Depends(dependency_access_token)) -> User:
-    session = Session()
+@dataclasses.dataclass()
+class LoginSession:
+    user: User
+    session: sqlalchemy.orm.session.Session
+
+
+def dependency_login_session(
+    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session),
+    payload: JSON = f.Depends(dependency_access_token)
+) -> LoginSession:
     user = session.query(User).filter_by(sub=payload["sub"]).one_or_none()
     if user is None:
         user = User(**payload)
@@ -40,13 +53,13 @@ def dependency_valid_user(payload: JSON = f.Depends(dependency_access_token)) ->
         for key, value in payload.items():
             user.__setattr__(key, value)
     session.commit()
-    session.close()
-    return user
+    return LoginSession(user=user, session=session)
 
 
 __all__ = (
     "auth0_scheme",
     "login_error",
     "dependency_access_token",
-    "dependency_valid_user",
+    "LoginSession",
+    "dependency_login_session",
 )

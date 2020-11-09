@@ -22,8 +22,8 @@ router_upload = f.APIRouter()
     }
 )
 def track_auto(
+    ls: LoginSession = f.Depends(dependency_login_session),
     file: f.UploadFile = f.File(...),
-    user: User = f.Depends(dependency_valid_user),
 ) -> MLayerFull:
     """
     Upload a new audio track.
@@ -40,85 +40,35 @@ def track_auto(
     # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
     # (*ahem* Funkwhale *ahem*)
     # Do not use the dependency for more control
-    session: sqlalchemy.orm.session.Session = Session()
-    session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
+    rr_session: sqlalchemy.orm.session.Session = Session()
+    rr_session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
     # Add the file to the session
-    file_db = File.make(session=session, name=filename, uploader=user)
+    file_db = File.make(session=rr_session, name=filename, uploader=ls.user)
 
     # Use the first parse to create the metadata
-    song = auto_song(session=session, parse=parse)
+    song = auto_song(session=rr_session, parse=parse)
 
     # Create the layer
     layer = Layer(song=song, file=file_db)
-    session.add(layer)
+    rr_session.add(layer)
+
+    # Log the upload
+    ls.user.log(session=rr_session, action="upload.auto", obj=layer.id)
 
     # Commit the changes in the session
-    session.commit()
+    rr_session.commit()
 
     # Create the return value
     result = MLayerFull.from_orm(layer)
 
     # Close the session
-    session.close()
+    rr_session.close()
 
     return result
 
 
-@router_upload.post(
-    "/track/add",
-    summary="Upload a track, and add it as a new layer of a song.",
-    response_model=MLayerFull,
-    status_code=201,
-    responses={
-        401: {"description": "Not logged in"},
-        404: {"description": "Song not found"},
-    }
-)
-def track_add(
-    song_id: int,
-    file: f.UploadFile = f.File(...),
-    user: User = f.Depends(dependency_valid_user)
-) -> MLayerFull:
-    """
-    Upload a new audio track.
 
-    A new layer will be created for the song having the specified id.
-
-    The metadata of the track will be discarded.
-    """
-
-    # Parse and save the file
-    parse, filename = save_uploadfile(file)
-
-    # Create a new session in REPEATABLE READ isolation mode, so albums cannot be created twice
-    # (*ahem* Funkwhale *ahem*)
-    # Do not use the dependency for more control
-    session: sqlalchemy.orm.session.Session = Session()
-    session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
-
-    # Add the file to the session
-    file_db = File.make(session=session, name=filename, uploader=user)
-
-    # Find the song
-    song: Optional[Song] = session.query(Song).get(song_id)
-    if song is None:
-        raise f.HTTPException(404, f"The id '{song_id}' does not match any song.")
-
-    # Create the layer
-    layer = Layer(song=song, file=file_db)
-    session.add(layer)
-
-    # Commit the changes in the session
-    session.commit()
-
-    # Create the return value
-    result = MLayerFull.from_orm(layer)
-
-    # Close the session
-    session.close()
-
-    return result
 
 
 __all__ = (

@@ -34,18 +34,23 @@ class Song(Base, a.ColRepr, a.Updatable):
     track_number = s.Column(s.Integer)
     year = s.Column(s.Integer)
 
-    def involve(self, people: Iterable["Person"], role: "SongRole") -> List["SongInvolvement"]:
-        """Involve a list of people with this song, and return the resulting involvements."""
-        # TODO: should it check for duplicate involvements?
+    def involve(self, people: Iterable["Person"], role: "SongRole") -> Set["SongInvolvement"]:
+        """
+        Involve people with this song, assigning them the specified role, and return all the resulting involvements.
+
+        If the involvement already exists, it won't be created, but it will be returned.
+        """
 
         session = o.session.Session.object_session(self)
 
-        involvements = []
+        involvements = set()
 
         for person in people:
-            involvement = SongInvolvement(song=self, person=person, role=role)
-            session.add(involvement)
-            involvements.append(involvement)
+            involvement = session.query(self.__class__).get(song=self, person=person, role=role)
+            if involvement is None:
+                involvement = SongInvolvement(song=self, person=person, role=role)
+                session.add(involvement)
+            involvements.add(involvement)
 
         return involvements
 
