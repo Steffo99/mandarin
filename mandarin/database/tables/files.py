@@ -30,7 +30,7 @@ class File(Base, a.ColRepr, a.Updatable):
     used_as_album_cover = o.relationship("Album", back_populates="cover")
 
     @classmethod
-    def make(cls, session: o.session.Session, name: str, uploader: Optional[User] = None) -> File:
+    def make(cls, session: o.session.Session, name: str, _uploader: Optional[User] = None) -> File:
         """Find the item with the specified name, or create it and add it to the session if it doesn't exist."""
         item = (
             session.query(cls)
@@ -39,7 +39,7 @@ class File(Base, a.ColRepr, a.Updatable):
         )
 
         if item is None:
-            item = cls(name=name, uploader=uploader)
+            item = cls(name=name, _uploader=_uploader)
             session.add(item)
 
         return item

@@ -2,6 +2,7 @@ from __future__ import annotations
 from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm.session
+import datetime
 
 from ...database import *
 from ..models.database import *
@@ -44,7 +45,7 @@ def track_auto(
     rr_session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
     # Add the file to the session
-    file_db = File.make(session=rr_session, name=filename, uploader=ls.user)
+    file_db = File.make(session=rr_session, name=filename, _uploader=ls.user.sub)
 
     # Use the first parse to create the metadata
     song = auto_song(session=rr_session, parse=parse)
@@ -54,7 +55,7 @@ def track_auto(
     rr_session.add(layer)
 
     # Log the upload
-    ls.user.log(session=rr_session, action="upload.auto", obj=layer.id)
+    ls.user.log("upload.auto", obj=layer.id)
 
     # Commit the changes in the session
     rr_session.commit()
@@ -64,6 +65,8 @@ def track_auto(
 
     # Close the session
     rr_session.close()
+
+    ls.session.commit()
 
     return result
 

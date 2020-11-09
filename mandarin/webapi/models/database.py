@@ -190,6 +190,13 @@ class MLayerFromSong(MLayer):
     file: MFile
 
 
+class MLayerBatch(MLayer):
+    """
+    A song layer, and non-recursive data about its song.
+    """
+    song: MSong
+
+
 class MLayerFull(MLayer):
     """
     All properties for a layer.
@@ -284,6 +291,7 @@ __all__ = (
     "MSongFull",
     "MLayerFromSong",
     "MLayerFull",
+    "MLayerBatch",
     "MAlbumFromSong",
     "MAlbumFull",
     "MPersonFull",

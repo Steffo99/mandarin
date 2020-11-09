@@ -46,7 +46,7 @@ class Song(Base, a.ColRepr, a.Updatable):
         involvements = set()
 
         for person in people:
-            involvement = session.query(self.__class__).get(song=self, person=person, role=role)
+            involvement = session.query(SongInvolvement).filter_by(song=self, person=person, role=role).one_or_none()
             if involvement is None:
                 involvement = SongInvolvement(song=self, person=person, role=role)
                 session.add(involvement)

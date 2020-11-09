@@ -3,6 +3,7 @@ from royalnet.typing import *
 import fastapi as f
 import pydantic as p
 import sqlalchemy.orm
+import datetime
 
 from ...database import *
 from ..models import *
@@ -18,15 +19,14 @@ router_layers = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=List[MLayer]
+    response_model=List[MLayerBatch]
 )
 def get_all(
     ls: LoginSession = f.Depends(dependency_login_session),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
-    layers = ls.session.query(Layer).order_by(Layer.id).limit(limit).offset(offset).all()
-    return layers
+    return ls.session.query(Layer).order_by(Layer.id).limit(limit).offset(offset).all()
     # return [MLayer.from_orm(obj) for obj in objs]
 
 
@@ -62,6 +62,7 @@ def get_single(
 def create_upload(
     ls: LoginSession = f.Depends(dependency_login_session),
     song_id: int = f.Query(..., description="The song to attach the new layer to."),
+    name: str = f.Query("Default", description="The name of the layer to be created."),
     file: f.UploadFile = f.File(..., description="The file to be uploaded."),
 ):
     """
@@ -80,7 +81,7 @@ def create_upload(
     rr_session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
     # Add the file to the session
-    file_db = File.make(session=rr_session, name=filename, uploader=ls.user)
+    file_db = File.make(session=rr_session, name=filename, _uploader=ls.user.sub)
 
     # Find the song
     song: Optional[Song] = rr_session.query(Song).get(song_id)
@@ -88,11 +89,11 @@ def create_upload(
         raise f.HTTPException(404, f"The id '{song_id}' does not match any song.")
 
     # Create the layer
-    layer = Layer(song=song, file=file_db)
+    layer = Layer(song=song, file=file_db, name=name)
     rr_session.add(layer)
 
     # Log the upload
-    ls.user.log(session=rr_session, action="layer.create.upload", obj=layer.id)
+    ls.user.log("upload.auto", obj=layer.id)
 
     # Commit the changes in the session
     rr_session.commit()
@@ -103,13 +104,15 @@ def create_upload(
     # Close the session
     rr_session.close()
 
+    ls.session.commit()
+
     return result
 
 
 @router_layers.put(
     "/{layer_id}",
     summary="Edit a layer.",
-    status_code=204,
+    response_model=MLayerFull,
     responses={
         401: {"description": "Not logged in"},
         404: {"description": "Layer not found"},
@@ -124,19 +127,20 @@ def edit_single(
     if layer is None:
         raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
 
-    layer.update(**data)
+    layer.update(**data.__dict__)
     ls.user.log("layer.edit.single", obj=layer.id)
     ls.session.commit()
+    return layer
 
 
 @router_layers.patch(
     "/",
     summary="Move some layers to a different song.",
+    status_code=204,
     responses={
         **login_error,
         404: {"description": "Song not found"},
     },
-    status_code=204,
 )
 def edit_multiple(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -171,6 +175,9 @@ def delete(
     ls: LoginSession = f.Depends(dependency_login_session),
     layer_id: int = f.Path(..., description="The id of the layer to be deleted.")
 ):
+    """
+    Calling this method WON'T delete the corresponding file!
+    """
     layer = ls.session.query(Layer).get(layer_id)
     if layer is None:
         raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
