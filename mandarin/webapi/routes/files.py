@@ -15,7 +15,7 @@ router_files = f.APIRouter()
 
 
 @router_files.post(
-    "/upload/layer",
+    "/layer",
     summary="Upload an audio track.",
     response_model=MLayerFull,
     status_code=201,
@@ -56,7 +56,7 @@ def upload_layer(
 
 
 @router_files.post(
-    "/upload/layer/auto",
+    "/layer/auto",
     summary="Upload an audio track, and autogenerate its entities.",
     response_model=MLayerFull,
     status_code=201,
@@ -118,7 +118,7 @@ def upload_layer_auto(
 
 
 @router_files.get(
-    "/download/{file_id}",
+    "/{file_id}",
     summary="Download a file.",
     response_class=starlette.responses.FileResponse,
     responses={
