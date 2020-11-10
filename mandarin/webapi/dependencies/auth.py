@@ -9,6 +9,7 @@ from mandarin.database.tables import *
 from mandarin.database.engine import *
 
 from .db import *
+from ..utils.loginsession import LoginSession
 
 
 auth0_scheme = fs.OAuth2AuthorizationCodeBearer(
@@ -33,12 +34,6 @@ def dependency_access_token(
     return requests.get(config["auth.userinfo"], headers={
         "Authorization": f"Bearer {token}"
     }).json()
-
-
-@dataclasses.dataclass()
-class LoginSession:
-    user: User
-    session: sqlalchemy.orm.session.Session
 
 
 def dependency_login_session(

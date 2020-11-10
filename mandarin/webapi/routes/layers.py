@@ -117,15 +117,10 @@ def edit_multiple_move(
     """
     Non-existing layer_ids will be ignored.
     """
-    song: Optional[Song] = ls.session.query(Song).get(song_id)
-    if song is None:
-        raise f.HTTPException(404, f"The id '{song_id}' does not match any song.")
-
-    layers = ls.session.query(Layer).filter(Layer.id.in_(layer_ids)).all()
-    for layer in layers:
+    song = ls.get(Song, song_id)
+    for layer in ls.group(Layer, layer_ids):
         layer.song = song
         ls.user.log("layer.edit.multiple.move", obj=layer.id)
-
     ls.session.commit()
 
 
@@ -146,9 +141,7 @@ def edit_multiple_rename(
     """
     Non-existing layer_ids will be ignored.
     """
-
-    layers = ls.session.query(Layer).filter(Layer.id.in_(layer_ids)).all()
-    for layer in layers:
+    for layer in ls.group(Layer, layer_ids):
         layer.name = name
         ls.user.log("layer.edit.multiple.rename", obj=layer.id)
 
@@ -168,10 +161,7 @@ def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     layer_id: int = f.Path(..., description="The id of the layer to be retrieved.")
 ):
-    layer = ls.session.query(Layer).get(layer_id)
-    if layer is None:
-        raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
-    return layer
+    return ls.get(Layer, layer_id)
 
 
 @router_layers.put(
@@ -188,10 +178,7 @@ def edit_single(
     layer_id: int = f.Path(..., description="The id of the layer to be edited."),
     data: MLayerWithoutId = f.Body(..., description="The new data the layer should have."),
 ):
-    layer: Layer = ls.session.query(Layer).get(layer_id)
-    if layer is None:
-        raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
-
+    layer = ls.get(Layer, layer_id)
     layer.update(**data.__dict__)
     ls.user.log("layer.edit.single", obj=layer.id)
     ls.session.commit()
@@ -214,9 +201,7 @@ def delete(
     """
     Calling this method WON'T delete the corresponding file!
     """
-    layer = ls.session.query(Layer).get(layer_id)
-    if layer is None:
-        raise f.HTTPException(404, f"The id '{layer_id}' does not match any layer.")
+    layer = ls.get(Layer, layer_id)
     ls.session.delete(layer)
     ls.user.log("layer.delete", obj=layer.id)
     ls.session.commit()
