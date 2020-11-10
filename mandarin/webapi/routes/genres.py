@@ -31,38 +31,20 @@ def get_all(
     summary="Create a new genre.",
     responses={
         **login_error,
-        409: {"description": "A genre with that name already exists."}
+        409: {"description": "Duplicate genre name"}
     },
     response_model=MGenreFull,
 )
 def create(
     ls: LoginSession = f.Depends(dependency_login_session),
-    genre_name: str = f.Query(..., description="The name of the genre to retrieve or create."),
+    data: MGenreWithoutId = f.Body(..., description="The new data the genre should have."),
 ):
-    genre = ls.session.query(Genre).filter_by(name=genre_name).one_or_none()
+    genre = ls.session.query(Genre).filter_by(name=data.name).one_or_none()
     if genre is not None:
-        raise f.HTTPException(409, f"The genre '{genre_name}' already exists.")
+        raise f.HTTPException(409, f"The genre '{data.name}' already exists.")
 
-    genre = Genre.make(session=ls.session, name=genre_name)
+    genre = Genre.make(session=ls.session, name=data.name)
     ls.user.log("genre.create.post", obj=genre.id)
-    ls.session.commit()
-    return genre
-
-
-@router_genres.put(
-    "/by-name/{genre_name}",
-    summary="Get or create a new genre.",
-    responses={
-        **login_error,
-    },
-    response_model=MGenreFull,
-)
-def create_byname(
-    ls: LoginSession = f.Depends(dependency_login_session),
-    genre_name: str = f.Path(..., description="The name of the genre to retrieve or create."),
-):
-    genre = Genre.make(session=ls.session, name=genre_name)
-    ls.user.log("genre.create.put", obj=genre.id)
     ls.session.commit()
     return genre
 
@@ -76,6 +58,54 @@ def count(
     session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
 ):
     return session.query(Genre).count()
+
+
+@router_genres.patch(
+    "/merge",
+    summary="Merge two or more genres.",
+    status_code=204,
+    responses={
+        **login_error,
+        400: {"description": "Not enough genres specified"}
+    },
+)
+def merge(
+    ls: LoginSession = f.Depends(dependency_login_session),
+    genre_ids: List[int] = f.Query(..., description="The ids of the genres to merge."),
+):
+    """
+    The first genre will be used as base and will keep its name and description.
+    """
+
+    if len(genre_ids) < 2:
+        raise f.HTTPException(400, "Not enough genres specified")
+
+    # Create a new session in SERIALIZABLE isolation mode, so nothing can be added to the genres to be merged.
+    rr_session: sqlalchemy.orm.session.Session = Session()
+    rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
+
+    # Get the first genre
+    main_genre = rr_session.query(Genre).get(genre_ids[0])
+    ls.user.log("genre.merge.to", obj=main_genre.id)
+
+    # Get the other genres
+    other_genres = rr_session.query(Genre).filter(Genre.id.in_(genre_ids[1:])).all()
+
+    # Replace and delete the other genres
+    for merged_genre in other_genres:
+        for song in merged_genre.songs:
+            song.genres.remove(merged_genre)
+            song.genres.append(main_genre)
+        for album in merged_genre.albums:
+            album.genres.remove(merged_genre)
+            album.genres.append(main_genre)
+        ls.user.log("genre.merge.from", obj=merged_genre.id)
+        rr_session.delete(merged_genre)
+
+    rr_session.commit()
+    rr_session.close()
+
+    ls.session.commit()
 
 
 @router_genres.get(
