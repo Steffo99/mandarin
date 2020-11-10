@@ -17,7 +17,7 @@ class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
 
     id = s.Column(s.Integer, primary_key=True)
 
-    name = s.Column(s.String, nullable=False)
+    name = s.Column(s.String, nullable=False, unique=True)
     description = s.Column(s.Text)
 
     songs = o.relationship("Song", secondary=songgenres, back_populates="genres")

@@ -130,7 +130,7 @@ def edit_single(
     summary="Delete a layer.",
     status_code=204,
     responses={
-        401: {"description": "Not logged in"},
+        **login_error,
         404: {"description": "Layer not found"},
     }
 )

@@ -20,6 +20,7 @@ app.include_router(router_auth, prefix="/auth", tags=["Authentication"])
 app.include_router(router_files, prefix="/files", tags=["Files"])
 app.include_router(router_layers, prefix="/layers", tags=["Layers"])
 app.include_router(router_songs, prefix="/songs", tags=["Songs"])
+app.include_router(router_genres, prefix="/genres", tags=["Genres"])
 
 
 if __name__ == "__main__":
