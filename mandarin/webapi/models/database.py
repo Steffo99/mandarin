@@ -89,8 +89,8 @@ class MFileFull(MFile):
     A file stored in Mandarin, including the uploader of the file, and the places where the file is currently used in.
     """
     uploader: MUser
-    used_as_layer: MLayer
-    used_as_album_cover: MAlbum
+    used_as_layer: List[MLayer]
+    used_as_album_cover: List[MAlbum]
 
 
 class MAlbumInvolvementFromAlbum(MAlbumInvolvement):
@@ -204,6 +204,13 @@ class MLayerBatch(MLayer):
     song: MSong
 
 
+class MLayerFromFile(MLayer):
+    """
+    A song layer, and data about its song.
+    """
+    song: MSongFromLayer
+
+
 class MLayerFull(MLayer):
     """
     All properties for a layer.
@@ -293,6 +300,7 @@ __all__ = (
     "MSongInvolvementFromRole",
     "MAlbumRoleFull",
     "MSongBatch",
+    "MLayerFromFile",
     "MSongRoleFull",
     "MSongFromLayer",
     "MSongFromAlbum",

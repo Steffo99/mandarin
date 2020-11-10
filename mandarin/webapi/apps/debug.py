@@ -17,7 +17,7 @@ app = f.FastAPI(
 app.include_router(router_version, prefix="/version", tags=["Version"])
 app.include_router(router_debug, prefix="/debug", tags=["Debug"])
 app.include_router(router_auth, prefix="/auth", tags=["Authentication"])
-app.include_router(router_upload, prefix="/upload", tags=["Upload"])
+app.include_router(router_files, prefix="/files", tags=["Files"])
 app.include_router(router_layers, prefix="/layers", tags=["Layers"])
 app.include_router(router_songs, prefix="/songs", tags=["Songs"])
 

@@ -76,6 +76,9 @@ def save_uploadfile(upload_file: fastapi.UploadFile, overwrite: bool = False) ->
         # Create the required directories
         os.makedirs(os.path.dirname(filename), exist_ok=True)
 
+        # Seek back to the beginning
+        upload_file.file.seek(0)
+
         # Save the file
         with open(filename, "wb") as result:
             while chunk := upload_file.file.read(8192):
@@ -90,7 +93,7 @@ def auto_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum)
 
     To match the metadata to the Album row,
     """
-    artist_arole = AlbumRole.make(session, config["apps.files.roles.album.artist"])
+    artist_arole = AlbumRole.make(session=session, name=config["apps.files.roles.album.artist"])
 
     # Find the album, if it already exists
     query = None

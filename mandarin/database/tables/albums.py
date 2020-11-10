@@ -20,6 +20,7 @@ class Album(Base, a.ColRepr, a.Updatable):
 
     id = s.Column(s.Integer, primary_key=True)
     title = s.Column(s.String, nullable=False)
+    description = s.Column(s.Text)
 
     involvements = o.relationship("AlbumInvolvement", back_populates="album")
 

@@ -9,7 +9,7 @@ from .songgenres import songgenres
 from .albumgenres import albumgenres
 
 
-class Genre(Base, a.ColRepr, a.Updatable):
+class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     A genre of music.
     """
@@ -18,26 +18,10 @@ class Genre(Base, a.ColRepr, a.Updatable):
     id = s.Column(s.Integer, primary_key=True)
 
     name = s.Column(s.String, nullable=False)
+    description = s.Column(s.Text)
 
     songs = o.relationship("Song", secondary=songgenres, back_populates="genres")
     albums = o.relationship("Album", secondary=albumgenres, back_populates="genres")
-
-    @classmethod
-    def make(cls, session: o.session.Session, name: str) -> Genre:
-        """Find the item with the specified name, or create it and add it to the session if it doesn't exist."""
-        item = (
-            session.query(cls)
-                   .filter(a.ieq(cls.name, name))
-                   .one_or_none()
-        )
-
-        if item is None:
-            item = cls(name=name)
-            session.add(item)
-
-        return item
-
-
 
 
 __all__ = ("Genre",)

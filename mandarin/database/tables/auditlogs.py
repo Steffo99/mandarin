@@ -14,7 +14,7 @@ class AuditLog(Base):
 
     id = s.Column(s.Integer, primary_key=True)
 
-    _user = s.Column(s.String, s.ForeignKey("users.sub"), nullable=False)
+    _user = s.Column(s.Integer, s.ForeignKey("users.id"), nullable=False)
     user = o.relationship("User", back_populates="audit_logs")
 
     action = s.Column(s.String, nullable=False)

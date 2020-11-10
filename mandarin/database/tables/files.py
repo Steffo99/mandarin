@@ -7,11 +7,8 @@ import mimetypes
 
 from ..base import Base
 
-if TYPE_CHECKING:
-    from .users import User
 
-
-class File(Base, a.ColRepr, a.Updatable):
+class File(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     A file that has been uploaded to Mandarin.
     """
@@ -23,31 +20,16 @@ class File(Base, a.ColRepr, a.Updatable):
     mime_type = s.Column(s.String)
     mime_software = s.Column(s.String)
 
-    _uploader = s.Column(s.String, s.ForeignKey("users.sub"))
+    _uploader = s.Column(s.Integer, s.ForeignKey("users.id"))
     uploader = o.relationship("User", back_populates="uploads")
 
     used_as_layer = o.relationship("Layer", back_populates="file")
     used_as_album_cover = o.relationship("Album", back_populates="cover")
 
     @classmethod
-    def make(cls, session: o.session.Session, name: str, _uploader: Optional[User] = None) -> File:
-        """Find the item with the specified name, or create it and add it to the session if it doesn't exist."""
-        item = (
-            session.query(cls)
-                   .filter(cls.name == name)
-                   .one_or_none()
-        )
-
-        if item is None:
-            item = cls(name=name, _uploader=_uploader)
-            session.add(item)
-
-        return item
-
-    @classmethod
-    def guess(cls, name: str, uploader: Optional[User] = None) -> File:
+    def guess(cls, name: str, *, session: o.session.Session, **kwargs) -> File:
         mtype, msoftware = mimetypes.guess_type(name, strict=False)
-        return cls(name=name, mime_type=mtype, mime_software=msoftware, uploader=uploader)
+        return cls.make(session=session, name=name, mime_type=mtype, mime_software=msoftware, **kwargs)
 
 
 __all__ = ("File",)

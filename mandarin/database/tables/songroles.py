@@ -7,7 +7,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class SongRole(Base, a.ColRepr, a.Updatable):
+class SongRole(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     A role for a person involved with a song.
     """
@@ -16,23 +16,9 @@ class SongRole(Base, a.ColRepr, a.Updatable):
     id = s.Column(s.Integer, primary_key=True)
 
     name = s.Column(s.String, nullable=False)
+    description = s.Column(s.Text)
 
     involvements = o.relationship("SongInvolvement", back_populates="role", cascade="all, delete")
-
-    @classmethod
-    def make(cls, session: o.session.Session, name: str) -> SongRole:
-        """Find the item with the specified name, or create it and add it to the session if it doesn't exist."""
-        item = (
-            session.query(cls)
-                   .filter(a.ieq(cls.name, name))
-                   .one_or_none()
-        )
-
-        if item is None:
-            item = cls(name=name)
-            session.add(item)
-
-        return item
 
 
 __all__ = ("SongRole",)

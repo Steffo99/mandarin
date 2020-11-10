@@ -1,4 +1,12 @@
 [[package]]
+name = "aiofiles"
+version = "0.6.0"
+description = "File support for asyncio."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "certifi"
 version = "2020.6.20"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -230,7 +238,7 @@ urllib3 = ">=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26"
 
 [[package]]
 name = "royalnet"
-version = "6.0.0a11"
+version = "6.0.0a12"
 description = "A multipurpose bot and web framework"
 category = "main"
 optional = false
@@ -331,9 +339,13 @@ h11 = ">=0.8"
 [metadata]
 lock-version = "1.0"
 python-versions = "^3.8"
-content-hash = "93708f9fab5829ad2fe1f73ebbf587befbd5173b09c7a8d7bb0001b2d7ff1edc"
+content-hash = "46beab3bfd2b9f3fff18bf2e43bcbbb5d0e95b490ed04a87e459fd5d78a1a125"
 
 [metadata.files]
+aiofiles = [
+    {file = "aiofiles-0.6.0-py3-none-any.whl", hash = "sha256:bd3019af67f83b739f8e4053c6c0512a7f545b9a8d91aaeab55e6e0f9d123c27"},
+    {file = "aiofiles-0.6.0.tar.gz", hash = "sha256:e0281b157d3d5d59d803e3f4557dcc9a3dff28a4dd4829a9ff478adae50ca092"},
+]
 certifi = [
     {file = "certifi-2020.6.20-py2.py3-none-any.whl", hash = "sha256:8fc0819f1f30ba15bdb34cceffb9ef04d99f420f68eb75d901e9560b8749fc41"},
     {file = "certifi-2020.6.20.tar.gz", hash = "sha256:5930595817496dd21bb8dc35dad090f1c2cd0adfaf21204bf6732ca5d8ee34d3"},
@@ -556,8 +568,8 @@ requests = [
     {file = "requests-2.24.0.tar.gz", hash = "sha256:b3559a131db72c33ee969480840fff4bb6dd111de7dd27c8ee1f820f4f00231b"},
 ]
 royalnet = [
-    {file = "royalnet-6.0.0a11-py3-none-any.whl", hash = "sha256:d379f787d626bbea132ac26824ff7bed16873b0f4ddefac8eb58aefc09a2b567"},
-    {file = "royalnet-6.0.0a11.tar.gz", hash = "sha256:046be7b02bcf9f61e38b99ac6ae505f4932b0708d582aed9a73da434c0f48041"},
+    {file = "royalnet-6.0.0a12-py3-none-any.whl", hash = "sha256:d86f2ce8c6a7e0288c73848ba67081cd13e97318d520b92aa7d70bdeab86a19f"},
+    {file = "royalnet-6.0.0a12.tar.gz", hash = "sha256:c2e146d8037452aac586db10e8d341ed3357c127411e0d39cee242258fde0573"},
 ]
 rsa = [
     {file = "rsa-4.6-py3-none-any.whl", hash = "sha256:6166864e23d6b5195a5cfed6cd9fed0fe774e226d8f854fcb23b7bbef0350233"},

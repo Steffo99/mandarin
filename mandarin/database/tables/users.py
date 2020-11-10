@@ -14,7 +14,9 @@ class User(Base, a.ColRepr, a.Updatable):
     """
     __tablename__ = "users"
 
-    sub = s.Column(s.String, primary_key=True)
+    id = s.Column(s.Integer, primary_key=True)
+
+    sub = s.Column(s.String, nullable=False)
     name = s.Column(s.String, nullable=False)
     nickname = s.Column(s.String, nullable=False)
     picture = s.Column(s.String, nullable=False)
