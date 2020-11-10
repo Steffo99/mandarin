@@ -54,26 +54,24 @@ def make_model_without_id(table):
 
 
 MAlbumInvolvement = make_default_model(AlbumInvolvement)
-MAlbumRole = make_default_model(AlbumRole)
+MRole = make_default_model(Role)
 MAlbum = make_default_model(Album)
 MFile = make_default_model(File)
 MGenre = make_default_model(Genre)
 MLayer = make_default_model(Layer)
 MPerson = make_default_model(Person)
 MSongInvolvement = make_default_model(SongInvolvement)
-MSongRole = make_default_model(SongRole)
 MSong = make_default_model(Song)
 MUser = make_default_model(User)
 
 MAlbumInvolvementWithoutId = make_model_without_id(AlbumInvolvement)
-MAlbumRoleWithoutId = make_model_without_id(AlbumRole)
+MRoleWithoutId = make_model_without_id(Role)
 MAlbumWithoutId = make_model_without_id(Album)
 MFileWithoutId = make_model_without_id(File)
 MGenreWithoutId = make_model_without_id(Genre)
 MLayerWithoutId = make_model_without_id(Layer)
 MPersonWithoutId = make_model_without_id(Person)
 MSongInvolvementWithoutId = make_model_without_id(SongInvolvement)
-MSongRoleWithoutId = make_model_without_id(SongRole)
 MSongWithoutId = make_model_without_id(Song)
 
 
@@ -98,7 +96,7 @@ class MAlbumInvolvementFromAlbum(MAlbumInvolvement):
     The involment of a person in an album, including the person and the role of the involvement.
     """
     person: MPerson
-    role: MAlbumRole
+    role: MRole
 
 
 class MAlbumInvolvementFromPerson(MAlbumInvolvement):
@@ -106,7 +104,7 @@ class MAlbumInvolvementFromPerson(MAlbumInvolvement):
     The involment of a person in an album, including the album and the role of the involvement.
     """
     album: MAlbum
-    role: MAlbumRole
+    role: MRole
 
 
 class MAlbumInvolvementFromRole(MAlbumInvolvement):
@@ -122,7 +120,7 @@ class MSongInvolvementFromSong(MSongInvolvement):
     The involment of a person in a song, including the person and the role of the involvement.
     """
     person: MPerson
-    role: MSongRole
+    role: MRole
 
 
 class MSongInvolvementFromPerson(MSongInvolvement):
@@ -130,7 +128,7 @@ class MSongInvolvementFromPerson(MSongInvolvement):
     The involment of a person in a song, including the song and the role of the involvement.
     """
     song: MSong
-    role: MSongRole
+    role: MRole
 
 
 class MSongInvolvementFromRole(MSongInvolvement):
@@ -141,18 +139,12 @@ class MSongInvolvementFromRole(MSongInvolvement):
     song: MSong
 
 
-class MAlbumRoleFull(MAlbumRole):
+class MRoleFull(MRole):
     """
-    A role that people can have in an album, detailing where the role is used.
+    A role that people can have in an album or a song, detailing where the role is used.
     """
-    involvements: List[MAlbumInvolvement]
-
-
-class MSongRoleFull(MSongRole):
-    """
-    A role that people can have in a song, detailing where the role is used.
-    """
-    involvements: List[MSongInvolvement]
+    album_involvements: List[MAlbumInvolvementFromRole]
+    song_involvements: List[MSongInvolvementFromRole]
 
 
 class MSongBatch(MSong):
@@ -270,25 +262,23 @@ class MGenreFull(MGenre):
 
 __all__ = (
     "MAlbumInvolvement",
-    "MAlbumRole",
+    "MRole",
     "MAlbum",
     "MFile",
     "MGenre",
     "MLayer",
     "MPerson",
     "MSongInvolvement",
-    "MSongRole",
     "MSong",
     "MUser",
     "MAlbumInvolvementWithoutId",
-    "MAlbumRoleWithoutId",
+    "MRoleWithoutId",
     "MAlbumWithoutId",
     "MFileWithoutId",
     "MGenreWithoutId",
     "MLayerWithoutId",
     "MPersonWithoutId",
     "MSongInvolvementWithoutId",
-    "MSongRoleWithoutId",
     "MSongWithoutId",
     "MFileWithUploader",
     "MFileFull",
@@ -298,10 +288,9 @@ __all__ = (
     "MSongInvolvementFromSong",
     "MSongInvolvementFromPerson",
     "MSongInvolvementFromRole",
-    "MAlbumRoleFull",
+    "MRoleFull",
     "MSongBatch",
     "MLayerFromFile",
-    "MSongRoleFull",
     "MSongFromLayer",
     "MSongFromAlbum",
     "MSongFull",

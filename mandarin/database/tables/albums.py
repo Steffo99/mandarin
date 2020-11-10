@@ -9,7 +9,7 @@ from .albuminvolvements import AlbumInvolvement
 
 if TYPE_CHECKING:
     from .people import Person
-    from .albumroles import AlbumRole
+    from .roles import Role
 
 
 class Album(Base, a.ColRepr, a.Updatable):
@@ -30,7 +30,7 @@ class Album(Base, a.ColRepr, a.Updatable):
     _cover = s.Column(s.Integer, s.ForeignKey("files.id"))
     cover = o.relationship("File", back_populates="used_as_album_cover")
 
-    def involve(self, people: Iterable["Person"], role: "AlbumRole") -> List[AlbumInvolvement]:
+    def involve(self, people: Iterable["Person"], role: "Role") -> List[AlbumInvolvement]:
         """Involve a list of people with this album, and return the resulting involvements."""
         # TODO: should it check for duplicate involvements?
 

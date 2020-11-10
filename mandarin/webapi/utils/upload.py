@@ -93,14 +93,14 @@ def auto_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum)
 
     To match the metadata to the Album row,
     """
-    artist_arole = AlbumRole.make(session=session, name=config["apps.files.roles.album.artist"])
+    album_artist_role = Role.make(session=session, name=config["apps.files.roles.albumartist"])
 
     # Find the album, if it already exists
     query = None
     for artist in parse_album.artists:
         subquery = (
             session.query(AlbumInvolvement)
-                   .filter(AlbumInvolvement.role == artist_arole)
+                   .filter(AlbumInvolvement.role == album_artist_role)
                    .join(Person)
                    .filter(Person.name == artist)
                    .join(Album)
@@ -119,7 +119,7 @@ def auto_album(session: sqlalchemy.orm.session.Session, parse_album: ParseAlbum)
         session.add(album)
 
         album.involve(people=(Person.make(session=session, name=name) for name in parse_album.artists),
-                      role=artist_arole)
+                      role=album_artist_role)
     else:
         album = album_involvement.album
 
@@ -134,16 +134,16 @@ def auto_song(session: sqlalchemy.orm.session.Session, parse: ParseData) -> Song
     """
 
     # Make the necessary SongRoles
-    artist_srole = SongRole.make(session=session, name=config["apps.files.roles.song.artist"])
-    composer_srole = SongRole.make(session=session, name=config["apps.files.roles.song.composer"])
-    performer_srole = SongRole.make(session=session, name=config["apps.files.roles.song.performer"])
+    artist_role = Role.make(session=session, name=config["apps.files.roles.artist"])
+    composer_role = Role.make(session=session, name=config["apps.files.roles.composer"])
+    performer_role = Role.make(session=session, name=config["apps.files.roles.performer"])
 
     # Find the song, if it already exists
     query = None
     for artist in parse.song.artists:
         subquery = (
             session.query(SongInvolvement)
-                   .filter(SongInvolvement.role == artist_srole)
+                   .filter(SongInvolvement.role == artist_role)
                    .join(Person)
                    .filter(Person.name == artist)
                    .join(Song)
@@ -173,15 +173,15 @@ def auto_song(session: sqlalchemy.orm.session.Session, parse: ParseData) -> Song
 
         # Involve artists
         song.involve(people=(Person.make(session=session, name=name) for name in parse.song.artists),
-                     role=artist_srole)
+                     role=artist_role)
 
         # Involve composers
         song.involve(people=(Person.make(session=session, name=name) for name in parse.song.composers),
-                     role=composer_srole)
+                     role=composer_role)
 
         # Involve performers
         song.involve(people=(Person.make(session=session, name=name) for name in parse.song.performers),
-                     role=performer_srole)
+                     role=performer_role)
     else:
         song = song_involvement.song
 

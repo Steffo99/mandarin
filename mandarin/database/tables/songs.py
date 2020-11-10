@@ -9,7 +9,7 @@ from .songinvolvements import SongInvolvement
 
 if TYPE_CHECKING:
     from .people import Person
-    from .songroles import SongRole
+    from .roles import Role
 
 
 class Song(Base, a.ColRepr, a.Updatable):
@@ -34,7 +34,7 @@ class Song(Base, a.ColRepr, a.Updatable):
     track_number = s.Column(s.Integer)
     year = s.Column(s.Integer)
 
-    def involve(self, people: Iterable["Person"], role: "SongRole") -> Set["SongInvolvement"]:
+    def involve(self, people: Iterable["Person"], role: "Role") -> Set["SongInvolvement"]:
         """
         Involve people with this song, assigning them the specified role, and return all the resulting involvements.
 

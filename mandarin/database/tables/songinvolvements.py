@@ -21,8 +21,8 @@ class SongInvolvement(Base, a.ColRepr, a.Updatable, a.Makeable):
     _song = s.Column(s.Integer, s.ForeignKey("songs.id"))
     song = o.relationship("Song", back_populates="involvements")
 
-    _role = s.Column(s.Integer, s.ForeignKey("songroles.id"))
-    role = o.relationship("SongRole", back_populates="involvements")
+    _role = s.Column(s.Integer, s.ForeignKey("roles.id"))
+    role = o.relationship("Role", back_populates="song_involvements")
 
 
 __all__ = ("SongInvolvement",)

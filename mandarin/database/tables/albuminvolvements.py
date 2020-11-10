@@ -20,8 +20,8 @@ class AlbumInvolvement(Base, a.ColRepr, a.Updatable):
     _album = s.Column(s.Integer, s.ForeignKey("albums.id"))
     album = o.relationship("Album", back_populates="involvements")
 
-    _role = s.Column(s.Integer, s.ForeignKey("albumroles.id"))
-    role = o.relationship("AlbumRole", back_populates="involvements")
+    _role = s.Column(s.Integer, s.ForeignKey("roles.id"))
+    role = o.relationship("Role", back_populates="album_involvements")
 
 
 __all__ = ("AlbumInvolvement",)
