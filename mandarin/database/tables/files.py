@@ -20,7 +20,7 @@ class File(Base, a.ColRepr, a.Updatable, a.Makeable):
     mime_type = s.Column(s.String)
     mime_software = s.Column(s.String)
 
-    _uploader = s.Column(s.Integer, s.ForeignKey("users.id"))
+    uploader_id = s.Column(s.Integer, s.ForeignKey("users.id"))
     uploader = o.relationship("User", back_populates="uploads")
 
     used_as_layer = o.relationship("Layer", back_populates="file")

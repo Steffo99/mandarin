@@ -27,7 +27,7 @@ class Song(Base, a.ColRepr, a.Updatable):
     track_number = s.Column(s.Integer)
     year = s.Column(s.Integer)
 
-    _album = s.Column(s.Integer, s.ForeignKey("albums.id"))
+    album_id = s.Column(s.Integer, s.ForeignKey("albums.id"))
     album = o.relationship("Album", back_populates="songs")
 
     layers = o.relationship("Layer", back_populates="song")

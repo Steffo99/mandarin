@@ -16,10 +16,10 @@ class Layer(Base, a.ColRepr, a.Updatable):
     name = s.Column(s.String, nullable=False, default="Default", server_default="'Default'")
     description = s.Column(s.Text, nullable=False, default="")
 
-    _song = s.Column(s.Integer, s.ForeignKey("songs.id"))
+    song_id = s.Column(s.Integer, s.ForeignKey("songs.id"))
     song = o.relationship("Song", back_populates="layers")
 
-    _file = s.Column(s.Integer, s.ForeignKey("files.id"), nullable=False)
+    file_id = s.Column(s.Integer, s.ForeignKey("files.id"), nullable=False)
     file = o.relationship("File", back_populates="used_as_layer")
 
 
