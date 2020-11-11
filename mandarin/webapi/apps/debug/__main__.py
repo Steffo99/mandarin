@@ -2,16 +2,16 @@ import fastapi as f
 import uvicorn
 import pkg_resources
 
-from ...database import *
-from ...config import *
-from ...webapi.routes import *
+from mandarin.database import *
+from mandarin.config import *
+from mandarin.webapi.routes import *
+from .description import description
 
 
 app = f.FastAPI(
     debug=True,
     title="Mandarin [DEBUG]",
-    description="A debug endpoint for the Mandarin API.\n\nWARNING: Running this will drop all tables from the "
-                "database!",
+    description=description,
     version=pkg_resources.get_distribution("mandarin").version,
 )
 app.include_router(router_version, prefix="/version", tags=["Version"])
