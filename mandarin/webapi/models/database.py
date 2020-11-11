@@ -63,6 +63,7 @@ MPerson = make_default_model(Person)
 MSongInvolvement = make_default_model(SongInvolvement)
 MSong = make_default_model(Song)
 MUser = make_default_model(User)
+MAuditLog = make_default_model(AuditLog)
 
 MAlbumInvolvementWithoutId = make_model_without_id(AlbumInvolvement)
 MRoleWithoutId = make_model_without_id(Role)
@@ -271,6 +272,7 @@ __all__ = (
     "MSongInvolvement",
     "MSong",
     "MUser",
+    "MAuditLog",
     "MAlbumInvolvementWithoutId",
     "MRoleWithoutId",
     "MAlbumWithoutId",
