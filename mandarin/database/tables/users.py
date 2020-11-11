@@ -27,13 +27,11 @@ class User(Base, a.ColRepr, a.Updatable):
     uploads = o.relationship("File", back_populates="uploader")
     audit_logs = o.relationship("AuditLog", back_populates="user")
 
-    def log(self, action: str, obj: Optional[int], *, session: Optional[o.session.Session] = None) -> AuditLog:
+    def log(self, action: str, obj: Optional[int]) -> AuditLog:
         """
         Log an action and add it to the session.
         """
-        if session is None:
-            session = o.session.Session.object_session(self)
-
+        session = o.session.Session.object_session(self)
         audit_log = AuditLog(user=self, action=action, timestamp=datetime.datetime.now(), obj=obj)
         session.add(audit_log)
         return audit_log

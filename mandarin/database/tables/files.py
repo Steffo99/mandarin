@@ -16,7 +16,7 @@ class File(Base, a.ColRepr, a.Updatable, a.Makeable):
 
     id = s.Column(s.Integer, primary_key=True)
 
-    name = s.Column(s.String, nullable=False)
+    name = s.Column(s.String, nullable=False, unique=True)
     mime_type = s.Column(s.String)
     mime_software = s.Column(s.String)
 
@@ -24,7 +24,6 @@ class File(Base, a.ColRepr, a.Updatable, a.Makeable):
     uploader = o.relationship("User", back_populates="uploads")
 
     used_as_layer = o.relationship("Layer", back_populates="file")
-    used_as_album_cover = o.relationship("Album", back_populates="cover")
 
     @classmethod
     def guess(cls, name: str, *, session: o.session.Session, **kwargs) -> File:

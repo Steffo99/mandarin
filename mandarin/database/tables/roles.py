@@ -15,7 +15,7 @@ class Role(Base, a.ColRepr, a.Updatable, a.Makeable):
     id = s.Column(s.Integer, primary_key=True)
 
     name = s.Column(s.String, nullable=False)
-    description = s.Column(s.Text)
+    description = s.Column(s.Text, nullable=False, default="")
 
     album_involvements = o.relationship("AlbumInvolvement", back_populates="role", cascade="all, delete")
     song_involvements = o.relationship("SongInvolvement", back_populates="role", cascade="all, delete")

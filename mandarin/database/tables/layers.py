@@ -13,8 +13,8 @@ class Layer(Base, a.ColRepr, a.Updatable):
     __tablename__ = "layers"
 
     id = s.Column(s.Integer, primary_key=True)
-    name = s.Column(s.String, nullable=False, default="Default", server_default="Default")
-    description = s.Column(s.Text)
+    name = s.Column(s.String, nullable=False, default="Default", server_default="'Default'")
+    description = s.Column(s.Text, nullable=False, default="")
 
     _song = s.Column(s.Integer, s.ForeignKey("songs.id"))
     song = o.relationship("Song", back_populates="layers")

@@ -20,19 +20,19 @@ class Song(Base, a.ColRepr, a.Updatable):
 
     id = s.Column(s.Integer, primary_key=True)
 
-    title = s.Column(s.String)
-
-    layers = o.relationship("Layer", back_populates="song")
-
-    _album = s.Column(s.Integer, s.ForeignKey("albums.id"))
-    album = o.relationship("Album", back_populates="songs")
-
-    involvements = o.relationship("SongInvolvement", back_populates="song", cascade="all, delete")
-    genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
+    title = s.Column(s.String, nullable=False, default="")
+    description = s.Column(s.String, nullable=False, default="")
 
     disc_number = s.Column(s.Integer)
     track_number = s.Column(s.Integer)
     year = s.Column(s.Integer)
+
+    _album = s.Column(s.Integer, s.ForeignKey("albums.id"))
+    album = o.relationship("Album", back_populates="songs")
+
+    layers = o.relationship("Layer", back_populates="song")
+    involvements = o.relationship("SongInvolvement", back_populates="song", cascade="all, delete")
+    genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
     def involve(self, people: Iterable["Person"], role: "Role") -> Set["SongInvolvement"]:
         """
