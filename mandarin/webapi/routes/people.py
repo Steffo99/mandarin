@@ -38,7 +38,7 @@ def create(
     ls: LoginSession = f.Depends(dependency_login_session),
     data: MPerson = f.Body(..., description="The new data the person should have."),
 ):
-    person = Person(**data)
+    person = Person(**data.__dict__)
     ls.session.add(person)
     ls.session.commit()
     ls.user.log("person.create", obj=person.id)

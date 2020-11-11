@@ -43,7 +43,7 @@ def create(
     if genre is not None:
         raise f.HTTPException(409, f"The genre '{data.name}' already exists.")
 
-    genre = Genre.make(session=ls.session, **data)
+    genre = Genre.make(session=ls.session, **data.__dict__)
     ls.user.log("genre.create", obj=genre.id)
     ls.session.commit()
     return genre

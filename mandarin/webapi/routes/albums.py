@@ -38,7 +38,7 @@ def create(
     ls: LoginSession = f.Depends(dependency_login_session),
     data: MAlbumWithoutId = f.Body(..., description="The data the new album should have."),
 ):
-    album = Album(**data)
+    album = Album(**data.__dict__)
     ls.session.add(data)
     ls.session.commit()
     ls.user.log("album.create", obj=album.id)
