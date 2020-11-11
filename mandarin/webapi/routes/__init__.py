@@ -4,5 +4,6 @@ from .debug import *
 from .files import *
 from .genres import *
 from .layers import *
+from .people import *
 from .songs import *
 from .version import *

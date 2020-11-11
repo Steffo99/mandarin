@@ -21,6 +21,7 @@ app.include_router(router_files, prefix="/files", tags=["Files"])
 app.include_router(router_layers, prefix="/layers", tags=["Layers"])
 app.include_router(router_songs, prefix="/songs", tags=["Songs"])
 app.include_router(router_genres, prefix="/genres", tags=["Genres"])
+app.include_router(router_people, prefix="/people", tags=["People"])
 app.include_router(router_auditlogs, prefix="/audit-logs", tags=["Audit Logs"])
 
 

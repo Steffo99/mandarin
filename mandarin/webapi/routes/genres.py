@@ -43,15 +43,15 @@ def create(
     if genre is not None:
         raise f.HTTPException(409, f"The genre '{data.name}' already exists.")
 
-    genre = Genre.make(session=ls.session, name=data.name)
-    ls.user.log("genre.create.post", obj=genre.id)
+    genre = Genre.make(session=ls.session, **data)
+    ls.user.log("genre.create", obj=genre.id)
     ls.session.commit()
     return genre
 
 
 @router_genres.get(
     "/count",
-    summary="Get the number of layers currently in the database.",
+    summary="Get the number of genres currently in the database.",
     response_model=int,
 )
 def count(
