@@ -6,7 +6,7 @@ import royalnet.alchemist as a
 from ..base import Base
 
 
-class AlbumInvolvement(Base, a.ColRepr, a.Updatable):
+class AlbumInvolvement(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     The involment of a person in an album.
     """

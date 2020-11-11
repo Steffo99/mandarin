@@ -43,7 +43,7 @@ def create(
     data: MSongWithoutId = f.Body(..., description="The data for the new song."),
 ):
     album = ls.get(Album, album_id)
-    song = Song(album=album, **data)
+    song = Song(album=album, **data.__dict__)
     ls.session.add(song)
     ls.session.commit()
     ls.user.log("song.create", obj=song.id)
@@ -111,7 +111,7 @@ def edit_multiple_involve(
     """
     Non-existing song_ids will be ignored.
     """
-    role = ls.get(SongRole, role_id)
+    role = ls.get(Role, role_id)
     person = ls.get(Person, person_id)
     for song in ls.group(Song, song_ids):
         SongInvolvement.make(session=ls.session, role=role, song=song, person=person)
@@ -137,7 +137,7 @@ def edit_multiple_uninvolve(
     """
     Non-existing song_ids will be ignored.
     """
-    role = ls.get(SongRole, role_id)
+    role = ls.get(Role, role_id)
     person = ls.get(Person, person_id)
     for song in ls.group(Song, song_ids):
         SongInvolvement.unmake(session=ls.session, role=role, song=song, person=person)

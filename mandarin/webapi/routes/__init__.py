@@ -1,3 +1,4 @@
+from .albums import *
 from .auditlogs import *
 from .auth import *
 from .debug import *
