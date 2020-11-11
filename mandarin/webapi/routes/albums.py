@@ -4,7 +4,7 @@ import fastapi as f
 import sqlalchemy.orm
 
 from ...database import *
-from ..models import *
+from .. import models
 from ..dependencies import *
 
 router_albums = f.APIRouter()
@@ -16,7 +16,7 @@ router_albums = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=List[MAlbum]
+    response_model=List[models.Album]
 )
 def get_all(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -32,11 +32,11 @@ def get_all(
     responses={
         **login_error,
     },
-    response_model=MAlbumFull,
+    response_model=models.AlbumOutput,
 )
 def create(
     ls: LoginSession = f.Depends(dependency_login_session),
-    data: MAlbumWithoutId = f.Body(..., description="The data the new album should have."),
+    data: models.AlbumInput = f.Body(..., description="The data the new album should have."),
 ):
     album = Album(**data.__dict__)
     ls.session.add(data)
@@ -81,6 +81,7 @@ def edit_multiple_involve(
         AlbumInvolvement.make(session=ls.session, role=role, album=album, person=person)
         ls.user.log("album.edit.multiple.involve", obj=album.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_albums.patch(
@@ -107,6 +108,7 @@ def edit_multiple_uninvolve(
         AlbumInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
         ls.user.log("album.edit.multiple.uninvolve", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_albums.patch(
@@ -131,6 +133,7 @@ def edit_multiple_classify(
         album.genres.append(genre)
         ls.user.log("album.edit.multiple.classify", obj=album.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_albums.patch(
@@ -155,6 +158,7 @@ def edit_multiple_declassify(
         album.genres.remove(genre)
         ls.user.log("album.edit.multiple.declassify", obj=album.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_albums.patch(
@@ -199,6 +203,7 @@ def merge(
     rr_session.close()
 
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_albums.get(
@@ -208,7 +213,7 @@ def merge(
         **login_error,
         404: {"description": "Album not found"},
     },
-    response_model=MAlbumFull
+    response_model=models.AlbumOutput
 )
 def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -220,7 +225,7 @@ def get_single(
 @router_albums.put(
     "/{album_id}",
     summary="Edit an album.",
-    response_model=MAlbumFull,
+    response_model=models.AlbumOutput,
     responses={
         **login_error,
         404: {"description": "Album not found"},
@@ -229,7 +234,7 @@ def get_single(
 def edit_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     album_id: int = f.Path(..., description="The id of the album to be edited."),
-    data: MAlbumWithoutId = f.Body(..., description="The new data the album should have."),
+    data: models.AlbumInput = f.Body(..., description="The new data the album should have."),
 ):
     album = ls.get(Album, album_id)
     album.update(**data.__dict__)
@@ -258,6 +263,7 @@ def delete(
     ls.session.delete(album)
     ls.user.log("album.delete", obj=album.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 __all__ = (

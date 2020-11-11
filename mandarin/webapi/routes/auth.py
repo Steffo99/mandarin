@@ -1,7 +1,7 @@
 import fastapi as f
 
 from ...database import *
-from ..models.database import *
+from .. import models
 from mandarin.webapi.dependencies.auth import *
 
 
@@ -14,12 +14,12 @@ router_auth = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=MUser
+    response_model=models.UserOutput
 )
 def access_token(
     payload: dict = f.Depends(dependency_access_token)
-) -> MUser:
-    return MUser(**payload)
+):
+    return payload
 
 
 @router_auth.get(
@@ -28,12 +28,12 @@ def access_token(
     responses={
         **login_error
     },
-    response_model=MUser
+    response_model=models.UserOutput
 )
 def current_user(
     ls: LoginSession = f.Depends(dependency_login_session)
-) -> MUser:
-    return MUser.from_orm(ls.user)
+):
+    return ls.user
 
 
 __all__ = (

@@ -4,7 +4,7 @@ import fastapi as f
 import sqlalchemy.orm
 
 from ...database import *
-from ..models import *
+from .. import models
 from ..dependencies import *
 
 router_people = f.APIRouter()
@@ -16,7 +16,7 @@ router_people = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=List[MPerson]
+    response_model=List[models.Person]
 )
 def get_all(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -32,11 +32,11 @@ def get_all(
     responses={
         **login_error,
     },
-    response_model=MPersonFull,
+    response_model=models.PersonOutput,
 )
 def create(
     ls: LoginSession = f.Depends(dependency_login_session),
-    data: MPerson = f.Body(..., description="The new data the person should have."),
+    data: models.PersonInput = f.Body(..., description="The new data the person should have."),
 ):
     person = Person(**data.__dict__)
     ls.session.add(person)
@@ -101,6 +101,7 @@ def merge(
     rr_session.close()
 
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_people.get(
@@ -110,7 +111,7 @@ def merge(
         **login_error,
         404: {"description": "Person not found"},
     },
-    response_model=MPersonFull
+    response_model=models.PersonOutput
 )
 def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -122,7 +123,7 @@ def get_single(
 @router_people.put(
     "/{person_id}",
     summary="Edit a person.",
-    response_model=MPersonFull,
+    response_model=models.PersonOutput,
     responses={
         **login_error,
         404: {"description": "Person not found"},
@@ -131,7 +132,7 @@ def get_single(
 def edit_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     person_id: int = f.Path(..., description="The id of the person to be edited."),
-    data: MPersonWithoutId = f.Body(..., description="The new data the person should have."),
+    data: models.PersonInput = f.Body(..., description="The new data the person should have."),
 ):
     person = ls.get(Person, person_id)
     person.update(**data.__dict__)
@@ -157,6 +158,7 @@ def delete(
     ls.session.delete(person)
     ls.user.log("person.delete", obj=person.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 __all__ = (

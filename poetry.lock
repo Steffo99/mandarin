@@ -8,7 +8,7 @@ python-versions = "*"
 
 [[package]]
 name = "certifi"
-version = "2020.6.20"
+version = "2020.11.8"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
@@ -157,21 +157,6 @@ python-versions = ">=3.6"
 dotenv = ["python-dotenv (>=0.10.4)"]
 email = ["email-validator (>=1.0.3)"]
 typing_extensions = ["typing-extensions (>=3.7.2)"]
-
-[[package]]
-name = "pydantic-sqlalchemy"
-version = "0.0.7"
-description = "Tools to convert SQLAlchemy models to Pydantic models"
-category = "main"
-optional = false
-python-versions = ">=3.6,<4.0"
-
-[package.extras]
-dev = ["jupyter (>=1.0.0,<2.0.0)", "autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.7.9,<4.0.0)"]
-
-[package.dependencies]
-pydantic = ">=1.5.1,<2.0.0"
-sqlalchemy = ">=1.3.16,<2.0.0"
 
 [[package]]
 name = "python-jose"
@@ -339,7 +324,7 @@ h11 = ">=0.8"
 [metadata]
 lock-version = "1.0"
 python-versions = "^3.8"
-content-hash = "46beab3bfd2b9f3fff18bf2e43bcbbb5d0e95b490ed04a87e459fd5d78a1a125"
+content-hash = "d46dc53c8bf65c73ff5366887645ae7284aa5cbeff4100ca400adf951eca5d5d"
 
 [metadata.files]
 aiofiles = [
@@ -347,8 +332,8 @@ aiofiles = [
     {file = "aiofiles-0.6.0.tar.gz", hash = "sha256:e0281b157d3d5d59d803e3f4557dcc9a3dff28a4dd4829a9ff478adae50ca092"},
 ]
 certifi = [
-    {file = "certifi-2020.6.20-py2.py3-none-any.whl", hash = "sha256:8fc0819f1f30ba15bdb34cceffb9ef04d99f420f68eb75d901e9560b8749fc41"},
-    {file = "certifi-2020.6.20.tar.gz", hash = "sha256:5930595817496dd21bb8dc35dad090f1c2cd0adfaf21204bf6732ca5d8ee34d3"},
+    {file = "certifi-2020.11.8-py2.py3-none-any.whl", hash = "sha256:1f422849db327d534e3d0c5f02a263458c3955ec0aae4ff09b95f195c59f4edd"},
+    {file = "certifi-2020.11.8.tar.gz", hash = "sha256:f05def092c44fbf25834a51509ef6e631dc19765ab8a57b4e7ab85531f0a9cf4"},
 ]
 cffi = [
     {file = "cffi-1.14.3-2-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:3eeeb0405fd145e714f7633a5173318bd88d8bbfc3dd0a5751f8c4f70ae629bc"},
@@ -547,10 +532,6 @@ pydantic = [
     {file = "pydantic-1.7.2-cp39-cp39-win_amd64.whl", hash = "sha256:f045cf7afb3352a03bc6cb993578a34560ac24c5d004fa33c76efec6ada1361a"},
     {file = "pydantic-1.7.2-py3-none-any.whl", hash = "sha256:6665f7ab7fbbf4d3c1040925ff4d42d7549a8c15fe041164adfe4fc2134d4cce"},
     {file = "pydantic-1.7.2.tar.gz", hash = "sha256:c8200aecbd1fb914e1bd061d71a4d1d79ecb553165296af0c14989b89e90d09b"},
-]
-pydantic-sqlalchemy = [
-    {file = "pydantic-sqlalchemy-0.0.7.tar.gz", hash = "sha256:d518cfd2d61390bc214dfe7fae3c415685f213a6fd205e32aff03916a045d69a"},
-    {file = "pydantic_sqlalchemy-0.0.7-py3-none-any.whl", hash = "sha256:fcc082cd58f6f6c6a54d3b01a291e6cdb6cbf2c7291843085d2bf067c5dcaca7"},
 ]
 python-jose = [
     {file = "python-jose-3.2.0.tar.gz", hash = "sha256:4e4192402e100b5fb09de5a8ea6bcc39c36ad4526341c123d401e2561720335b"},

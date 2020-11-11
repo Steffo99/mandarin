@@ -13,13 +13,11 @@ router_debug = f.APIRouter()
     "/database/reset",
     summary="Drop and recreate all database tables.",
     status_code=204,
-    responses={
-        **login_error,
-    },
 )
 def database_reset():
     Base.metadata.drop_all()
     Base.metadata.create_all()
+    return f.Response(status_code=204)
 
 
 __all__ = (

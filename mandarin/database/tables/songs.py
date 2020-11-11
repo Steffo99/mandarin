@@ -23,8 +23,8 @@ class Song(Base, a.ColRepr, a.Updatable):
     title = s.Column(s.String, nullable=False, default="")
     description = s.Column(s.String, nullable=False, default="")
 
-    disc_number = s.Column(s.Integer)
-    track_number = s.Column(s.Integer)
+    disc = s.Column(s.Integer)
+    track = s.Column(s.Integer)
     year = s.Column(s.Integer)
 
     album_id = s.Column(s.Integer, s.ForeignKey("albums.id"))

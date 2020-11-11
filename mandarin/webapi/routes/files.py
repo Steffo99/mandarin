@@ -6,7 +6,7 @@ import sqlalchemy.orm.session
 import datetime
 
 from ...database import *
-from ..models.database import *
+from .. import models
 from ..dependencies import *
 from ..utils.upload import *
 
@@ -17,7 +17,7 @@ router_files = f.APIRouter()
 @router_files.post(
     "/layer",
     summary="Upload an audio track.",
-    response_model=MLayerFull,
+    response_model=models.LayerOutput,
     status_code=201,
     responses={
         **login_error,
@@ -58,7 +58,7 @@ def upload_layer(
 @router_files.post(
     "/layer/auto",
     summary="Upload an audio track, and autogenerate its entities.",
-    response_model=MLayerFull,
+    response_model=models.LayerOutput,
     status_code=201,
     responses={
         **login_error,
@@ -109,7 +109,7 @@ def upload_layer_auto(
     ls.session.commit()
 
     # Prepare the return value
-    result = MLayerFull.from_orm(layer)
+    result = models.LayerOutput.from_orm(layer)
 
     # Close the session
     rr_session.close()

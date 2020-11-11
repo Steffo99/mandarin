@@ -3,7 +3,7 @@ from royalnet.typing import *
 import fastapi as f
 
 from ...database import *
-from ..models import *
+from .. import models
 from ..dependencies import *
 
 router_auditlogs = f.APIRouter()
@@ -15,7 +15,7 @@ router_auditlogs = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=List[MAuditLog]
+    response_model=List[models.AuditLogOutput]
 )
 def get(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -31,7 +31,7 @@ def get(
     responses={
         **login_error,
     },
-    response_model=List[MAuditLog]
+    response_model=List[models.AuditLogOutput]
 )
 def get_by_user(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -57,7 +57,7 @@ def get_by_user(
     responses={
         **login_error,
     },
-    response_model=List[MAuditLog]
+    response_model=List[models.AuditLogOutput]
 )
 def get_by_action(
     ls: LoginSession = f.Depends(dependency_login_session),

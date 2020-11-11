@@ -4,7 +4,7 @@ import fastapi as f
 import sqlalchemy.orm
 
 from ...database import *
-from ..models import *
+from .. import models
 from ..dependencies import *
 
 router_songs = f.APIRouter()
@@ -16,7 +16,7 @@ router_songs = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=List[MSongBatch]
+    response_model=List[models.Song]
 )
 def get_all(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -29,7 +29,7 @@ def get_all(
 @router_songs.post(
     "/",
     summary="Create a new song.",
-    response_model=MSongFull,
+    response_model=models.SongOutput,
     status_code=201,
     responses={
         **login_error,
@@ -38,9 +38,9 @@ def get_all(
 )
 def create(
     ls: LoginSession = f.Depends(dependency_login_session),
-    album_id: Optional[int] = f.Query(None, description="The album to attach the new song to.\nCan be null for no "
-                                                        "album."),
-    data: MSongWithoutId = f.Body(..., description="The data for the new song."),
+    album_id: Optional[int] = f.Query(None, description="The album to attach the new song to.\nCan be null "
+                                                                   "for no album."),
+    data: models.SongInput = f.Body(..., description="The data for the new song."),
 ):
     album = ls.get(Album, album_id)
     song = Song(album=album, **data.__dict__)
@@ -48,7 +48,6 @@ def create(
     ls.session.commit()
     ls.user.log("song.create", obj=song.id)
     ls.session.commit()
-
     return song
 
 
@@ -91,6 +90,7 @@ def edit_multiple_move(
         ls.user.log("song.edit.multiple.move", obj=song.id)
 
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -117,6 +117,7 @@ def edit_multiple_involve(
         SongInvolvement.make(session=ls.session, role=role, song=song, person=person)
         ls.user.log("song.edit.multiple.involve", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -211,7 +212,7 @@ def edit_multiple_group(
     Non-existing song_ids will be ignored.
     """
     for song in ls.group(Song, song_ids):
-        song.disc_number = disc_number
+        song.disc = disc_number
         ls.user.log("song.edit.multiple.group", obj=song.id)
     ls.session.commit()
 
@@ -291,7 +292,7 @@ def merge(
         **login_error,
         404: {"description": "Song not found"},
     },
-    response_model=MSongFull
+    response_model=models.SongOutput
 )
 def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -303,7 +304,7 @@ def get_single(
 @router_songs.put(
     "/{song_id}",
     summary="Edit a song.",
-    response_model=MSongFull,
+    response_model=models.SongOutput,
     responses={
         **login_error,
         404: {"description": "Song not found"},
@@ -312,10 +313,10 @@ def get_single(
 def edit_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     song_id: int = f.Path(..., description="The id of the song to be edited."),
-    data: MSongWithoutId = f.Body(..., description="The new data the song should have."),
+    data: models.SongInput = f.Body(..., description="The new data the song should have."),
 ):
     song = ls.get(Song, song_id)
-    song.update(**data.__dict__)
+    song.update(**data.dict())
     ls.user.log("song.edit.single", obj=song.id)
     ls.session.commit()
     return song

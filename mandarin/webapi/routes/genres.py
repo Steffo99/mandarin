@@ -4,7 +4,7 @@ import fastapi as f
 import sqlalchemy.orm
 
 from ...database import *
-from ..models import *
+from .. import models
 from ..dependencies import *
 
 router_genres = f.APIRouter()
@@ -16,7 +16,7 @@ router_genres = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=List[MGenre]
+    response_model=List[models.GenreOutput]
 )
 def get_all(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -33,17 +33,17 @@ def get_all(
         **login_error,
         409: {"description": "Duplicate genre name"}
     },
-    response_model=MGenreFull,
+    response_model=models.GenreOutput,
 )
 def create(
     ls: LoginSession = f.Depends(dependency_login_session),
-    data: MGenreWithoutId = f.Body(..., description="The new data the genre should have."),
+    data: models.GenreInput = f.Body(..., description="The new data the genre should have."),
 ):
     genre = ls.session.query(Genre).filter_by(name=data.name).one_or_none()
     if genre is not None:
         raise f.HTTPException(409, f"The genre '{data.name}' already exists.")
 
-    genre = Genre.make(session=ls.session, **data.__dict__)
+    genre = Genre.make(session=ls.session, **data.dict())
     ls.user.log("genre.create", obj=genre.id)
     ls.session.commit()
     return genre
@@ -106,6 +106,7 @@ def merge(
     rr_session.close()
 
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_genres.get(
@@ -115,7 +116,7 @@ def merge(
         **login_error,
         404: {"description": "Genre not found"},
     },
-    response_model=MGenreFull
+    response_model=models.GenreOutput
 )
 def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -127,7 +128,7 @@ def get_single(
 @router_genres.put(
     "/{genre_id}",
     summary="Edit a genre.",
-    response_model=MGenreFull,
+    response_model=models.GenreOutput,
     responses={
         **login_error,
         404: {"description": "Genre not found"},
@@ -136,10 +137,10 @@ def get_single(
 def edit_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     genre_id: int = f.Path(..., description="The id of the genre to be edited."),
-    data: MGenreWithoutId = f.Body(..., description="The new data the genre should have."),
+    data: models.GenreInput = f.Body(..., description="The new data the genre should have."),
 ):
     genre = ls.get(Genre, genre_id)
-    genre.update(**data.__dict__)
+    genre.update(**data.dict())
     ls.user.log("genre.edit.single", obj=genre.id)
     ls.session.commit()
     return genre
@@ -165,6 +166,7 @@ def delete(
     ls.session.delete(genre)
     ls.user.log("genre.delete", obj=genre.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 __all__ = (

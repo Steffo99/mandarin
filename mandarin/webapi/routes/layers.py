@@ -6,7 +6,7 @@ import sqlalchemy.orm
 import datetime
 
 from ...database import *
-from ..models import *
+from .. import models
 from ..dependencies import *
 from ..utils.upload import *
 
@@ -19,7 +19,7 @@ router_layers = f.APIRouter()
     responses={
         **login_error,
     },
-    response_model=List[MLayerBatch]
+    response_model=List[models.LayerOutput]
 )
 def get_all(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -95,7 +95,7 @@ def edit_multiple_rename(
         **login_error,
         404: {"description": "Layer not found"},
     },
-    response_model=MLayerFull
+    response_model=models.LayerOutput
 )
 def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
@@ -107,7 +107,7 @@ def get_single(
 @router_layers.put(
     "/{layer_id}",
     summary="Edit a layer.",
-    response_model=MLayerFull,
+    response_model=models.LayerOutput,
     responses={
         **login_error,
         404: {"description": "Layer not found"},
@@ -116,7 +116,7 @@ def get_single(
 def edit_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     layer_id: int = f.Path(..., description="The id of the layer to be edited."),
-    data: MLayerWithoutId = f.Body(..., description="The new data the layer should have."),
+    data: models.LayerInput = f.Body(..., description="The new data the layer should have."),
 ):
     layer = ls.get(Layer, layer_id)
     layer.update(**data.__dict__)
@@ -145,6 +145,7 @@ def delete(
     ls.session.delete(layer)
     ls.user.log("layer.delete", obj=layer.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 __all__ = (
