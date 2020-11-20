@@ -23,7 +23,7 @@ router_layers = f.APIRouter()
 )
 def get_all(
     ls: LoginSession = f.Depends(dependency_login_session),
-    limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0),
+    limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
     return ls.session.query(Layer).order_by(Layer.id).limit(limit).offset(offset).all()
