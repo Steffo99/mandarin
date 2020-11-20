@@ -20,9 +20,15 @@ router_albums = f.APIRouter()
 )
 def get_all(
     ls: LoginSession = f.Depends(dependency_login_session),
-    limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0),
+    limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
+    """
+    Get an array of all the albums currently in the database, in pages of `limit` elements and starting at the
+    element number `offset`.
+
+    To avoid denial of service attacks, `limit` cannot be greater than 500.
+    """
     return ls.session.query(Album).order_by(Album.id).limit(limit).offset(offset).all()
 
 
@@ -38,6 +44,9 @@ def create(
     ls: LoginSession = f.Depends(dependency_login_session),
     data: models.AlbumInput = f.Body(..., description="The data the new album should have."),
 ):
+    """
+    Create a new, **empty** album with the data specified in the body of the request.
+    """
     album = Album(**data.__dict__)
     ls.session.add(data)
     ls.session.commit()
@@ -48,12 +57,17 @@ def create(
 
 @router_albums.get(
     "/count",
-    summary="Get the number of albums currently in the database.",
+    summary="Get the total number of albums.",
     response_model=int,
 )
 def count(
     session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
 ):
+    """
+    Get the total number of albums.
+
+    Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
+    """
     return session.query(Album).count()
 
 
@@ -73,7 +87,15 @@ def edit_multiple_involve(
     role_id: int = f.Query(..., description="The id of the role of the involvement."),
 ):
     """
-    Non-existing album_ids will be ignored.
+    Connect the specified person to the specified albums detailing a role as the role of their involvement.
+
+    For example, "[Luis Fonsi](https://en.wikipedia.org/wiki/Luis_Fonsi)" should be involved with the album
+    "[Vida](https://en.wikipedia.org/wiki/Vida_(Luis_Fonsi_album))" with the role "Artist".
+
+    Non-existing `album_ids` passed to the method will be silently skipped, while a 404 error will be raised for
+    non-existing people or roles.
+
+    Trying to create an involvement that already exists will result in that involvement being skipped.
     """
     role = ls.get(Role, role_id)
     person = ls.get(Person, person_id)
@@ -100,7 +122,13 @@ def edit_multiple_uninvolve(
     role_id: int = f.Query(..., description="The id of the role of the involvement."),
 ):
     """
-    Non-existing album_ids will be ignored.
+    The opposite of _involve_: delete the connection between the specified person and the specified albums that has
+    the specified role.
+
+    Non-existing `album_ids` passed to the method will be silently skipped, while a 404 error will be raised for
+    non-existing people or roles.
+
+    Involvements that don't exist will be silently ignored.
     """
     role = ls.get(Role, role_id)
     person = ls.get(Person, person_id)
@@ -126,7 +154,10 @@ def edit_multiple_classify(
     genre_id: int = f.Query(..., description="The id of the genre to add."),
 ):
     """
-    Non-existing album_ids will be ignored.
+    Add the specified genre to all the specified albums.
+
+    Non-existing `album_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
+    non-existing genre.
     """
     genre = ls.get(Genre, genre_id)
     for album in ls.group(Album, album_ids):
@@ -151,7 +182,10 @@ def edit_multiple_declassify(
     genre_id: int = f.Query(..., description="The id of the genre to remove."),
 ):
     """
-    Non-existing album_ids will be ignored.
+    Remove the specified genre from all the specified albums.
+
+    Non-existing `album_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
+    non-existing genre.
     """
     genre = ls.get(Genre, genre_id)
     for album in ls.group(Album, album_ids):
@@ -175,7 +209,8 @@ def merge(
     album_ids: List[int] = f.Query(..., description="The ids of the albums to merge."),
 ):
     """
-    The first album will be used as base and will keep its data.
+    Merge the songs of all the specified albums into a single album, which will keep the metadata of the first album
+    specified as argument.
     """
 
     if len(album_ids) < 2:
@@ -185,14 +220,14 @@ def merge(
     rr_session: sqlalchemy.orm.session.Session = Session()
     rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
 
-    # Get the first genre
+    # Get the first album
     main_album = rr_session.query(Album).get(album_ids[0])
     ls.user.log("album.merge.to", obj=main_album.id)
 
-    # Get the other genres
+    # Get the other albums
     other_albums = rr_session.query(Album).filter(Album.id.in_(album_ids[1:])).all()
 
-    # Replace and delete the other genres
+    # Replace and delete the other albums
     for merged_album in other_albums:
         for song in merged_album.songs:
             song.album = main_album
@@ -219,6 +254,9 @@ def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     album_id: int = f.Path(..., description="The id of the album to be retrieved.")
 ):
+    """
+    Get full information for the album with the specified `album_id`.
+    """
     return ls.get(Album, album_id)
 
 
@@ -236,6 +274,9 @@ def edit_single(
     album_id: int = f.Path(..., description="The id of the album to be edited."),
     data: models.AlbumInput = f.Body(..., description="The new data the album should have."),
 ):
+    """
+    Replace the data of an album with the data passed in the request body.
+    """
     album = ls.get(Album, album_id)
     album.update(**data.__dict__)
     ls.user.log("album.edit.single", obj=album.id)
@@ -257,7 +298,9 @@ def delete(
     album_id: int = f.Path(..., description="The id of the album to be deleted."),
 ):
     """
-    Calling this method WON'T delete the corresponding tracks!
+    Delete the album having the specified `album_id`.
+
+    Note that the contained songs will not be deleted; they will become orphaned instead.
     """
     album = ls.get(Album, album_id)
     ls.session.delete(album)
