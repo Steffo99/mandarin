@@ -12,6 +12,9 @@ router_version = f.APIRouter()
     response_model=Literal[pkg_resources.get_distribution("mandarin").version],
 )
 def package() -> Literal[pkg_resources.get_distribution("mandarin").version]:
+    """
+    Return a string representing the [semantic version](https://semver.org/) of the mandarin Python package.
+    """
     return pkg_resources.get_distribution("mandarin").version
 
 
