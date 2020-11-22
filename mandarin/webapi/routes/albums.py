@@ -209,8 +209,8 @@ def merge(
     album_ids: List[int] = f.Query(..., description="The ids of the albums to merge."),
 ):
     """
-    Merge the songs of all the specified albums into a single album, which will keep the metadata of the first album
-    specified as argument.
+    Merge the songs of all the specified albums into a single one, which will have the metadata of the first album
+    specified.
     """
 
     if len(album_ids) < 2:
