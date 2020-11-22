@@ -15,6 +15,11 @@ router_debug = f.APIRouter()
     status_code=204,
 )
 def database_reset():
+    """
+    **Drop** and **recreate** all tables declared using the `DeclarativeBase` in `mandarin.database.base`.
+
+    **THIS DELETES ALL DATA FROM THE DATABASE!**
+    """
     Base.metadata.drop_all()
     Base.metadata.create_all()
     return f.Response(status_code=204)
