@@ -23,6 +23,12 @@ def get_all(
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
+    """
+    Get an array of all the genres currently in the database, in pages of `limit` elements and starting at the
+    element number `offset`.
+
+    To avoid denial of service attacks, `limit` cannot be greater than 500.
+    """
     return ls.session.query(Genre).order_by(Genre.id).limit(limit).offset(offset).all()
 
 
@@ -39,6 +45,9 @@ def create(
     ls: LoginSession = f.Depends(dependency_login_session),
     data: models.GenreInput = f.Body(..., description="The new data the genre should have."),
 ):
+    """
+    Create a new genre with the data specified in the body of the request.
+    """
     genre = ls.session.query(Genre).filter_by(name=data.name).one_or_none()
     if genre is not None:
         raise f.HTTPException(409, f"The genre '{data.name}' already exists.")
@@ -57,6 +66,11 @@ def create(
 def count(
     session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
 ):
+    """
+    Get the total number of genres.
+
+    Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
+    """
     return session.query(Genre).count()
 
 
@@ -74,7 +88,8 @@ def merge(
     genre_ids: List[int] = f.Query(..., description="The ids of the genres to merge."),
 ):
     """
-    The first genre will be used as base and will keep its name and description.
+    Merge the songs and albums of the specified genre into a single one, which will have the metadata of the first
+    genre specified.
     """
 
     if len(genre_ids) < 2:
@@ -122,6 +137,9 @@ def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     genre_id: int = f.Path(..., description="The id of the genre to be retrieved.")
 ):
+    """
+    Get full information for the genre with the specified `genre_id`.
+    """
     return ls.get(Genre, genre_id)
 
 
@@ -139,6 +157,9 @@ def edit_single(
     genre_id: int = f.Path(..., description="The id of the genre to be edited."),
     data: models.GenreInput = f.Body(..., description="The new data the genre should have."),
 ):
+    """
+    Replace the data of a genre with the data passed in the request body.
+    """
     genre = ls.get(Genre, genre_id)
     genre.update(**data.dict())
     ls.user.log("genre.edit.single", obj=genre.id)
@@ -160,7 +181,7 @@ def delete(
     genre_id: int = f.Path(..., description="The id of the genre to be deleted."),
 ):
     """
-    Calling this method WON'T delete the corresponding file!
+    Delete the genre having the specified `genre_id`, also disconnecting all songs from it.
     """
     genre = ls.get(Genre, genre_id)
     ls.session.delete(genre)
