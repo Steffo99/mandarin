@@ -26,6 +26,12 @@ def get_all(
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
+    """
+    Get an array of all the layers currently in the database, in pages of `limit` elements and starting at the
+    element number `offset`.
+
+    To avoid denial of service attacks, `limit` cannot be greater than 500.
+    """
     return ls.session.query(Layer).order_by(Layer.id).limit(limit).offset(offset).all()
 
 
@@ -37,6 +43,11 @@ def get_all(
 def count(
     session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
 ):
+    """
+    Get the total number of layers.
+
+    Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
+    """
     return session.query(Layer).count()
 
 
@@ -54,9 +65,6 @@ def edit_multiple_move(
     layer_ids: List[int] = f.Query(..., description="The ids of the layers that should be moved."),
     song_id: int = f.Query(...,  description="The id of the song the layers should be moved to."),
 ):
-    """
-    Non-existing layer_ids will be ignored.
-    """
     song = ls.get(Song, song_id)
     for layer in ls.group(Layer, layer_ids):
         layer.song = song
