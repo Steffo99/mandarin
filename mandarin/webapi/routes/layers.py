@@ -65,6 +65,9 @@ def edit_multiple_move(
     layer_ids: List[int] = f.Query(..., description="The ids of the layers that should be moved."),
     song_id: int = f.Query(...,  description="The id of the song the layers should be moved to."),
 ):
+    """
+    Change the song the specified layers are associated with.
+    """
     song = ls.get(Song, song_id)
     for layer in ls.group(Layer, layer_ids):
         layer.song = song
@@ -87,7 +90,7 @@ def edit_multiple_rename(
     name: str = f.Query(...,  description="The name the layers should be renamed to."),
 ):
     """
-    Non-existing layer_ids will be ignored.
+    Bulk change the name of all the specified layers.
     """
     for layer in ls.group(Layer, layer_ids):
         layer.name = name
@@ -109,6 +112,9 @@ def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     layer_id: int = f.Path(..., description="The id of the layer to be retrieved.")
 ):
+    """
+    Get full information for the layer with the specified `layer_id`.
+    """
     return ls.get(Layer, layer_id)
 
 
@@ -126,6 +132,9 @@ def edit_single(
     layer_id: int = f.Path(..., description="The id of the layer to be edited."),
     data: models.LayerInput = f.Body(..., description="The new data the layer should have."),
 ):
+    """
+    Replace the data of the layer with the specified `layer_id` with the data passed in the request body.
+    """
     layer = ls.get(Layer, layer_id)
     layer.update(**data.__dict__)
     ls.user.log("layer.edit.single", obj=layer.id)
@@ -147,7 +156,9 @@ def delete(
     layer_id: int = f.Path(..., description="The id of the layer to be deleted.")
 ):
     """
-    Calling this method WON'T delete the corresponding file!
+    Delete the layer having the specified `layer_id`.
+
+    Note that the associated file **WON'T** be deleted, it will instead become orphaned and unable to be used.
     """
     layer = ls.get(Layer, layer_id)
     ls.session.delete(layer)

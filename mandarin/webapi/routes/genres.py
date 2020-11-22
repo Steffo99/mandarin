@@ -60,7 +60,7 @@ def create(
 
 @router_genres.get(
     "/count",
-    summary="Get the number of genres currently in the database.",
+    summary="Get the total number of genres.",
     response_model=int,
 )
 def count(
@@ -158,7 +158,7 @@ def edit_single(
     data: models.GenreInput = f.Body(..., description="The new data the genre should have."),
 ):
     """
-    Replace the data of a genre with the data passed in the request body.
+    Replace the data of the genre with the specified `genre_id` with the data passed in the request body.
     """
     genre = ls.get(Genre, genre_id)
     genre.update(**data.dict())

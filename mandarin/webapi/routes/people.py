@@ -23,6 +23,12 @@ def get_all(
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
+    """
+    Get an array of all the people currently in the database, in pages of `limit` elements and starting at the
+    element number `offset`.
+
+    To avoid denial of service attacks, `limit` cannot be greater than 500.
+    """
     return ls.session.query(Person).order_by(Person.id).limit(limit).offset(offset).all()
 
 
@@ -38,6 +44,9 @@ def create(
     ls: LoginSession = f.Depends(dependency_login_session),
     data: models.PersonInput = f.Body(..., description="The new data the person should have."),
 ):
+    """
+    Create a new person with the data specified in the body of the request.
+    """
     person = Person(**data.__dict__)
     ls.session.add(person)
     ls.session.commit()
@@ -48,12 +57,17 @@ def create(
 
 @router_people.get(
     "/count",
-    summary="Get the number of people currently in the database.",
+    summary="Get the total number of people.",
     response_model=int,
 )
 def count(
     session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
 ):
+    """
+    Get the total number of people.
+
+    Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
+    """
     return session.query(Genre).count()
 
 
@@ -71,7 +85,8 @@ def merge(
     people_ids: List[int] = f.Query(..., description="The ids of the people to merge."),
 ):
     """
-    The first person will be used as base and will keep its name and description.
+    Change the involvements of all the passed people to involve the first person instead, then delete the now-empty
+    people from the second to the last place.
     """
 
     if len(people_ids) < 2:
@@ -117,6 +132,9 @@ def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     person_id: int = f.Path(..., description="The id of the person to be retrieved."),
 ):
+    """
+    Get full information for the person with the specified `person_id`.
+    """
     return ls.get(Person, person_id)
 
 
@@ -134,6 +152,9 @@ def edit_single(
     person_id: int = f.Path(..., description="The id of the person to be edited."),
     data: models.PersonInput = f.Body(..., description="The new data the person should have."),
 ):
+    """
+    Replace the data of the person with the specified `person_id` with the data passed in the request body.
+    """
     person = ls.get(Person, person_id)
     person.update(**data.__dict__)
     ls.user.log("person.edit.single", obj=person.id)
@@ -154,6 +175,11 @@ def delete(
     ls: LoginSession = f.Depends(dependency_login_session),
     person_id: int = f.Path(..., description="The id of the person to be edited."),
 ):
+    """
+    Delete the person having the specified `album_id`.
+
+    All their involvements will be deleted.
+    """
     person = ls.get(Person, person_id)
     ls.session.delete(person)
     ls.user.log("person.delete", obj=person.id)

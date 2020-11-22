@@ -209,7 +209,7 @@ def merge(
     album_ids: List[int] = f.Query(..., description="The ids of the albums to merge."),
 ):
     """
-    Merge the songs of all the specified albums into a single one, which will have the metadata of the first album
+    Move the songs of all the specified albums into a single one, which will have the metadata of the first album
     specified.
     """
 
@@ -275,7 +275,7 @@ def edit_single(
     data: models.AlbumInput = f.Body(..., description="The new data the album should have."),
 ):
     """
-    Replace the data of an album with the data passed in the request body.
+    Replace the data of the album with the specified `album_id` with the data passed in the request body.
     """
     album = ls.get(Album, album_id)
     album.update(**data.__dict__)

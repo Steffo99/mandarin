@@ -23,6 +23,12 @@ def get_all(
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
+    """
+    Get an array of all the songs currently in the database, in pages of `limit` elements and starting at the
+    element number `offset`.
+
+    To avoid denial of service attacks, `limit` cannot be greater than 500.
+    """
     return ls.session.query(Song).order_by(Song.id).limit(limit).offset(offset).all()
 
 
@@ -38,10 +44,13 @@ def get_all(
 )
 def create(
     ls: LoginSession = f.Depends(dependency_login_session),
-    album_id: Optional[int] = f.Query(None, description="The album to attach the new song to.\nCan be null "
-                                                                   "for no album."),
+    album_id: Optional[int] = f.Query(None,
+                                      description="The album to attach the new song to.\nCan be null for no album."),
     data: models.SongInput = f.Body(..., description="The data for the new song."),
 ):
+    """
+    Create a new song with no layers and the data specified in the body of the request.
+    """
     album = ls.get(Album, album_id)
     song = Song(album=album, **data.__dict__)
     ls.session.add(song)
@@ -59,6 +68,11 @@ def create(
 def count(
     session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
 ):
+    """
+    Get the total number of songs.
+
+    Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
+    """
     return session.query(Song).count()
 
 
@@ -75,10 +89,9 @@ def edit_multiple_move(
     ls: LoginSession = f.Depends(dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the songs that should be moved."),
     album_id: Optional[int] = f.Query(..., description="The id of the album the layers should be moved to."),
-
 ):
     """
-    Non-existing song_ids will be ignored.
+    Change the album the specified songs are associated with.
     """
     if album_id:
         album = ls.get(Album, album_id)
@@ -109,7 +122,15 @@ def edit_multiple_involve(
     role_id: int = f.Query(..., description="The id of the role of the involvement."),
 ):
     """
-    Non-existing song_ids will be ignored.
+    Connect the specified person to the specified songs detailing a role as the role of their involvement.
+
+    For example, "[Luis Fonsi](https://en.wikipedia.org/wiki/Luis_Fonsi)" should be involved with the song
+    "[Despacito](https://en.wikipedia.org/wiki/Despacito)" with the role "Artist".
+
+    Non-existing `song_ids` passed to the method will be silently skipped, while a 404 error will be raised for
+    non-existing people or roles.
+
+    Trying to create an involvement that already exists will result in that involvement being skipped.
     """
     role = ls.get(Role, role_id)
     person = ls.get(Person, person_id)
@@ -136,7 +157,13 @@ def edit_multiple_uninvolve(
     role_id: int = f.Query(..., description="The id of the role of the involvement."),
 ):
     """
-    Non-existing song_ids will be ignored.
+    The opposite of _involve_: delete the connection between the specified person and the specified songs that has
+    the specified role.
+
+    Non-existing `song_ids` passed to the method will be silently skipped, while a 404 error will be raised for
+    non-existing people or roles.
+
+    Involvements that don't exist will be silently ignored.
     """
     role = ls.get(Role, role_id)
     person = ls.get(Person, person_id)
@@ -161,7 +188,10 @@ def edit_multiple_classify(
     genre_id: int = f.Query(..., description="The id of the genre to add."),
 ):
     """
-    Non-existing song_ids will be ignored.
+    Add the specified genre to all the specified songs.
+
+    Non-existing `song_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
+    non-existing genre.
     """
     genre = ls.get(Genre, genre_id)
     for song in ls.group(Song, song_ids):
@@ -185,7 +215,10 @@ def edit_multiple_declassify(
     genre_id: int = f.Query(..., description="The id of the genre to remove."),
 ):
     """
-    Non-existing song_ids will be ignored.
+    Remove the specified genre from all the specified songs.
+
+    Non-existing `song_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
+    non-existing genre.
     """
     genre = ls.get(Genre, genre_id)
     for song in ls.group(Song, song_ids):
@@ -209,7 +242,7 @@ def edit_multiple_group(
                                                            "or None to clear the disc number.", ge=1),
 ):
     """
-    Non-existing song_ids will be ignored.
+    Change the disc number of all the specified songs.
     """
     for song in ls.group(Song, song_ids):
         song.disc = disc_number
@@ -231,7 +264,7 @@ def edit_multiple_calendarize(
     year: Optional[int] = f.Query(None, description="The year to set the songs to, or None to clear the year."),
 ):
     """
-    Non-existing song_ids will be ignored.
+    Change the release year of all the specified songs.
     """
     for song in ls.group(Song, song_ids):
         song.year = year
@@ -253,8 +286,8 @@ def merge(
     song_ids: List[int] = f.Query(..., description="The ids of the genres to merge."),
 ):
     """
-    The first song will be used as base and will keep all its properties, while the properties of all other songs
-    will be discarded.
+    Move the layers of all the specified songs into a single one, which will have the metadata of the first song
+    specified.
     """
 
     if len(song_ids) < 2:
@@ -298,6 +331,9 @@ def get_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     song_id: int = f.Path(..., description="The id of the song to be retrieved.")
 ):
+    """
+    Get full information for the song with the specified `song_id`.
+    """
     return ls.get(Song, song_id)
 
 
@@ -315,6 +351,9 @@ def edit_single(
     song_id: int = f.Path(..., description="The id of the song to be edited."),
     data: models.SongInput = f.Body(..., description="The new data the song should have."),
 ):
+    """
+    Replace the data of the song with the specified `song_id` with the data passed in the request body.
+    """
     song = ls.get(Song, song_id)
     song.update(**data.dict())
     ls.user.log("song.edit.single", obj=song.id)
@@ -336,7 +375,9 @@ def delete(
     song_id: int = f.Path(..., description="The id of the song to be deleted.")
 ):
     """
-    Calling this method WON'T delete the corresponding layer (but will delete the SongInvolvements).
+    Delete the song having the specified `song_id`.
+
+    Note that the contained layers will not be deleted; they will become orphaned instead.
     """
     song = ls.get(Song, song_id)
     ls.session.delete(song)
