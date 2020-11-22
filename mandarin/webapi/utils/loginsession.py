@@ -4,6 +4,7 @@ import dataclasses
 import sqlalchemy.orm
 import fastapi
 
+from ..models import enums
 from ...database import *
 
 
@@ -21,7 +22,7 @@ class LoginSession:
             raise fastapi.HTTPException(404, f"The id '{id_}' does not match any {table.__name__}.")
         return obj
 
-    def group(self, table: Type[RowType], ids: List[int]) -> List[RowType]:
+    def group(self, table: Type[RowType], ids: List[int]) -> Sequence[RowType]:
         return self.session.query(table).filter(table.id.in_(ids)).all()
 
 

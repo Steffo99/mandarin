@@ -4,14 +4,23 @@ import fastapi as f
 
 from ...database import *
 from .. import models
+from ..models import enums
 from ..dependencies import *
 
 router_auditlogs = f.APIRouter()
 
 
+def ordered(query, column, order: enums.TimestampOrdering):
+    if order is enums.TimestampOrdering.OLDEST_FIRST:
+        query = query.order_by(column)
+    elif order is enums.TimestampOrdering.LATEST_FIRST:
+        query = query.order_by(column.desc())
+    return query
+
+
 @router_auditlogs.get(
     "/",
-    summary="Get the latest audit logs.",
+    summary="Get all audit logs.",
     responses={
         **login_error,
     },
@@ -21,8 +30,16 @@ def get(
     ls: LoginSession = f.Depends(dependency_login_session),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
+    order: enums.TimestampOrdering = f.Query(enums.TimestampOrdering.ANY,
+                                             description="The order you want the objects to be returned in."),
 ):
-    return ls.session.query(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit).offset(offset).all()
+    """
+    Get an array of all audit logs currently in the database, in pages of `limit` elements and starting at the 
+    element number `offset`.
+
+    To avoid denial of service attacks, `limit` cannot be greater than 500.
+    """
+    return ordered(ls.session.query(AuditLog), AuditLog.timestamp, order=order).limit(limit).offset(offset).all()
 
 
 @router_auditlogs.get(
@@ -38,16 +55,19 @@ def get_by_user(
     user_id: int = f.Path(..., description="The id of the user to get audit logs about."),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
+    order: enums.TimestampOrdering = f.Query(enums.TimestampOrdering.ANY,
+                                             description="The order you want the objects to be returned in."),
 ):
+    """
+    Get an array of the audit logs in which the specified user is involved, in pages of `limit` elements and
+    starting at the element number `offset`.
+
+    To avoid denial of service attacks, `limit` cannot be greater than 500.
+    """
     user = ls.get(User, user_id)
     return (
-        ls.session
-            .query(AuditLog)
-            .filter_by(user=user)
-            .order_by(AuditLog.timestamp.desc())
-            .limit(limit)
-            .offset(offset)
-            .all()
+        ordered(ls.session.query(AuditLog).filter_by(user=user), AuditLog.timestamp, order=order)
+        .limit(limit).offset(offset).all()
     )
 
 
@@ -65,15 +85,18 @@ def get_by_action(
                                           "insensitive."),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
+    order: enums.TimestampOrdering = f.Query(enums.TimestampOrdering.ANY,
+                                             description="The order you want the objects to be returned in."),
 ):
+    """
+    Get an array of the audit logs that match the passed `action` pattern, in pages of `limit` elements and
+    starting at the element number `offset`.
+
+    To avoid denial of service attacks, `limit` cannot be greater than 500.
+    """
     return (
-        ls.session
-            .query(AuditLog)
-            .filter(AuditLog.action.ilike(action))
-            .order_by(AuditLog.timestamp.desc())
-            .limit(limit)
-            .offset(offset)
-            .all()
+        ordered(ls.session.query(AuditLog).filter(AuditLog.action.ilike(action)), AuditLog.timestamp, order=order)
+        .limit(limit).offset(offset).all()
     )
 
 
