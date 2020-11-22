@@ -130,6 +130,9 @@ async def download_single(
     ls: LoginSession = f.Depends(dependency_login_session),
     file_id: int = f.Path(..., description="The id of the file to be downloaded.")
 ):
+    """
+    Download a single raw file from the database, without any tags applied.
+    """
     file = ls.get(File, file_id)
     return starlette.responses.FileResponse(file.name, media_type=file.mime_type)
 
