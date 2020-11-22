@@ -19,6 +19,12 @@ router_auth = f.APIRouter()
 def access_token(
     payload: dict = f.Depends(dependency_access_token)
 ):
+    """
+    Returns the payload obtained by getting the `/userinfo` endpoint of the authentication provider with the passed
+    bearer token.
+
+    Can be used to debug the authentication process.
+    """
     return payload
 
 
@@ -33,6 +39,11 @@ def access_token(
 def current_user(
     ls: LoginSession = f.Depends(dependency_login_session)
 ):
+    """
+    Returns information about the user that matches the passed bearer token.
+
+    Can be used to debug the authentication process.
+    """
     return ls.user
 
 
