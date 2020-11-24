@@ -3,7 +3,6 @@ import starlette.responses
 from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm.session
-import datetime
 
 from ...database import *
 from .. import models
