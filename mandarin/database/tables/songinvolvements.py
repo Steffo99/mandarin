@@ -13,13 +13,13 @@ class SongInvolvement(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     __tablename__ = "songinvolvements"
 
-    _person = s.Column(s.Integer, s.ForeignKey("people.id"), primary_key=True)
+    person_id = s.Column(s.Integer, s.ForeignKey("people.id"), primary_key=True)
     person = o.relationship("Person", back_populates="song_involvements")
 
-    _song = s.Column(s.Integer, s.ForeignKey("songs.id"), primary_key=True)
+    song_id = s.Column(s.Integer, s.ForeignKey("songs.id"), primary_key=True)
     song = o.relationship("Song", back_populates="involvements")
 
-    _role = s.Column(s.Integer, s.ForeignKey("roles.id"), primary_key=True)
+    role_id = s.Column(s.Integer, s.ForeignKey("roles.id"), primary_key=True)
     role = o.relationship("Role", back_populates="song_involvements")
 
 

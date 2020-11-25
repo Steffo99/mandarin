@@ -25,10 +25,5 @@ class File(Base, a.ColRepr, a.Updatable, a.Makeable):
 
     used_as_layer = o.relationship("Layer", back_populates="file")
 
-    @classmethod
-    def guess(cls, name: str, *, session: o.session.Session, **kwargs) -> File:
-        mtype, msoftware = mimetypes.guess_type(name, strict=False)
-        return cls.make(session=session, name=name, mime_type=mtype, mime_software=msoftware, **kwargs)
-
 
 __all__ = ("File",)

@@ -252,7 +252,7 @@ def auto_song(session: sqlalchemy.orm.session.Session, parse: Parse) -> Parse.So
         if query is None:
             query = subquery
         else:
-            query = subquery.filter(dt.SongInvolvement._person.in_([person.id for person in query.all()]))
+            query = subquery.filter(dt.SongInvolvement.person_id.in_([person.id for person in query.all()]))
 
     song_involvement: dt.SongInvolvement = query.one_or_none() if query else None
 
