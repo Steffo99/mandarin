@@ -1,26 +1,36 @@
 from royalnet.typing import *
-import eyed3.core
-import eyed3.id3
-import eyed3.mp3
 import os
 import pathlib
 import hashlib
 import mimetypes
 import sqlalchemy.orm
+import copy
+import mutagen
 
 from ..celery import celery
 from ...config import config
 from ...database import tables, Session
 
 
-def parse_tag(path: os.PathLike) -> eyed3.core.Tag:
-    file: Union[eyed3.id3.TagFile, eyed3.mp3.Mp3AudioFile] = eyed3.core.load(path)
-    return file.tag
+def parse_tag(file: mutagen.File) -> mutagen.Tags:
+    tag: mutagen.Tags = copy.deepcopy(file.tags)
+    return tag
 
 
-def strip_tag(path: os.PathLike) -> None:
-    file: Union[eyed3.id3.TagFile, eyed3.mp3.Mp3AudioFile] = eyed3.core.load(path)
-    file.initTag()
+def strip_tag(file: mutagen.File) -> None:
+    file.delete(fileobj=file)
+
+
+def save_with_no_padding(file: mutagen.File) -> None:
+    file.save(padding=lambda _: 0)
+
+
+def parse_and_strip_tags(path: os.PathLike) -> mutagen.Tags:
+    file: mutagen.File = mutagen.File(filename=path)
+    tag = parse_tag(file)
+    strip_tag(file)
+    save_with_no_padding(file)
+    return tag
 
 
 HASH_CHUNK_SIZE = 8192
@@ -78,18 +88,18 @@ def field_int(field: Optional[str]) -> Optional[int]:
         return None
 
 
-def find_album_from_tag(session: sqlalchemy.orm.session.Session, tag: eyed3.core.Tag) -> Optional[tables.Album]:
+def find_album_from_tag(session: sqlalchemy.orm.session.Session, tag: mutagen.Tags) -> Optional[tables.Album]:
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
 
     query = None
-    for artist in field_list(tag.album_artist):
+    for artist in field_list(tag.get("albumartist")):
         subquery = (
             session.query(tables.AlbumInvolvement)
                    .filter(tables.AlbumInvolvement.role == role_artist)
                    .join(tables.Person)
-                   .filter(tables.Person.name == artist)
+                   .filter(tables.Person.name == field_str(tag.get("artist")))
                    .join(tables.Album)
-                   .filter(tables.Album.title == field_str(tag.album))
+                   .filter(tables.Album.title == field_str(tag.get("album")))
         )
         if query is None:
             query = subquery
@@ -102,20 +112,20 @@ def find_album_from_tag(session: sqlalchemy.orm.session.Session, tag: eyed3.core
     return None
 
 
-def find_song_from_tag(session: sqlalchemy.orm.session.Session, tag: eyed3.core.Tag) -> Optional[tables.Song]:
+def find_song_from_tag(session: sqlalchemy.orm.session.Session, tag: mutagen.Tags) -> Optional[tables.Song]:
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
 
     query = None
-    for artist in field_list(tag.album_artist):
+    for artist in field_list(tag.get("albumartist")):
         subquery = (
             session.query(tables.SongInvolvement)
                    .filter(tables.SongInvolvement.role == role_artist)
                    .join(tables.Person)
                    .filter(tables.Person.name == artist)
                    .join(tables.Song)
-                   .filter(tables.Song.title == field_str(tag.title))
+                   .filter(tables.Song.title == field_str(tag.get("title")))
                    .join(tables.Album)
-                   .filter(tables.Album.title == field_str(tag.album))
+                   .filter(tables.Album.title == field_str(tag.get("album")))
         )
         if query is None:
             query = subquery
@@ -128,7 +138,9 @@ def find_song_from_tag(session: sqlalchemy.orm.session.Session, tag: eyed3.core.
     return None
 
 
-def make_entries_from_file(session: sqlalchemy.orm.session.Session, file: tables.File, tag: eyed3.core.Tag):
+def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
+                            layer: tables.Layer,
+                            tag: mutagen.Tags) -> Tuple[tables.Album, tables.Song]:
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
     role_composer = tables.Role.make(session=session, name=config["apps.files.roles.composer"])
     role_performer = tables.Role.make(session=session, name=config["apps.files.roles.performer"])
@@ -136,35 +148,58 @@ def make_entries_from_file(session: sqlalchemy.orm.session.Session, file: tables
     album = find_album_from_tag(session=session, tag=tag)
     if album is None:
         album = tables.Album(
-            title=field_str(tag.album)
+            title=field_str(tag.get("album"))
         )
-        session.add(album)
         album.involve(
-            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.artist)),
+            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.get("artist"))),
             role=role_artist
         )
 
     song = find_song_from_tag(session=session, tag=tag)
     if song is None:
+        song_genre = field_str(tag.get("genre"))
         song = tables.Song(
-            title=field_str(tag.title),
-            year=field_int(tag.),
-            disc=parse.song.disc_number,
-            track=parse.song.track_number,
-            album=auto_album(session=session, parse_album=parse.album) if parse.album.title else None,
-            genres=[dt.Genre.make(session=session, name=parse.song.genre)] if parse.song.genre else [],
+            title=field_str(tag.get("title")),
+            year=field_int(tag.get("date")),
+            disc=field_int(tag.get("discnumber")),
+            track=field_int(tag.get("tracknumber")),
+            album=album,
+            genres=[tables.Genre.make(session=session, name=song_genre)] if song_genre else [],
         )
+        song.involve(
+            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.get("artist"))),
+            role=role_artist
+        )
+        song.involve(
+            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.get("composer"))),
+            role=role_composer
+        )
+        song.involve(
+            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.get("performer"))),
+            role=role_performer
+        )
+
+    layer.song = song
+
+    return album, song
 
 
 @celery.task
-def process_music(path: os.PathLike, uploader_id: Optional[int] = None):
-    tag: eyed3.core.Tag = parse_tag(path)
-    strip_tag(path)
+def process_music(path: os.PathLike,
+                  uploader_id: Optional[int] = None,
+                  *,
+                  layer_data: Dict[str, Any],
+                  generate_entries: bool = False):
+
+    session = Session()
+    session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
+
+    tag: mutagen.Tags = parse_and_strip_tags(path)
+
     destination = determine_filename(path)
     mime_type, mime_software = guess_mimetypes(path)
     move_file(source=path, destination=destination)
 
-    session = Session()
     file = tables.File(
         name=destination.name,
         mime_type=mime_type,
@@ -172,4 +207,16 @@ def process_music(path: os.PathLike, uploader_id: Optional[int] = None):
         uploader_id=uploader_id
     )
     session.add(file)
+
+    layer = tables.Layer(
+        **layer_data,
+        file=file,
+    )
+    session.add(layer)
+
+    if generate_entries:
+        album, song = make_entries_from_layer(session=session, layer=layer, tag=tag)
+        session.add(album)
+        session.add(song)
+
     session.commit()
