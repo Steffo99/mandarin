@@ -20,6 +20,9 @@ celery = {extras = ["redis"], version = "^5.0.2"}
 mutagen = "^1.45.1"
 
 [tool.poetry.dev-dependencies]
+celery = "^5.0.2"
+pytest = "^6.1.2"
+pytest-celery = "^0.0.0-alpha.1"
 
 [build-system]
 requires = ["poetry>=0.12"]

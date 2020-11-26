@@ -1,11 +1,13 @@
-import celery as _celery
+import celery
 
 from ..config import config
 
 
-celery = _celery.Celery(__name__, broker=config["taskbus.broker"], backend=config["taskbus.backend"])
-
+app = celery.Celery("mandarin",
+                    broker=config["taskbus.broker"],
+                    backend=config["taskbus.backend"],
+                    include=["mandarin.taskbus.tasks"])
 
 __all__ = (
-    "celery",
+    "app",
 )

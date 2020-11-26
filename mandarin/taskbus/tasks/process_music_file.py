@@ -6,10 +6,14 @@ import mimetypes
 import sqlalchemy.orm
 import copy
 import mutagen
+import logging
+import shutil
 
-from ..celery import celery
+from ..celery import app as celery
 from ...config import config
 from ...database import tables, Session
+
+log = logging.getLogger(__name__)
 
 
 def parse_tag(file: mutagen.File) -> mutagen.Tags:
@@ -18,7 +22,7 @@ def parse_tag(file: mutagen.File) -> mutagen.Tags:
 
 
 def strip_tag(file: mutagen.File) -> None:
-    file.delete(fileobj=file)
+    file.delete()
 
 
 def save_with_no_padding(file: mutagen.File) -> None:
@@ -54,6 +58,11 @@ def determine_filename(path: os.PathLike) -> pathlib.Path:
     extension = determine_extension(path)
     musicdir = pathlib.Path(config["storage.music.dir"])
     return musicdir.joinpath(f"{filename}{extension}")
+
+
+def copy_file(source: os.PathLike, destination: os.PathLike) -> None:
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    shutil.copy2(source, destination)
 
 
 def move_file(source: os.PathLike, destination: os.PathLike) -> None:
@@ -188,25 +197,37 @@ def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
 def process_music(path: os.PathLike,
                   uploader_id: Optional[int] = None,
                   *,
-                  layer_data: Dict[str, Any],
-                  generate_entries: bool = False):
+                  layer_data: Optional[Dict[str, Any]] = None,
+                  generate_entries: bool = False,
+                  delete_original: bool = False):
+
+    if layer_data is None:
+        layer_data: Dict[str, Any] = {}
 
     session = Session()
-    session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
+    session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
     tag: mutagen.Tags = parse_and_strip_tags(path)
 
     destination = determine_filename(path)
     mime_type, mime_software = guess_mimetypes(path)
-    move_file(source=path, destination=destination)
 
-    file = tables.File(
-        name=destination.name,
-        mime_type=mime_type,
-        mime_software=mime_software,
-        uploader_id=uploader_id
-    )
-    session.add(file)
+    file: Optional[tables.File] = None
+    if os.path.exists(destination):
+        file = session.query(tables.File).filter_by(name=destination.name).one_or_none()
+    else:
+        if delete_original:
+            move_file(source=path, destination=destination)
+        else:
+            copy_file(source=path, destination=destination)
+    if file is None:
+        file = tables.File(
+            name=destination.name,
+            mime_type=mime_type,
+            mime_software=mime_software,
+            uploader_id=uploader_id
+        )
+        session.add(file)
 
     layer = tables.Layer(
         **layer_data,
@@ -220,3 +241,8 @@ def process_music(path: os.PathLike,
         session.add(song)
 
     session.commit()
+
+
+__all__ = (
+    "process_music",
+)
