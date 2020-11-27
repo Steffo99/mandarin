@@ -1,6 +1,8 @@
 import pytest
 import pathlib
 import shutil
+import random
+import os
 from mandarin.taskbus.tasks import process_music
 from mandarin.database.engine import *
 from mandarin.database.base import *
@@ -9,8 +11,15 @@ from mandarin.database.tables import *
 
 @pytest.fixture
 def sample_noise_path():
-    shutil.copy2(pathlib.Path("tests/samples/noise.mp3"), pathlib.Path("tmp/noise.mp3"))
-    return "tmp/noise.mp3"
+    """
+    Copy the sample noise file to a temporary folder.
+    """
+    b = str(random.randrange(0, 1_000_000_000))
+    src = pathlib.Path("tests/samples/noise.mp3")
+    dst = pathlib.Path(f"tmp/noise_{b}.mp3")
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    shutil.copy2(src, dst)
+    return dst
 
 
 @pytest.fixture
@@ -20,8 +29,8 @@ def clean_db():
     Base.metadata.create_all()
 
 
-def test_file_processing(clean_db):
-    file_id, layer_id = process_music.delay(original_path="tests/samples/noise.mp3").get(timeout=5)
+def test_file_processing(clean_db, sample_noise_path):
+    file_id, layer_id = process_music.delay(original_path=str(sample_noise_path)).get(timeout=5)
 
     session = Session()
 
@@ -42,9 +51,9 @@ def test_file_processing(clean_db):
     session.close()
 
 
-def test_entries_generation(clean_db):
+def test_entries_generation(clean_db, sample_noise_path):
     _, layer_id = process_music.delay(
-        original_path="./tests/samples/noise.mp3",
+        original_path=str(sample_noise_path),
         generate_entries=True,
     ).get(timeout=5)
 

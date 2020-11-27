@@ -20,19 +20,43 @@ log = logging.getLogger(__name__)
 
 
 def parse_tag(file: mutagen.File) -> Dict[str, List[str]]:
+    """
+    Copy the tag of a :class:`mutagen.File` to a :class:`dict`.
+
+    :param file: The file to copy the tags from.
+    :return: The copied dict.
+    """
     tag: Dict[str, List[str]] = dict(file.tags)
     return tag
 
 
 def strip_tag(file: mutagen.File) -> None:
+    """
+    Remove the tag of a :class:`mutagen.File`.
+
+    :param file: The file to remove the tags of.
+    """
     file.tags.clear()
 
 
 def save_with_no_padding(file: mutagen.File, destination_stream: IO[bytes]) -> None:
+    """
+    Write the specified :class:`mutagen.File` to the passed destination stream (which can be any
+    writeable file-like object), using no padding for the tag section.
+
+    :param file: The file to save.
+    :param destination_stream: The file-like object to save the file to.
+    """
     file.save(fileobj=destination_stream, padding=lambda _: 0)
 
 
 def process_tags(stream: IO[bytes]) -> MutagenParse:
+    """
+    Extract the tag of a file from its contents, creating a :class:`.MutagenParse` object.
+
+    :param stream: The file-like object that will be parsed and **edited**.
+    :return: The :class:`.MutagenParse` object containing information about the song.
+    """
     stream.seek(0)
     file: mutagen.File = mutagen.File(fileobj=stream, easy=True)
     tag: Dict[str, List[str]] = parse_tag(file)
@@ -47,6 +71,12 @@ HASH_CHUNK_SIZE = 8192
 
 
 def hash_file(stream: IO[bytes]) -> hashlib.sha512:
+    """
+    Calculate the :class:`hashlib.sha512` hash of a file-like object.
+
+    :param stream: The file-like object to calculate the hash of.
+    :return: The :class:`hashlib.sha512` hash.
+    """
     h = hashlib.sha512()
     stream.seek(0)
     while chunk := stream.read(HASH_CHUNK_SIZE):
@@ -55,23 +85,50 @@ def hash_file(stream: IO[bytes]) -> hashlib.sha512:
 
 
 def determine_extension(path: os.PathLike) -> str:
+    """
+    Determine the extension of a file path.
+
+    :param path: The path-like object to parse, such as a :class:`str` or a `pathlib.Path`.
+    :return: The extension of the file object.
+    """
     _, ext = os.path.splitext(path)
     return ext
 
 
 def determine_filename(stream: IO[bytes], original_path: os.PathLike) -> pathlib.Path:
+    """
+    Determine the filename that should be given to a music file, passed as a file-like object.
+
+    :param stream: The file-like object.
+    :param original_path: The original path of the file, used to determine the extension and the mimetype.
+    :return: A :class:`pathlib.Path` object representing the path that the file should have.
+    """
     filename = hash_file(stream).hexdigest()
     musicdir = pathlib.Path(config["storage.music.dir"])
     extension = determine_extension(original_path)
     return musicdir.joinpath(f"{filename}{extension}")
 
 
-def guess_mimetypes(original_path: os.PathLike) -> Tuple[Optional[str], Optional[str]]:
+def guess_mimetype(original_path: os.PathLike) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Try to guess the mimetype and the mimeapplication from a path-like object.
+
+    :param original_path: The path-like object to guess the mimetype from.
+    :return: A :class:`tuple` of the mimetype and the mimeapplication. Either can be :data:`None` if the guess failed.
+    """
     return mimetypes.guess_type(original_path, strict=False)
 
 
 def find_album_from_tag(session: sqlalchemy.orm.session.Session,
                         mp: MutagenParse) -> Optional[tables.Album]:
+    """
+    Try to find in the database the :class:`~mandarin.database.tables.Album` that matches the passed
+    :class:`.MutagenParse` object.
+
+    :param session: The :class:`~sqlalchemy.orm.session.Session` to use for the search.
+    :param mp: The :class:`.MutagenParse` object.
+    :return: The found :class:`~mandarin.database.tables.Album`, or :data:`None` if no matches were found.
+    """
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
 
     query = None
@@ -97,6 +154,14 @@ def find_album_from_tag(session: sqlalchemy.orm.session.Session,
 
 def find_song_from_tag(session: sqlalchemy.orm.session.Session,
                        mp: MutagenParse) -> Optional[tables.Song]:
+    """
+    Try to find in the database the :class:`~mandarin.database.tables.Song` that matches the passed
+    :class:`.MutagenParse` object.
+
+    :param session: The :class:`~sqlalchemy.orm.session.Session` to use for the search.
+    :param mp: The :class:`.MutagenParse` object.
+    :return: The found :class:`~mandarin.database.tables.Song`, or :data:`None` if no matches were found.
+    """
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
 
     query = None
@@ -125,6 +190,15 @@ def find_song_from_tag(session: sqlalchemy.orm.session.Session,
 def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
                             layer: tables.Layer,
                             mp: MutagenParse) -> Tuple[tables.Album, tables.Song]:
+    """
+    Create :class:`~mandarin.database.tables.Album`, :class:`~mandarin.database.tables.Song`,
+    and :class:`~mandarin.database.tables.Person` entries for the specified layer, using the information contained in
+    the passed :class:`.MutagenParse`.
+
+    :param session: The :class:`~sqlalchemy.orm.session.Session` to use; all created entries **will be added to it**.
+    :param layer: The :class:`~mandarin.database.tables.Layer` to associate the created entities with.
+    :param mp: The :class:`.MutagenParse` to source the information from.
+    """
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
     role_composer = tables.Role.make(session=session, name=config["apps.files.roles.composer"])
     role_performer = tables.Role.make(session=session, name=config["apps.files.roles.performer"])
@@ -179,6 +253,20 @@ def process_music(original_path: os.PathLike,
                   layer_data: Optional[Dict[str, Any]] = None,
                   generate_entries: bool = False,
                   delete_original: bool = False) -> Tuple[int, int]:
+    """
+    A :mod:`celery` task that processes an uploaded music file.
+
+    :param original_path: The temporary path where the file is initially stored.
+    :param uploader_id: The id of the :class:`~mandarin.database.tables.User` who uploaded the file, or :data:`None`
+                        if it was anonymous.
+    :param layer_data: ``**kwargs`` to pass to the :class:`~mandarin.database.tables.Layer` constructor.
+    :param generate_entries: Whether entries for the music file should be generated with
+                             :func:`.make_entries_from_layer`.
+    :param delete_original: If the initial file should be deleted after it is copied to the data directory. Useful
+                            for testing, or to import existing media libraries.
+    :return: A :class:`tuple` of the ids of the created :class:`~mandarin.database.tables.File` and
+             :class:`~mandarin.database.tables.Layer` respectively.
+    """
 
     if layer_data is None:
         layer_data: Dict[str, Any] = {}
@@ -193,7 +281,7 @@ def process_music(original_path: os.PathLike,
 
     mp: MutagenParse = process_tags(stream=stream)
     destination = determine_filename(stream=stream, original_path=original_path)
-    mime_type, mime_software = guess_mimetypes(original_path=original_path)
+    mime_type, mime_software = guess_mimetype(original_path=original_path)
 
     file: Optional[tables.File] = None
     if os.path.exists(destination):
