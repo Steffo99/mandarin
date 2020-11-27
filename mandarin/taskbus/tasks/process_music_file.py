@@ -1,50 +1,56 @@
+from __future__ import annotations
 from royalnet.typing import *
+from typing import IO
 import os
 import pathlib
 import hashlib
 import mimetypes
 import sqlalchemy.orm
-import copy
 import mutagen
 import logging
-import shutil
+import io
 
 from ..celery import app as celery
+from ..utils import MutagenParse
 from ...config import config
 from ...database import tables, Session
+
 
 log = logging.getLogger(__name__)
 
 
-def parse_tag(file: mutagen.File) -> mutagen.Tags:
-    tag: mutagen.Tags = copy.deepcopy(file.tags)
+def parse_tag(file: mutagen.File) -> Dict[str, List[str]]:
+    tag: Dict[str, List[str]] = dict(file.tags)
     return tag
 
 
 def strip_tag(file: mutagen.File) -> None:
-    file.delete()
+    file.tags.clear()
 
 
-def save_with_no_padding(file: mutagen.File) -> None:
-    file.save(padding=lambda _: 0)
+def save_with_no_padding(file: mutagen.File, destination_stream: IO[bytes]) -> None:
+    file.save(fileobj=destination_stream, padding=lambda _: 0)
 
 
-def parse_and_strip_tags(path: os.PathLike) -> mutagen.Tags:
-    file: mutagen.File = mutagen.File(filename=path)
-    tag = parse_tag(file)
+def process_tags(stream: IO[bytes]) -> MutagenParse:
+    stream.seek(0)
+    file: mutagen.File = mutagen.File(fileobj=stream, easy=True)
+    tag: Dict[str, List[str]] = parse_tag(file)
+    print(tag)
     strip_tag(file)
-    save_with_no_padding(file)
-    return tag
+    stream.seek(0)
+    save_with_no_padding(file=file, destination_stream=stream)
+    return MutagenParse.from_tags(tag)
 
 
 HASH_CHUNK_SIZE = 8192
 
 
-def hash_file(path: os.PathLike) -> hashlib.sha512:
+def hash_file(stream: IO[bytes]) -> hashlib.sha512:
     h = hashlib.sha512()
-    with open(path, "rb") as file:
-        while chunk := file.read(HASH_CHUNK_SIZE):
-            h.update(chunk)
+    stream.seek(0)
+    while chunk := stream.read(HASH_CHUNK_SIZE):
+        h.update(chunk)
     return h
 
 
@@ -53,62 +59,30 @@ def determine_extension(path: os.PathLike) -> str:
     return ext
 
 
-def determine_filename(path: os.PathLike) -> pathlib.Path:
-    filename = hash_file(path).hexdigest()
-    extension = determine_extension(path)
+def determine_filename(stream: IO[bytes], original_path: os.PathLike) -> pathlib.Path:
+    filename = hash_file(stream).hexdigest()
     musicdir = pathlib.Path(config["storage.music.dir"])
+    extension = determine_extension(original_path)
     return musicdir.joinpath(f"{filename}{extension}")
 
 
-def copy_file(source: os.PathLike, destination: os.PathLike) -> None:
-    os.makedirs(os.path.dirname(destination), exist_ok=True)
-    shutil.copy2(source, destination)
+def guess_mimetypes(original_path: os.PathLike) -> Tuple[Optional[str], Optional[str]]:
+    return mimetypes.guess_type(original_path, strict=False)
 
 
-def move_file(source: os.PathLike, destination: os.PathLike) -> None:
-    os.makedirs(os.path.dirname(destination), exist_ok=True)
-    os.replace(source, destination)
-
-
-def guess_mimetypes(path: os.PathLike) -> Tuple[Optional[str], Optional[str]]:
-    return mimetypes.guess_type(path, strict=False)
-
-
-def field_str(field: Optional[str]) -> Optional[str]:
-    if field is None or field == "":
-        return ""
-    return field.strip()
-
-
-def field_list(field: Optional[str]) -> List[str]:
-    field = field_str(field)
-    if field is None:
-        return []
-    return [item.strip() for item in field.split("/")]
-
-
-def field_int(field: Optional[str]) -> Optional[int]:
-    field = field_str(field)
-    if field is None:
-        return None
-    try:
-        return int(field)
-    except ValueError:
-        return None
-
-
-def find_album_from_tag(session: sqlalchemy.orm.session.Session, tag: mutagen.Tags) -> Optional[tables.Album]:
+def find_album_from_tag(session: sqlalchemy.orm.session.Session,
+                        mp: MutagenParse) -> Optional[tables.Album]:
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
 
     query = None
-    for artist in field_list(tag.get("albumartist")):
+    for artist in mp.album.artists:
         subquery = (
             session.query(tables.AlbumInvolvement)
                    .filter(tables.AlbumInvolvement.role == role_artist)
                    .join(tables.Person)
-                   .filter(tables.Person.name == field_str(tag.get("artist")))
+                   .filter(tables.Person.name == artist)
                    .join(tables.Album)
-                   .filter(tables.Album.title == field_str(tag.get("album")))
+                   .filter(tables.Album.title == mp.album.title)
         )
         if query is None:
             query = subquery
@@ -121,20 +95,21 @@ def find_album_from_tag(session: sqlalchemy.orm.session.Session, tag: mutagen.Ta
     return None
 
 
-def find_song_from_tag(session: sqlalchemy.orm.session.Session, tag: mutagen.Tags) -> Optional[tables.Song]:
+def find_song_from_tag(session: sqlalchemy.orm.session.Session,
+                       mp: MutagenParse) -> Optional[tables.Song]:
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
 
     query = None
-    for artist in field_list(tag.get("albumartist")):
+    for artist in mp.song.artists:
         subquery = (
             session.query(tables.SongInvolvement)
                    .filter(tables.SongInvolvement.role == role_artist)
                    .join(tables.Person)
                    .filter(tables.Person.name == artist)
                    .join(tables.Song)
-                   .filter(tables.Song.title == field_str(tag.get("title")))
+                   .filter(tables.Song.title == mp.song.title)
                    .join(tables.Album)
-                   .filter(tables.Album.title == field_str(tag.get("album")))
+                   .filter(tables.Album.title == mp.album.title)
         )
         if query is None:
             query = subquery
@@ -149,42 +124,43 @@ def find_song_from_tag(session: sqlalchemy.orm.session.Session, tag: mutagen.Tag
 
 def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
                             layer: tables.Layer,
-                            tag: mutagen.Tags) -> Tuple[tables.Album, tables.Song]:
+                            mp: MutagenParse) -> Tuple[tables.Album, tables.Song]:
     role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
     role_composer = tables.Role.make(session=session, name=config["apps.files.roles.composer"])
     role_performer = tables.Role.make(session=session, name=config["apps.files.roles.performer"])
 
-    album = find_album_from_tag(session=session, tag=tag)
+    album = find_album_from_tag(session=session, mp=mp)
     if album is None:
         album = tables.Album(
-            title=field_str(tag.get("album"))
+            title=mp.album.title
         )
+        session.add(album)
         album.involve(
-            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.get("artist"))),
+            people=(tables.Person.make(session=session, name=name) for name in mp.album.artists),
             role=role_artist
         )
 
-    song = find_song_from_tag(session=session, tag=tag)
+    song = find_song_from_tag(session=session, mp=mp)
     if song is None:
-        song_genre = field_str(tag.get("genre"))
         song = tables.Song(
-            title=field_str(tag.get("title")),
-            year=field_int(tag.get("date")),
-            disc=field_int(tag.get("discnumber")),
-            track=field_int(tag.get("tracknumber")),
+            title=mp.song.title,
+            year=mp.song.year,
+            disc=mp.song.disc_number,
+            track=mp.song.track_number,
             album=album,
-            genres=[tables.Genre.make(session=session, name=song_genre)] if song_genre else [],
+            genres=[tables.Genre.make(session=session, name=mp.song.genre)] if mp.song.genre else [],
         )
+        session.add(song)
         song.involve(
-            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.get("artist"))),
+            people=(tables.Person.make(session=session, name=name) for name in mp.song.artists),
             role=role_artist
         )
         song.involve(
-            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.get("composer"))),
+            people=(tables.Person.make(session=session, name=name) for name in mp.song.composers),
             role=role_composer
         )
         song.involve(
-            people=(tables.Person.make(session=session, name=name) for name in field_list(tag.get("performer"))),
+            people=(tables.Person.make(session=session, name=name) for name in mp.song.performers),
             role=role_performer
         )
 
@@ -193,13 +169,16 @@ def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
     return album, song
 
 
+READ_CHUNK_SIZE = 8192
+
+
 @celery.task
-def process_music(path: os.PathLike,
+def process_music(original_path: os.PathLike,
                   uploader_id: Optional[int] = None,
                   *,
                   layer_data: Optional[Dict[str, Any]] = None,
                   generate_entries: bool = False,
-                  delete_original: bool = False):
+                  delete_original: bool = False) -> Tuple[int, int]:
 
     if layer_data is None:
         layer_data: Dict[str, Any] = {}
@@ -207,22 +186,28 @@ def process_music(path: os.PathLike,
     session = Session()
     session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
 
-    tag: mutagen.Tags = parse_and_strip_tags(path)
+    with open(original_path, "rb") as f:
+        stream = io.BytesIO()
+        while data := f.read(READ_CHUNK_SIZE):
+            stream.write(data)
 
-    destination = determine_filename(path)
-    mime_type, mime_software = guess_mimetypes(path)
+    mp: MutagenParse = process_tags(stream=stream)
+    destination = determine_filename(stream=stream, original_path=original_path)
+    mime_type, mime_software = guess_mimetypes(original_path=original_path)
 
     file: Optional[tables.File] = None
     if os.path.exists(destination):
-        file = session.query(tables.File).filter_by(name=destination.name).one_or_none()
+        file = session.query(tables.File).filter_by(name=str(destination)).one_or_none()
     else:
+        with open(destination, "wb") as f:
+            while data := stream.read(READ_CHUNK_SIZE):
+                f.write(data)
         if delete_original:
-            move_file(source=path, destination=destination)
-        else:
-            copy_file(source=path, destination=destination)
+            os.remove(original_path)
+
     if file is None:
         file = tables.File(
-            name=destination.name,
+            name=str(destination),
             mime_type=mime_type,
             mime_software=mime_software,
             uploader_id=uploader_id
@@ -236,11 +221,17 @@ def process_music(path: os.PathLike,
     session.add(layer)
 
     if generate_entries:
-        album, song = make_entries_from_layer(session=session, layer=layer, tag=tag)
+        album, song = make_entries_from_layer(session=session, layer=layer, mp=mp)
         session.add(album)
         session.add(song)
 
     session.commit()
+
+    result = (file.id, layer.id)
+
+    session.close()
+
+    return result
 
 
 __all__ = (
