@@ -19,7 +19,7 @@ from ...database import tables, Session
 log = logging.getLogger(__name__)
 
 
-def parse_tag(file: mutagen.File) -> Dict[str, List[str]]:
+def tag_parse(file: mutagen.File) -> Dict[str, List[str]]:
     """
     Copy the tag of a :class:`mutagen.File` to a :class:`dict`.
 
@@ -30,7 +30,7 @@ def parse_tag(file: mutagen.File) -> Dict[str, List[str]]:
     return tag
 
 
-def strip_tag(file: mutagen.File) -> None:
+def tag_strip(file: mutagen.File) -> None:
     """
     Remove the tag of a :class:`mutagen.File`.
 
@@ -39,18 +39,22 @@ def strip_tag(file: mutagen.File) -> None:
     file.tags.clear()
 
 
-def save_with_no_padding(file: mutagen.File, destination_stream: IO[bytes]) -> None:
+def tag_save(file: mutagen.File, destination_stream: IO[bytes]) -> IO[bytes]:
     """
-    Write the specified :class:`mutagen.File` to the passed destination stream (which can be any
-    writeable file-like object), using no padding for the tag section.
+    Write the specified :class:`mutagen.File` to the passed destination stream (which can be any writeable file-like
+    object), using no padding for the tag section.
 
     :param file: The file to save.
     :param destination_stream: The file-like object to save the file to.
+
+                               .. important:: The destination stream must be the same exact one that was used to
+                                              create the ``file``, otherwise :mod:`mutagen` won't work!
     """
     file.save(fileobj=destination_stream, padding=lambda _: 0)
+    return destination_stream
 
 
-def process_tags(stream: IO[bytes]) -> MutagenParse:
+def tag_process(stream: IO[bytes]) -> MutagenParse:
     """
     Extract the tag of a file from its contents, creating a :class:`.MutagenParse` object.
 
@@ -59,11 +63,10 @@ def process_tags(stream: IO[bytes]) -> MutagenParse:
     """
     stream.seek(0)
     file: mutagen.File = mutagen.File(fileobj=stream, easy=True)
-    tag: Dict[str, List[str]] = parse_tag(file)
-    print(tag)
-    strip_tag(file)
+    tag: Dict[str, List[str]] = tag_parse(file)
+    tag_strip(file)
     stream.seek(0)
-    save_with_no_padding(file=file, destination_stream=stream)
+    tag_save(file=file, destination_stream=stream)
     return MutagenParse.from_tags(tag)
 
 
@@ -279,7 +282,7 @@ def process_music(original_path: os.PathLike,
         while data := f.read(READ_CHUNK_SIZE):
             stream.write(data)
 
-    mp: MutagenParse = process_tags(stream=stream)
+    mp: MutagenParse = tag_process(stream=stream)
     destination = determine_filename(stream=stream, original_path=original_path)
     mime_type, mime_software = guess_mimetype(original_path=original_path)
 
