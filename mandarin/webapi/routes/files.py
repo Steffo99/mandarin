@@ -33,8 +33,6 @@ def upload_layer(
 ):
     """
     Upload a new track to the database.
-
-    If `generate_entries` is set, `layer_data['song_id']` will be ignored.
     """
 
     task = tasks.process_music.delay(
