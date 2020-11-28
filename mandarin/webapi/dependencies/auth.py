@@ -22,10 +22,6 @@ auth0_scheme = fs.OAuth2AuthorizationCodeBearer(
     }
 )
 
-login_error = {
-    401: {"description": "Not logged in"},
-}
-
 
 def dependency_access_token(
     token: str = f.Depends(auth0_scheme)
@@ -53,7 +49,6 @@ def dependency_login_session(
 
 __all__ = (
     "auth0_scheme",
-    "login_error",
     "dependency_access_token",
     "LoginSession",
     "dependency_login_session",

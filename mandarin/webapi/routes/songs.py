@@ -3,9 +3,11 @@ from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm
 
-from ...database import *
+from ...database import tables, Session
+from ...taskbus import tasks
 from .. import models
-from ..dependencies import *
+from .. import dependencies
+from .. import responses
 
 router_songs = f.APIRouter()
 
@@ -14,12 +16,12 @@ router_songs = f.APIRouter()
     "/",
     summary="Get all songs.",
     responses={
-        **login_error,
+        **responses.login_error,
     },
     response_model=List[models.Song]
 )
 def get_all(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
@@ -29,7 +31,7 @@ def get_all(
 
     To avoid denial of service attacks, `limit` cannot be greater than 500.
     """
-    return ls.session.query(Song).order_by(Song.id).limit(limit).offset(offset).all()
+    return ls.session.query(tables.Song).order_by(tables.Song.id).limit(limit).offset(offset).all()
 
 
 @router_songs.post(
@@ -38,12 +40,12 @@ def get_all(
     response_model=models.SongOutput,
     status_code=201,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Album not found"},
     }
 )
 def create(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_id: Optional[int] = f.Query(None,
                                       description="The album to attach the new song to.\nCan be null for no album."),
     data: models.SongInput = f.Body(..., description="The data for the new song."),
@@ -51,8 +53,8 @@ def create(
     """
     Create a new song with no layers and the data specified in the body of the request.
     """
-    album = ls.get(Album, album_id)
-    song = Song(album=album, **data.__dict__)
+    album = ls.get(tables.Album, album_id)
+    song = tables.Song(album=album, **data.__dict__)
     ls.session.add(song)
     ls.session.commit()
     ls.user.log("song.create", obj=song.id)
@@ -66,14 +68,14 @@ def create(
     response_model=int,
 )
 def count(
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
+    session: sqlalchemy.orm.session.Session = f.Depends(dependencies.dependency_db_session)
 ):
     """
     Get the total number of songs.
 
     Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
     """
-    return session.query(Song).count()
+    return session.query(tables.Song).count()
 
 
 @router_songs.patch(
@@ -81,12 +83,12 @@ def count(
     summary="Move some songs to a different album.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Album not found"}
     }
 )
 def edit_multiple_move(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the songs that should be moved."),
     album_id: Optional[int] = f.Query(..., description="The id of the album the layers should be moved to."),
 ):
@@ -94,11 +96,11 @@ def edit_multiple_move(
     Change the album the specified songs are associated with.
     """
     if album_id:
-        album = ls.get(Album, album_id)
+        album = ls.get(tables.Album, album_id)
     else:
         album = None
 
-    for song in ls.group(Song, song_ids):
+    for song in ls.group(tables.Song, song_ids):
         song.album = album
         ls.user.log("song.edit.multiple.move", obj=song.id)
 
@@ -111,12 +113,12 @@ def edit_multiple_move(
     summary="Involve a person with some songs.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Role / person not found"},
     }
 )
 def edit_multiple_involve(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the songs to involve the person with."),
     person_id: int = f.Query(..., description="The ids of the person to involve."),
     role_id: int = f.Query(..., description="The id of the role of the involvement."),
@@ -132,10 +134,10 @@ def edit_multiple_involve(
 
     Trying to create an involvement that already exists will result in that involvement being skipped.
     """
-    role = ls.get(Role, role_id)
-    person = ls.get(Person, person_id)
-    for song in ls.group(Song, song_ids):
-        SongInvolvement.make(session=ls.session, role=role, song=song, person=person)
+    role = ls.get(tables.Role, role_id)
+    person = ls.get(tables.Person, person_id)
+    for song in ls.group(tables.Song, song_ids):
+        tables.SongInvolvement.make(session=ls.session, role=role, song=song, person=person)
         ls.user.log("song.edit.multiple.involve", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
@@ -146,12 +148,12 @@ def edit_multiple_involve(
     summary="Uninvolve a person from some songs.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Role / person not found"},
     }
 )
 def edit_multiple_uninvolve(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the songs to uninvolve the person from."),
     person_id: int = f.Query(..., description="The ids of the person to uninvolve."),
     role_id: int = f.Query(..., description="The id of the role of the involvement."),
@@ -165,10 +167,10 @@ def edit_multiple_uninvolve(
 
     Involvements that don't exist will be silently ignored.
     """
-    role = ls.get(Role, role_id)
-    person = ls.get(Person, person_id)
-    for song in ls.group(Song, song_ids):
-        SongInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
+    role = ls.get(tables.Role, role_id)
+    person = ls.get(tables.Person, person_id)
+    for song in ls.group(tables.Song, song_ids):
+        tables.SongInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
         ls.user.log("song.edit.multiple.uninvolve", obj=song.id)
     ls.session.commit()
 
@@ -178,12 +180,12 @@ def edit_multiple_uninvolve(
     summary="Add a genre to some songs.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Genre not found"},
     }
 )
 def edit_multiple_classify(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the songs to add a genre to."),
     genre_id: int = f.Query(..., description="The id of the genre to add."),
 ):
@@ -193,8 +195,8 @@ def edit_multiple_classify(
     Non-existing `song_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
     non-existing genre.
     """
-    genre = ls.get(Genre, genre_id)
-    for song in ls.group(Song, song_ids):
+    genre = ls.get(tables.Genre, genre_id)
+    for song in ls.group(tables.Song, song_ids):
         song.genres.append(genre)
         ls.user.log("song.edit.multiple.classify", obj=song.id)
     ls.session.commit()
@@ -205,12 +207,12 @@ def edit_multiple_classify(
     summary="Remove a genre from some songs.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Genre not found"},
     }
 )
 def edit_multiple_declassify(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the songs to remove a genre from."),
     genre_id: int = f.Query(..., description="The id of the genre to remove."),
 ):
@@ -220,8 +222,8 @@ def edit_multiple_declassify(
     Non-existing `song_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
     non-existing genre.
     """
-    genre = ls.get(Genre, genre_id)
-    for song in ls.group(Song, song_ids):
+    genre = ls.get(tables.Genre, genre_id)
+    for song in ls.group(tables.Song, song_ids):
         song.genres.remove(genre)
         ls.user.log("song.edit.multiple.declassify", obj=song.id)
     ls.session.commit()
@@ -232,11 +234,11 @@ def edit_multiple_declassify(
     summary="Set the disc number of some songs.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
     }
 )
 def edit_multiple_group(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the songs to group."),
     disc_number: Optional[int] = f.Query(None, description="The number of the disc to group the songs in, "
                                                            "or None to clear the disc number.", ge=1),
@@ -244,7 +246,7 @@ def edit_multiple_group(
     """
     Change the disc number of all the specified songs.
     """
-    for song in ls.group(Song, song_ids):
+    for song in ls.group(tables.Song, song_ids):
         song.disc = disc_number
         ls.user.log("song.edit.multiple.group", obj=song.id)
     ls.session.commit()
@@ -255,18 +257,18 @@ def edit_multiple_group(
     summary="Set the year of some songs.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
     }
 )
 def edit_multiple_calendarize(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the songs to calendarize."),
     year: Optional[int] = f.Query(None, description="The year to set the songs to, or None to clear the year."),
 ):
     """
     Change the release year of all the specified songs.
     """
-    for song in ls.group(Song, song_ids):
+    for song in ls.group(tables.Song, song_ids):
         song.year = year
         ls.user.log("song.edit.multiple.calendarize", obj=song.id)
     ls.session.commit()
@@ -277,12 +279,12 @@ def edit_multiple_calendarize(
     summary="Merge the layers of two or more songs.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         400: {"description": "Not enough genres specified"}
     },
 )
 def merge(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_ids: List[int] = f.Query(..., description="The ids of the genres to merge."),
 ):
     """
@@ -298,11 +300,11 @@ def merge(
     rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
 
     # Get the first genre
-    main_song = rr_session.query(Song).get(song_ids[0])
+    main_song = rr_session.query(tables.Song).get(song_ids[0])
     ls.user.log("song.merge.to", obj=main_song.id)
 
     # Get the other genres
-    other_songs = rr_session.query(Song).filter(Song.id.in_(song_ids[1:])).all()
+    other_songs = rr_session.query(tables.Song).filter(tables.Song.id.in_(song_ids[1:])).all()
 
     # Replace and delete the other genres
     for merged_song in other_songs:
@@ -322,19 +324,19 @@ def merge(
     "/{song_id}",
     summary="Get a single song.",
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Song not found"},
     },
     response_model=models.SongOutput
 )
 def get_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_id: int = f.Path(..., description="The id of the song to be retrieved.")
 ):
     """
     Get full information for the song with the specified `song_id`.
     """
-    return ls.get(Song, song_id)
+    return ls.get(tables.Song, song_id)
 
 
 @router_songs.put(
@@ -342,19 +344,19 @@ def get_single(
     summary="Edit a song.",
     response_model=models.SongOutput,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Song not found"},
     }
 )
 def edit_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_id: int = f.Path(..., description="The id of the song to be edited."),
     data: models.SongInput = f.Body(..., description="The new data the song should have."),
 ):
     """
     Replace the data of the song with the specified `song_id` with the data passed in the request body.
     """
-    song = ls.get(Song, song_id)
+    song = ls.get(tables.Song, song_id)
     song.update(**data.dict())
     ls.user.log("song.edit.single", obj=song.id)
     ls.session.commit()
@@ -366,12 +368,12 @@ def edit_single(
     summary="Delete a song.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Song not found"},
     }
 )
 def delete(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     song_id: int = f.Path(..., description="The id of the song to be deleted.")
 ):
     """
@@ -379,7 +381,7 @@ def delete(
 
     Note that the contained layers will not be deleted; they will become orphaned instead.
     """
-    song = ls.get(Song, song_id)
+    song = ls.get(tables.Song, song_id)
     ls.session.delete(song)
     ls.user.log("song.delete", obj=song.id)
     ls.session.commit()

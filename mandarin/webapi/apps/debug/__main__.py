@@ -2,9 +2,9 @@ import fastapi as f
 import uvicorn
 import pkg_resources
 
-from mandarin.database import *
-from mandarin.config import *
-from mandarin.webapi.routes import *
+from mandarin import database
+from mandarin.config import config
+from ...routes import *
 from .description import description
 
 
@@ -27,5 +27,5 @@ app.include_router(router_auditlogs, prefix="/audit-logs", tags=["Audit Logs"])
 
 
 if __name__ == "__main__":
-    Base.metadata.create_all()
+    database.Base.metadata.create_all(bind=database.engine)
     uvicorn.run(app, port=config["apps.files.port"])

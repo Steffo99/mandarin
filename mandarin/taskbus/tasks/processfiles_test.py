@@ -121,8 +121,11 @@ def test_guess_mimetype(tmp_sample_noise_path):
 
 class TestProcessMusic:
 
-    def test_simple(self, recreate_db, session, tmp_sample_noise_path):
-        file_id, layer_id = process_music.delay(original_path=str(tmp_sample_noise_path)).get(timeout=5)
+    def test_simple(self, recreate_db, session, tmp_sample_noise_bytesio):
+        file_id, layer_id = process_music.delay(
+            stream=tmp_sample_noise_bytesio,
+            original_filename="noise.mp3",
+        ).get(timeout=5)
         assert file_id == 1
         assert layer_id == 1
 
@@ -140,9 +143,10 @@ class TestProcessMusic:
         assert layer.file_id == file_id
         assert layer.song is None
 
-    def test_with_entries(self, recreate_db, session, tmp_sample_noise_path):
+    def test_with_entries(self, recreate_db, session, tmp_sample_noise_bytesio):
         file_id, layer_id = process_music.delay(
-            original_path=str(tmp_sample_noise_path),
+            stream=tmp_sample_noise_bytesio,
+            original_filename="noise.mp3",
             generate_entries=True,
         ).get(timeout=5)
         assert file_id == 1

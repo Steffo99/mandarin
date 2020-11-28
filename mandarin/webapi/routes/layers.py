@@ -1,14 +1,13 @@
 from __future__ import annotations
 from royalnet.typing import *
 import fastapi as f
-import pydantic as p
 import sqlalchemy.orm
-import datetime
 
-from ...database import *
+from ...database import tables
+from ...taskbus import tasks
 from .. import models
-from ..dependencies import *
-from ..utils.upload import *
+from .. import dependencies
+from .. import responses
 
 router_layers = f.APIRouter()
 
@@ -17,12 +16,12 @@ router_layers = f.APIRouter()
     "/",
     summary="Get all layers.",
     responses={
-        **login_error,
+        **responses.login_error,
     },
     response_model=List[models.LayerOutput]
 )
 def get_all(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
@@ -32,7 +31,7 @@ def get_all(
 
     To avoid denial of service attacks, `limit` cannot be greater than 500.
     """
-    return ls.session.query(Layer).order_by(Layer.id).limit(limit).offset(offset).all()
+    return ls.session.query(tables.Layer).order_by(tables.Layer.id).limit(limit).offset(offset).all()
 
 
 @router_layers.get(
@@ -41,14 +40,14 @@ def get_all(
     response_model=int,
 )
 def count(
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
+    session: sqlalchemy.orm.session.Session = f.Depends(dependencies.dependency_db_session)
 ):
     """
     Get the total number of layers.
 
     Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
     """
-    return session.query(Layer).count()
+    return session.query(tables.Layer).count()
 
 
 @router_layers.patch(
@@ -56,20 +55,20 @@ def count(
     summary="Move some layers to a different song.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Song not found"},
     },
 )
 def edit_multiple_move(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     layer_ids: List[int] = f.Query(..., description="The ids of the layers that should be moved."),
     song_id: int = f.Query(...,  description="The id of the song the layers should be moved to."),
 ):
     """
     Change the song the specified layers are associated with.
     """
-    song = ls.get(Song, song_id)
-    for layer in ls.group(Layer, layer_ids):
+    song = ls.get(tables.Song, song_id)
+    for layer in ls.group(tables.Layer, layer_ids):
         layer.song = song
         ls.user.log("layer.edit.multiple.move", obj=layer.id)
     ls.session.commit()
@@ -80,19 +79,19 @@ def edit_multiple_move(
     summary="Rename some layers.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Song not found"},
     },
 )
 def edit_multiple_rename(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     layer_ids: List[int] = f.Query(..., description="The ids of the layers that should be renamed."),
     name: str = f.Query(...,  description="The name the layers should be renamed to."),
 ):
     """
     Bulk change the name of all the specified layers.
     """
-    for layer in ls.group(Layer, layer_ids):
+    for layer in ls.group(tables.Layer, layer_ids):
         layer.name = name
         ls.user.log("layer.edit.multiple.rename", obj=layer.id)
 
@@ -103,19 +102,19 @@ def edit_multiple_rename(
     "/{layer_id}",
     summary="Get a single layer.",
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Layer not found"},
     },
     response_model=models.LayerOutput
 )
 def get_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     layer_id: int = f.Path(..., description="The id of the layer to be retrieved.")
 ):
     """
     Get full information for the layer with the specified `layer_id`.
     """
-    return ls.get(Layer, layer_id)
+    return ls.get(tables.Layer, layer_id)
 
 
 @router_layers.put(
@@ -123,19 +122,19 @@ def get_single(
     summary="Edit a layer.",
     response_model=models.LayerOutput,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Layer not found"},
     }
 )
 def edit_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     layer_id: int = f.Path(..., description="The id of the layer to be edited."),
     data: models.LayerInput = f.Body(..., description="The new data the layer should have."),
 ):
     """
     Replace the data of the layer with the specified `layer_id` with the data passed in the request body.
     """
-    layer = ls.get(Layer, layer_id)
+    layer = ls.get(tables.Layer, layer_id)
     layer.update(**data.__dict__)
     ls.user.log("layer.edit.single", obj=layer.id)
     ls.session.commit()
@@ -147,12 +146,12 @@ def edit_single(
     summary="Delete a layer.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Layer not found"},
     }
 )
 def delete(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     layer_id: int = f.Path(..., description="The id of the layer to be deleted.")
 ):
     """
@@ -160,7 +159,7 @@ def delete(
 
     Note that the associated file **WON'T** be deleted, it will instead become orphaned and unable to be used.
     """
-    layer = ls.get(Layer, layer_id)
+    layer = ls.get(tables.Layer, layer_id)
     ls.session.delete(layer)
     ls.user.log("layer.delete", obj=layer.id)
     ls.session.commit()

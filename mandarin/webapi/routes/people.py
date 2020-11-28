@@ -3,9 +3,11 @@ from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm
 
-from ...database import *
+from ...database import tables, Session
+from ...taskbus import tasks
 from .. import models
-from ..dependencies import *
+from .. import dependencies
+from .. import responses
 
 router_people = f.APIRouter()
 
@@ -14,12 +16,12 @@ router_people = f.APIRouter()
     "/",
     summary="Get all people.",
     responses={
-        **login_error,
+        **responses.login_error,
     },
     response_model=List[models.Person]
 )
 def get_all(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
@@ -29,25 +31,25 @@ def get_all(
 
     To avoid denial of service attacks, `limit` cannot be greater than 500.
     """
-    return ls.session.query(Person).order_by(Person.id).limit(limit).offset(offset).all()
+    return ls.session.query(tables.Person).order_by(tables.Person.id).limit(limit).offset(offset).all()
 
 
 @router_people.post(
     "/",
     summary="Create a new person.",
     responses={
-        **login_error,
+        **responses.login_error,
     },
     response_model=models.PersonOutput,
 )
 def create(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     data: models.PersonInput = f.Body(..., description="The new data the person should have."),
 ):
     """
     Create a new person with the data specified in the body of the request.
     """
-    person = Person(**data.__dict__)
+    person = tables.Person(**data.__dict__)
     ls.session.add(person)
     ls.session.commit()
     ls.user.log("person.create", obj=person.id)
@@ -61,14 +63,14 @@ def create(
     response_model=int,
 )
 def count(
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
+    session: sqlalchemy.orm.session.Session = f.Depends(dependencies.dependency_db_session)
 ):
     """
     Get the total number of people.
 
     Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
     """
-    return session.query(Genre).count()
+    return session.query(tables.Genre).count()
 
 
 @router_people.patch(
@@ -76,12 +78,12 @@ def count(
     summary="Merge two or more people.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         400: {"description": "Not enough people specified"}
     },
 )
 def merge(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     people_ids: List[int] = f.Query(..., description="The ids of the people to merge."),
 ):
     """
@@ -97,11 +99,11 @@ def merge(
     rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
 
     # Get the first genre
-    main_person = rr_session.query(Person).get(people_ids[0])
+    main_person = rr_session.query(tables.Person).get(people_ids[0])
     ls.user.log("person.merge.to", obj=main_person.id)
 
     # Get the other genres
-    other_people = rr_session.query(Person).filter(Person.id.in_(people_ids[1:])).all()
+    other_people = rr_session.query(tables.Person).filter(tables.Person.id.in_(people_ids[1:])).all()
 
     # Replace and delete the other genres
     for merged_person in other_people:
@@ -123,19 +125,19 @@ def merge(
     "/{person_id}",
     summary="Get a single person.",
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Person not found"},
     },
     response_model=models.PersonOutput
 )
 def get_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     person_id: int = f.Path(..., description="The id of the person to be retrieved."),
 ):
     """
     Get full information for the person with the specified `person_id`.
     """
-    return ls.get(Person, person_id)
+    return ls.get(tables.Person, person_id)
 
 
 @router_people.put(
@@ -143,19 +145,19 @@ def get_single(
     summary="Edit a person.",
     response_model=models.PersonOutput,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Person not found"},
     }
 )
 def edit_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     person_id: int = f.Path(..., description="The id of the person to be edited."),
     data: models.PersonInput = f.Body(..., description="The new data the person should have."),
 ):
     """
     Replace the data of the person with the specified `person_id` with the data passed in the request body.
     """
-    person = ls.get(Person, person_id)
+    person = ls.get(tables.Person, person_id)
     person.update(**data.__dict__)
     ls.user.log("person.edit.single", obj=person.id)
     ls.session.commit()
@@ -167,12 +169,12 @@ def edit_single(
     summary="Delete a person.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Person not found"},
     }
 )
 def delete(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     person_id: int = f.Path(..., description="The id of the person to be edited."),
 ):
     """
@@ -180,7 +182,7 @@ def delete(
 
     All their involvements will be deleted.
     """
-    person = ls.get(Person, person_id)
+    person = ls.get(tables.Person, person_id)
     ls.session.delete(person)
     ls.user.log("person.delete", obj=person.id)
     ls.session.commit()

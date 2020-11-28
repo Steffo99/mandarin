@@ -250,23 +250,21 @@ READ_CHUNK_SIZE = 8192
 
 
 @celery.task
-def process_music(original_path: os.PathLike,
+def process_music(stream: IO[bytes],
+                  original_filename: str,
                   uploader_id: Optional[int] = None,
-                  *,
                   layer_data: Optional[Dict[str, Any]] = None,
-                  generate_entries: bool = False,
-                  delete_original: bool = False) -> Tuple[int, int]:
+                  generate_entries: bool = False) -> Tuple[int, int]:
     """
     A :mod:`celery` task that processes an uploaded music file.
 
-    :param original_path: The temporary path where the file is initially stored.
+    :param stream: A file-like object containing info about the file.
+    :param original_filename: The filename the file originally had.
     :param uploader_id: The id of the :class:`~mandarin.database.tables.User` who uploaded the file, or :data:`None`
                         if it was anonymous.
     :param layer_data: ``**kwargs`` to pass to the :class:`~mandarin.database.tables.Layer` constructor.
     :param generate_entries: Whether entries for the music file should be generated with
                              :func:`.make_entries_from_layer`.
-    :param delete_original: If the initial file should be deleted after it is copied to the data directory. Useful
-                            for testing, or to import existing media libraries.
     :return: A :class:`tuple` of the ids of the created :class:`~mandarin.database.tables.File` and
              :class:`~mandarin.database.tables.Layer` respectively.
     """
@@ -275,16 +273,11 @@ def process_music(original_path: os.PathLike,
         layer_data: Dict[str, Any] = {}
 
     session = Session()
-    session.connection(execution_options={"isolation_level": "REPEATABLE READ"})
-
-    with open(original_path, "rb") as f:
-        stream = io.BytesIO()
-        while data := f.read(READ_CHUNK_SIZE):
-            stream.write(data)
+    session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
 
     mp: MutagenParse = tag_process(stream=stream)
-    destination = determine_filename(stream=stream, original_path=original_path)
-    mime_type, mime_software = guess_mimetype(original_path=original_path)
+    destination = determine_filename(stream=stream, original_path=original_filename)
+    mime_type, mime_software = guess_mimetype(original_path=original_filename)
 
     file: Optional[tables.File] = None
     if os.path.exists(destination):
@@ -293,8 +286,6 @@ def process_music(original_path: os.PathLike,
         with open(destination, "wb") as f:
             while data := stream.read(READ_CHUNK_SIZE):
                 f.write(data)
-        if delete_original:
-            os.remove(original_path)
 
     if file is None:
         file = tables.File(
