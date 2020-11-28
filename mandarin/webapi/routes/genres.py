@@ -3,9 +3,11 @@ from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm
 
-from ...database import *
+from ...database import tables, Session
+from ...taskbus import tasks
 from .. import models
-from ..dependencies import *
+from .. import dependencies
+from .. import responses
 
 router_genres = f.APIRouter()
 
@@ -14,12 +16,12 @@ router_genres = f.APIRouter()
     "/",
     summary="Get all genres.",
     responses={
-        **login_error,
+        **responses.login_error,
     },
     response_model=List[models.GenreOutput]
 )
 def get_all(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
@@ -29,30 +31,30 @@ def get_all(
 
     To avoid denial of service attacks, `limit` cannot be greater than 500.
     """
-    return ls.session.query(Genre).order_by(Genre.id).limit(limit).offset(offset).all()
+    return ls.session.query(tables.Genre).order_by(tables.Genre.id).limit(limit).offset(offset).all()
 
 
 @router_genres.post(
     "/",
     summary="Create a new genre.",
     responses={
-        **login_error,
+        **responses.login_error,
         409: {"description": "Duplicate genre name"}
     },
     response_model=models.GenreOutput,
 )
 def create(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     data: models.GenreInput = f.Body(..., description="The new data the genre should have."),
 ):
     """
     Create a new genre with the data specified in the body of the request.
     """
-    genre = ls.session.query(Genre).filter_by(name=data.name).one_or_none()
+    genre = ls.session.query(tables.Genre).filter_by(name=data.name).one_or_none()
     if genre is not None:
         raise f.HTTPException(409, f"The genre '{data.name}' already exists.")
 
-    genre = Genre.make(session=ls.session, **data.dict())
+    genre = tables.Genre.make(session=ls.session, **data.dict())
     ls.user.log("genre.create", obj=genre.id)
     ls.session.commit()
     return genre
@@ -64,14 +66,14 @@ def create(
     response_model=int,
 )
 def count(
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
+    session: sqlalchemy.orm.session.Session = f.Depends(dependencies.dependency_db_session)
 ):
     """
     Get the total number of genres.
 
     Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
     """
-    return session.query(Genre).count()
+    return session.query(tables.Genre).count()
 
 
 @router_genres.patch(
@@ -79,12 +81,12 @@ def count(
     summary="Merge two or more genres.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         400: {"description": "Not enough genres specified"}
     },
 )
 def merge(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     genre_ids: List[int] = f.Query(..., description="The ids of the genres to merge."),
 ):
     """
@@ -100,11 +102,11 @@ def merge(
     rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
 
     # Get the first genre
-    main_genre = rr_session.query(Genre).get(genre_ids[0])
+    main_genre = rr_session.query(tables.Genre).get(genre_ids[0])
     ls.user.log("genre.merge.to", obj=main_genre.id)
 
     # Get the other genres
-    other_genres = rr_session.query(Genre).filter(Genre.id.in_(genre_ids[1:])).all()
+    other_genres = rr_session.query(tables.Genre).filter(tables.Genre.id.in_(genre_ids[1:])).all()
 
     # Replace and delete the other genres
     for merged_genre in other_genres:
@@ -128,19 +130,19 @@ def merge(
     "/{genre_id}",
     summary="Get a single genre.",
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Genre not found"},
     },
     response_model=models.GenreOutput
 )
 def get_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     genre_id: int = f.Path(..., description="The id of the genre to be retrieved.")
 ):
     """
     Get full information for the genre with the specified `genre_id`.
     """
-    return ls.get(Genre, genre_id)
+    return ls.get(tables.Genre, genre_id)
 
 
 @router_genres.put(
@@ -148,19 +150,19 @@ def get_single(
     summary="Edit a genre.",
     response_model=models.GenreOutput,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Genre not found"},
     }
 )
 def edit_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     genre_id: int = f.Path(..., description="The id of the genre to be edited."),
     data: models.GenreInput = f.Body(..., description="The new data the genre should have."),
 ):
     """
     Replace the data of the genre with the specified `genre_id` with the data passed in the request body.
     """
-    genre = ls.get(Genre, genre_id)
+    genre = ls.get(tables.Genre, genre_id)
     genre.update(**data.dict())
     ls.user.log("genre.edit.single", obj=genre.id)
     ls.session.commit()
@@ -172,18 +174,18 @@ def edit_single(
     summary="Delete a genre.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Genre not found"},
     }
 )
 def delete(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     genre_id: int = f.Path(..., description="The id of the genre to be deleted."),
 ):
     """
     Delete the genre having the specified `genre_id`, also disconnecting all songs from it.
     """
-    genre = ls.get(Genre, genre_id)
+    genre = ls.get(tables.Genre, genre_id)
     ls.session.delete(genre)
     ls.user.log("genre.delete", obj=genre.id)
     ls.session.commit()

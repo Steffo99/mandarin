@@ -2,14 +2,12 @@ import sqlalchemy
 import sqlalchemy.orm
 
 from ..config import *
-from .base import *
 # noinspection PyUnresolvedReferences
 from .tables import *
 
 
 engine = sqlalchemy.create_engine(config["database.uri"])
 Session = sqlalchemy.orm.sessionmaker(bind=engine)
-Base.metadata.bind = engine
 
 
 __all__ = (

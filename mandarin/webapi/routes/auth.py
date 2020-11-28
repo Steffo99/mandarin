@@ -1,8 +1,10 @@
 import fastapi as f
 
-from ...database import *
+from ...database import tables
+from ...taskbus import tasks
 from .. import models
-from mandarin.webapi.dependencies.auth import *
+from .. import dependencies
+from .. import responses
 
 
 router_auth = f.APIRouter()
@@ -12,12 +14,12 @@ router_auth = f.APIRouter()
     "/token",
     summary="Validate the current access token.",
     responses={
-        **login_error,
+        **responses.login_error,
     },
     response_model=models.UserOutput
 )
 def access_token(
-    payload: dict = f.Depends(dependency_access_token)
+    payload: dict = f.Depends(dependencies.dependency_access_token)
 ):
     """
     Returns the payload obtained by getting the `/userinfo` endpoint of the authentication provider with the passed
@@ -32,12 +34,12 @@ def access_token(
     "/user",
     summary="Get info about the logged in user.",
     responses={
-        **login_error
+        **responses.login_error
     },
     response_model=models.UserOutput
 )
 def current_user(
-    ls: LoginSession = f.Depends(dependency_login_session)
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session)
 ):
     """
     Returns information about the user that matches the passed bearer token.

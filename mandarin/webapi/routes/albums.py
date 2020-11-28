@@ -3,9 +3,11 @@ from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm
 
-from ...database import *
+from ...database import tables
+from ...taskbus import tasks
 from .. import models
-from ..dependencies import *
+from .. import dependencies
+from .. import responses
 
 router_albums = f.APIRouter()
 
@@ -14,12 +16,12 @@ router_albums = f.APIRouter()
     "/",
     summary="Get all albums.",
     responses={
-        **login_error,
+        **responses.login_error,
     },
     response_model=List[models.Album]
 )
 def get_all(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     limit: int = f.Query(500, description="The number of objects that will be returned.", ge=0, le=500),
     offset: int = f.Query(0, description="The starting object from which the others will be returned.", ge=0),
 ):
@@ -29,25 +31,25 @@ def get_all(
 
     To avoid denial of service attacks, `limit` cannot be greater than 500.
     """
-    return ls.session.query(Album).order_by(Album.id).limit(limit).offset(offset).all()
+    return ls.session.query(tables.Album).order_by(tables.Album.id).limit(limit).offset(offset).all()
 
 
 @router_albums.post(
     "/",
     summary="Create a new album.",
     responses={
-        **login_error,
+        **responses.login_error,
     },
     response_model=models.AlbumOutput,
 )
 def create(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     data: models.AlbumInput = f.Body(..., description="The data the new album should have."),
 ):
     """
     Create a new, **empty** album with the data specified in the body of the request.
     """
-    album = Album(**data.__dict__)
+    album = tables.Album(**data.__dict__)
     ls.session.add(data)
     ls.session.commit()
     ls.user.log("album.create", obj=album.id)
@@ -61,14 +63,14 @@ def create(
     response_model=int,
 )
 def count(
-    session: sqlalchemy.orm.session.Session = f.Depends(dependency_db_session)
+    session: sqlalchemy.orm.session.Session = f.Depends(dependencies.dependency_db_session)
 ):
     """
     Get the total number of albums.
 
     Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
     """
-    return session.query(Album).count()
+    return session.query(tables.Album).count()
 
 
 @router_albums.patch(
@@ -76,12 +78,12 @@ def count(
     summary="Involve a person with some albums.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Role / person not found"},
     }
 )
 def edit_multiple_involve(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_ids: List[int] = f.Query(..., description="The ids of the albums to involve the person with."),
     person_id: int = f.Query(..., description="The ids of the person to involve."),
     role_id: int = f.Query(..., description="The id of the role of the involvement."),
@@ -97,10 +99,10 @@ def edit_multiple_involve(
 
     Trying to create an involvement that already exists will result in that involvement being skipped.
     """
-    role = ls.get(Role, role_id)
-    person = ls.get(Person, person_id)
-    for album in ls.group(Album, album_ids):
-        AlbumInvolvement.make(session=ls.session, role=role, album=album, person=person)
+    role = ls.get(tables.Role, role_id)
+    person = ls.get(tables.Person, person_id)
+    for album in ls.group(tables.Album, album_ids):
+        tables.AlbumInvolvement.make(session=ls.session, role=role, album=album, person=person)
         ls.user.log("album.edit.multiple.involve", obj=album.id)
     ls.session.commit()
     return f.Response(status_code=204)
@@ -111,12 +113,12 @@ def edit_multiple_involve(
     summary="Uninvolve a person from some albums.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Role / person not found"},
     }
 )
 def edit_multiple_uninvolve(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_ids: List[int] = f.Query(..., description="The ids of the albums to uninvolve the person from."),
     person_id: int = f.Query(..., description="The ids of the person to uninvolve."),
     role_id: int = f.Query(..., description="The id of the role of the involvement."),
@@ -130,10 +132,10 @@ def edit_multiple_uninvolve(
 
     Involvements that don't exist will be silently ignored.
     """
-    role = ls.get(Role, role_id)
-    person = ls.get(Person, person_id)
-    for song in ls.group(Album, album_ids):
-        AlbumInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
+    role = ls.get(tables.Role, role_id)
+    person = ls.get(tables.Person, person_id)
+    for song in ls.group(tables.Album, album_ids):
+        tables.AlbumInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
         ls.user.log("album.edit.multiple.uninvolve", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
@@ -144,12 +146,12 @@ def edit_multiple_uninvolve(
     summary="Add a genre to some albums.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Genre not found"},
     }
 )
 def edit_multiple_classify(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_ids: List[int] = f.Query(..., description="The ids of the albums to add a genre to."),
     genre_id: int = f.Query(..., description="The id of the genre to add."),
 ):
@@ -159,8 +161,8 @@ def edit_multiple_classify(
     Non-existing `album_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
     non-existing genre.
     """
-    genre = ls.get(Genre, genre_id)
-    for album in ls.group(Album, album_ids):
+    genre = ls.get(tables.Genre, genre_id)
+    for album in ls.group(tables.Album, album_ids):
         album.genres.append(genre)
         ls.user.log("album.edit.multiple.classify", obj=album.id)
     ls.session.commit()
@@ -172,12 +174,12 @@ def edit_multiple_classify(
     summary="Remove a genre from some albums.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Genre not found"},
     }
 )
 def edit_multiple_declassify(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_ids: List[int] = f.Query(..., description="The ids of the albums to remove a genre from."),
     genre_id: int = f.Query(..., description="The id of the genre to remove."),
 ):
@@ -187,8 +189,8 @@ def edit_multiple_declassify(
     Non-existing `album_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
     non-existing genre.
     """
-    genre = ls.get(Genre, genre_id)
-    for album in ls.group(Album, album_ids):
+    genre = ls.get(tables.Genre, genre_id)
+    for album in ls.group(tables.Album, album_ids):
         album.genres.remove(genre)
         ls.user.log("album.edit.multiple.declassify", obj=album.id)
     ls.session.commit()
@@ -200,12 +202,12 @@ def edit_multiple_declassify(
     summary="Merge two or more albums.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         400: {"description": "Not enough albums specified"}
     },
 )
 def merge(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_ids: List[int] = f.Query(..., description="The ids of the albums to merge."),
 ):
     """
@@ -221,11 +223,11 @@ def merge(
     rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
 
     # Get the first album
-    main_album = rr_session.query(Album).get(album_ids[0])
+    main_album = rr_session.query(tables.Album).get(album_ids[0])
     ls.user.log("album.merge.to", obj=main_album.id)
 
     # Get the other albums
-    other_albums = rr_session.query(Album).filter(Album.id.in_(album_ids[1:])).all()
+    other_albums = rr_session.query(tables.Album).filter(tables.Album.id.in_(album_ids[1:])).all()
 
     # Replace and delete the other albums
     for merged_album in other_albums:
@@ -245,19 +247,19 @@ def merge(
     "/{album_id}",
     summary="Get a single album.",
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Album not found"},
     },
     response_model=models.AlbumOutput
 )
 def get_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_id: int = f.Path(..., description="The id of the album to be retrieved.")
 ):
     """
     Get full information for the album with the specified `album_id`.
     """
-    return ls.get(Album, album_id)
+    return ls.get(tables.Album, album_id)
 
 
 @router_albums.put(
@@ -265,19 +267,19 @@ def get_single(
     summary="Edit an album.",
     response_model=models.AlbumOutput,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Album not found"},
     }
 )
 def edit_single(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_id: int = f.Path(..., description="The id of the album to be edited."),
     data: models.AlbumInput = f.Body(..., description="The new data the album should have."),
 ):
     """
     Replace the data of the album with the specified `album_id` with the data passed in the request body.
     """
-    album = ls.get(Album, album_id)
+    album = ls.get(tables.Album, album_id)
     album.update(**data.__dict__)
     ls.user.log("album.edit.single", obj=album.id)
     ls.session.commit()
@@ -289,12 +291,12 @@ def edit_single(
     summary="Delete an album.",
     status_code=204,
     responses={
-        **login_error,
+        **responses.login_error,
         404: {"description": "Album not found"},
     }
 )
 def delete(
-    ls: LoginSession = f.Depends(dependency_login_session),
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     album_id: int = f.Path(..., description="The id of the album to be deleted."),
 ):
     """
@@ -302,7 +304,7 @@ def delete(
 
     Note that the contained songs will not be deleted; they will become orphaned instead.
     """
-    album = ls.get(Album, album_id)
+    album = ls.get(tables.Album, album_id)
     ls.session.delete(album)
     ls.user.log("album.delete", obj=album.id)
     ls.session.commit()
