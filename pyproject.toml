@@ -20,6 +20,7 @@ celery = {extras = ["redis"], version = "^5.0.2"}
 mutagen = "^1.45.1"
 redis = "^3.5.3"
 hiredis = "^1.1.0"
+click = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
 celery = "^5.0.2"
