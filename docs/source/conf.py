@@ -71,17 +71,10 @@ intersphinx_mapping = {
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/13/", None),
     "mutagen": ("https://mutagen.readthedocs.io/en/latest/", None),
     "celery": ("https://docs.celeryproject.org/en/stable/", None),
+    "click": ("https://click.palletsprojects.com/en/7.x/", None),
+    "royalnet": ("https://royalnet-6.readthedocs.io/en/latest/", None),
 }
-
 
 # -- Setup function ----------------------------------------------------------
 def setup(app):
-    app.connect("autodoc-skip-member", skip)
     app.add_css_file('mandarin.css')
-
-
-# -- Skip function -----------------------------------------------------------
-def skip(app, what, name: str, obj, would_skip, options):
-    if name == "__init__" or name == "__getitem__" or name == "__getattr__":
-        return not bool(obj.__doc__)
-    return would_skip
