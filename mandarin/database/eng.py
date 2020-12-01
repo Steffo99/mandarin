@@ -1,4 +1,3 @@
-import sqlalchemy
 import sqlalchemy.orm
 
 from ..config import *
