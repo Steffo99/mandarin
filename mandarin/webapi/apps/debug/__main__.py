@@ -27,5 +27,5 @@ app.include_router(router_auditlogs, prefix="/audit-logs", tags=["Audit Logs"])
 
 
 if __name__ == "__main__":
-    database.Base.metadata.create_all(bind=database.engine)
+    database.create_all()
     uvicorn.run(app, port=config["apps.files.port"])

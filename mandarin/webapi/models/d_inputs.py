@@ -29,7 +29,7 @@ class FileInput(base.OrmModel):
 class GenreInput(base.OrmModel):
     name: str
     description: str
-    parent_id: Optional[int]
+    supergenre_id: Optional[int]
 
 
 class LayerInput(base.OrmModel):
