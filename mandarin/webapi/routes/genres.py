@@ -137,7 +137,7 @@ def merge(
         **responses.login_error,
     }
 )
-def edit_multiple_group(
+def edit_multiple_move(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     child_ids: List[int] = f.Query(..., description="The ids of the genres to change the parent of."),
     parent_id: Optional[int] = f.Query(None, description="The id of the genre to set as parent, or None to make the "
