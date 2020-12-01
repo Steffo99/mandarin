@@ -79,6 +79,23 @@ def count(
     return session.query(tables.Genre).count()
 
 
+@router_genres.get(
+    "/tree",
+    summary="Get a tree of all genres.",
+    responses={
+        **responses.login_error,
+    },
+    response_model=List[models.GenreTreeOutput]
+)
+def get_tree(
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session)
+):
+    """
+    Get all genres in the form of a tree structure, where the root nodes are the ones without a `parent_id`.
+    """
+    return ls.session.query(tables.Genre).filter_by(parent=None).order_by(tables.Genre.id).all()
+
+
 @router_genres.patch(
     "/merge",
     summary="Merge two or more genres.",
