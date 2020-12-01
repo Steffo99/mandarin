@@ -40,6 +40,8 @@ class GenreOutput(base.OrmModel):
     description: str
     songs: List[basic.Song]
     albums: List[basic.Album]
+    parent: Optional[basic.Genre]
+    children: List[basic.Genre]
 
 
 class LayerOutput(base.OrmModel):

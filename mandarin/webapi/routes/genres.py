@@ -18,7 +18,7 @@ router_genres = f.APIRouter()
     responses={
         **responses.login_error,
     },
-    response_model=List[models.GenreOutput]
+    response_model=List[models.Genre]
 )
 def get_all(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
@@ -30,6 +30,9 @@ def get_all(
     element number `offset`.
 
     To avoid denial of service attacks, `limit` cannot be greater than 500.
+
+    Note that this method doesn't return any information about parents and children of the genres; to access them,
+    you'll have to use the method that GETs the genres one by one.
     """
     return ls.session.query(tables.Genre).order_by(tables.Genre.id).limit(limit).offset(offset).all()
 
@@ -124,6 +127,36 @@ def merge(
 
     ls.session.commit()
     return f.Response(status_code=204)
+
+
+@router_genres.patch(
+    "/move",
+    summary="Change the parent of some genres.",
+    status_code=204,
+    responses={
+        **responses.login_error,
+    }
+)
+def edit_multiple_group(
+    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+    child_ids: List[int] = f.Query(..., description="The ids of the genres to change the parent of."),
+    parent_id: Optional[int] = f.Query(None, description="The id of the genre to set as parent, or None to make the "
+                                                         "genre a root.", ge=1),
+):
+    """
+    Change the parent of all the specified genres.
+
+    Non-existing `child_ids` passed to the method will be silently skipped, while a 404 error will be raised for a
+    non-existing `parent_id`.
+    """
+    if parent_id is None:
+        parent = None
+    else:
+        parent = ls.get(tables.Genre, parent_id)
+    for child in ls.group(tables.Genre, child_ids):
+        child.parent = parent
+        ls.user.log("genre.edit.multiple.group", obj=child.id)
+    ls.session.commit()
 
 
 @router_genres.get(

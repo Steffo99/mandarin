@@ -33,6 +33,7 @@ class Genre(base.OrmModel):
     id: int
     name: str
     description: str
+    parent_id: Optional[int]
 
 
 class Layer(base.OrmModel):

@@ -4,6 +4,7 @@ from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm.session
 import celery.exceptions
+import io
 
 from ...database import tables
 from ...taskbus import tasks
@@ -34,9 +35,13 @@ def upload_layer(
     """
     Upload a new track to the database.
     """
+    # file.file can't be directly pickled, transfer it to a bytesio object
+    stream = io.BytesIO()
+    while data := file.file.read(8192):
+        stream.write(data)
 
     task = tasks.process_music.delay(
-        stream=file.file,
+        stream=stream,
         original_filename=file.filename,
         uploader_id=ls.user.id,
         generate_entries=generate_entries

@@ -6,7 +6,7 @@ import sqlalchemy.orm
 import dataclasses
 from mandarin.config import *
 from mandarin.database.tables import *
-from mandarin.database.engine import *
+from mandarin.database.eng import *
 
 from .db import *
 from ..utils.loginsession import LoginSession
