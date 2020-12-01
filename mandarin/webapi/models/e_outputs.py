@@ -41,29 +41,29 @@ class GenreOutput(base.OrmModel):
     description: str
     songs: List[basic.Song]
     albums: List[basic.Album]
-    parent: Optional[basic.Genre]
-    children: List[basic.Genre]
+    supergenre: Optional[basic.Genre]
+    subgenres: List[basic.Genre]
 
 
 class GenreTree1(base.OrmModel):
     id: int
     name: str
     description: str
-    children: List
+    subgenres: List
 
 
 class GenreTree2(base.OrmModel):
     id: int
     name: str
     description: str
-    children: List[GenreTree1]
+    subgenres: List[GenreTree1]
 
 
 class GenreTreeOutput(base.OrmModel):
     id: int
     name: str
     description: str
-    children: List[GenreTree2]
+    subgenres: List[GenreTree2]
 
 
 class LayerOutput(base.OrmModel):

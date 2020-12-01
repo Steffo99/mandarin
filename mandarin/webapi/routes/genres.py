@@ -85,15 +85,15 @@ def count(
     responses={
         **responses.login_error,
     },
-    response_model=List[models.GenreTreeOutput]
+    response_model=models.GenreTreeOutput
 )
 def get_tree(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session)
 ):
     """
-    Get all genres in the form of a tree structure, where the root nodes are the ones without a `parent_id`.
+    Get all genres in the form of a tree structure, where the root nodes are the ones without a `supergenre_id`.
     """
-    return ls.session.query(tables.Genre).filter_by(parent=None).order_by(tables.Genre.id).all()
+    return ls.session.query(tables.Genre).get(0)
 
 
 @router_genres.patch(
@@ -148,7 +148,7 @@ def merge(
 
 @router_genres.patch(
     "/move",
-    summary="Change the parent of some genres.",
+    summary="Change the supergenre of some genres.",
     status_code=204,
     responses={
         **responses.login_error,
@@ -157,8 +157,7 @@ def merge(
 def edit_multiple_move(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     child_ids: List[int] = f.Query(..., description="The ids of the genres to change the parent of."),
-    parent_id: Optional[int] = f.Query(None, description="The id of the genre to set as parent, or None to make the "
-                                                         "genre a root.", ge=1),
+    parent_id: int = f.Query(..., description="The id of the genre to set as supergenre.", ge=1),
 ):
     """
     Change the parent of all the specified genres.
@@ -171,7 +170,7 @@ def edit_multiple_move(
     else:
         parent = ls.get(tables.Genre, parent_id)
     for child in ls.group(tables.Genre, child_ids):
-        child.parent = parent
+        child.supergenre = parent
         ls.user.log("genre.edit.multiple.group", obj=child.id)
     ls.session.commit()
 
