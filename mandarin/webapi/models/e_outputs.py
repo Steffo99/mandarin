@@ -1,3 +1,4 @@
+from __future__ import annotations
 from royalnet.typing import *
 import pydantic
 import datetime
@@ -42,6 +43,27 @@ class GenreOutput(base.OrmModel):
     albums: List[basic.Album]
     parent: Optional[basic.Genre]
     children: List[basic.Genre]
+
+
+class GenreTree1(base.OrmModel):
+    id: int
+    name: str
+    description: str
+    children: List
+
+
+class GenreTree2(base.OrmModel):
+    id: int
+    name: str
+    description: str
+    children: List[GenreTree1]
+
+
+class GenreTreeOutput(base.OrmModel):
+    id: int
+    name: str
+    description: str
+    children: List[GenreTree2]
 
 
 class LayerOutput(base.OrmModel):
@@ -104,6 +126,7 @@ __all__ = (
     "AuditLogOutput",
     "FileOutput",
     "GenreOutput",
+    "GenreTreeOutput",
     "LayerOutput",
     "PersonOutput",
     "RoleOutput",
