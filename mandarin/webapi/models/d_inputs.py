@@ -1,3 +1,9 @@
+"""
+Input models are :class:`.OrmModel` that represent **editable data** of database tables.
+
+They are mainly used in ``PUT`` methods of the API, which edit the properties of the specified object.
+"""
+
 from royalnet.typing import *
 import datetime
 import pydantic

@@ -7,7 +7,7 @@ Documentation
 -------------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
    autodoc/index
 

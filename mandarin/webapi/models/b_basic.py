@@ -1,3 +1,8 @@
+"""
+Basic models are :class:`.OrmModel` that represent **database tables**, and contain *only* the data as it is saved in
+the database; therefore, these models completely ignore table :func:`sqlalchemy.orm.relationship`.
+"""
+
 from royalnet.typing import *
 import datetime
 import pydantic

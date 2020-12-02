@@ -1,5 +1,6 @@
 description = """
-A debug endpoint for the Mandarin API. 
+A debug API endpoint for Mandarin which uses _all_ routes, including `debug`, which contains useful tools for 
+debugging, but also very dangerous tools to use in production ("delete the whole database").
 
-**Do not use this in production!**
+# Do **NOT** use this in production!
 """

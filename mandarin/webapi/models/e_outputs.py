@@ -1,3 +1,12 @@
+"""
+Output models are :class:`.OrmModel` that represent the **full data** of database tables.
+
+In them, :func:`sqlalchemy.orm.relationship` should be expanded up to 1 layer, and then regular :mod:`.b_basic`
+objects should be used.
+
+They are returned by most methods of the API.
+"""
+
 from __future__ import annotations
 from royalnet.typing import *
 import pydantic
@@ -45,25 +54,11 @@ class GenreOutput(base.OrmModel):
     subgenres: List[basic.Genre]
 
 
-class GenreTree1(base.OrmModel):
-    id: int
-    name: str
-    description: str
-    subgenres: List
-
-
-class GenreTree2(base.OrmModel):
-    id: int
-    name: str
-    description: str
-    subgenres: List[GenreTree1]
-
-
 class GenreTreeOutput(base.OrmModel):
     id: int
     name: str
     description: str
-    subgenres: List[GenreTree2]
+    subgenres: List[involvements.GenreTree2]
 
 
 class LayerOutput(base.OrmModel):

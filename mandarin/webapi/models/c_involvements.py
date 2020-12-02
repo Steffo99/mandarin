@@ -1,3 +1,8 @@
+"""
+Involvement models are :class:`.OrmModel` that represent **junction tables** or parts of **autoassociations** (which
+cannot be represented properly through :mod:`pydantic`).
+"""
+
 from royalnet.typing import *
 from . import a_base as base
 from . import b_basic as basic
@@ -33,6 +38,20 @@ class SongInvolvementFromSong(base.OrmModel):
     role: basic.Role
 
 
+class GenreTree1(base.OrmModel):
+    id: int
+    name: str
+    description: str
+    subgenres: List
+
+
+class GenreTree2(base.OrmModel):
+    id: int
+    name: str
+    description: str
+    subgenres: List[GenreTree1]
+
+
 __all__ = (
     "AlbumInvolvementFromPerson",
     "AlbumInvolvementFromRole",
@@ -40,4 +59,6 @@ __all__ = (
     "SongInvolvementFromPerson",
     "SongInvolvementFromRole",
     "SongInvolvementFromSong",
+    "GenreTree1",
+    "GenreTree2",
 )
