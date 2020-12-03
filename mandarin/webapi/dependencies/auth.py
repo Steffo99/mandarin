@@ -3,7 +3,7 @@ import fastapi as f
 import fastapi.security as fs
 import requests
 import sqlalchemy.orm
-import dataclasses
+import royalnet.lazy as l
 from mandarin.config import *
 from mandarin.database.tables import *
 from mandarin.database.eng import *
@@ -12,22 +12,22 @@ from .db import *
 from ..utils.loginsession import LoginSession
 
 
-auth0_scheme = fs.OAuth2AuthorizationCodeBearer(
-    authorizationUrl=config["auth.authorization"],
-    tokenUrl=config["auth.token"],
+lazy_auth0_scheme = l.Lazy(lambda c: fs.OAuth2AuthorizationCodeBearer(
+    authorizationUrl=c["auth.authorization"],
+    tokenUrl=c["auth.token"],
     scopes={
         "profile": "[Required] Get name, nickname and picture",
         "email": "[Required] Get email and email_verified",
         "openid": "[Required] Additional OpenID Connect info"
     }
-)
+), c=lazy_config)
 
 
 def dependency_access_token(
-    token: str = f.Depends(auth0_scheme)
+    token: str = f.Depends(mock_security_dependency)
 ) -> JSON:
     # May want to cache this
-    return requests.get(config["auth.userinfo"], headers={
+    return requests.get(lazy_config.e["auth.userinfo"], headers={
         "Authorization": f"Bearer {token}"
     }).json()
 
@@ -48,7 +48,7 @@ def dependency_login_session(
 
 
 __all__ = (
-    "auth0_scheme",
+    "lazy_auth0_scheme",
     "dependency_access_token",
     "LoginSession",
     "dependency_login_session",

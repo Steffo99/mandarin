@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="celery" />
-    <option name="PARAMETERS" value="-A mandarin.taskbus.celery worker --loglevel=DEBUG" />
+    <option name="PARAMETERS" value="-A mandarin.taskbus.__main__ worker --loglevel=DEBUG" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="true" />

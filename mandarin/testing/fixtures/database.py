@@ -7,7 +7,7 @@ def session():
     """
     Keep a database session open while running the test.
     """
-    session = database.Session()
+    session = database.lazy_Session()
     yield session
     session.close()
 
@@ -17,8 +17,8 @@ def recreate_db():
     """
     Drop and recreate all database tables before running this test.
     """
-    database.Base.metadata.drop_all(bind=database.engine)
-    database.Base.metadata.create_all(bind=database.engine)
+    database.Base.metadata.drop_all(bind=database.lazy_engine)
+    database.Base.metadata.create_all(bind=database.lazy_engine)
 
 
 __all__ = (

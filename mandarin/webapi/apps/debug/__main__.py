@@ -3,7 +3,7 @@ import uvicorn
 import pkg_resources
 
 from mandarin import database
-from mandarin.config import config
+from mandarin.config import lazy_config
 from ...routes import *
 from .description import description
 
@@ -28,4 +28,4 @@ app.include_router(router_auditlogs, prefix="/audit-logs", tags=["Audit Logs"])
 
 if __name__ == "__main__":
     database.create_all()
-    uvicorn.run(app, port=config["apps.files.port"])
+    uvicorn.run(app, port=lazy_config.e["apps.files.port"])

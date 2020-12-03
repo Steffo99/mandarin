@@ -208,6 +208,7 @@ def edit_multiple_declassify(
 )
 def merge(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+    ss: sqlalchemy.orm.Session = f.Depends(dependencies.dependency_db_session_serializable),
     album_ids: List[int] = f.Query(..., description="The ids of the albums to merge."),
 ):
     """
@@ -218,26 +219,22 @@ def merge(
     if len(album_ids) < 2:
         raise f.HTTPException(400, "Not enough albums specified")
 
-    # Create a new session in SERIALIZABLE isolation mode, so nothing can be added to the genres to be merged.
-    rr_session: sqlalchemy.orm.session.Session = Session()
-    rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
-
     # Get the first album
-    main_album = rr_session.query(tables.Album).get(album_ids[0])
+    main_album = ss.query(tables.Album).get(album_ids[0])
     ls.user.log("album.merge.to", obj=main_album.id)
 
     # Get the other albums
-    other_albums = rr_session.query(tables.Album).filter(tables.Album.id.in_(album_ids[1:])).all()
+    other_albums = ss.query(tables.Album).filter(tables.Album.id.in_(album_ids[1:])).all()
 
     # Replace and delete the other albums
     for merged_album in other_albums:
         for song in merged_album.songs:
             song.album = main_album
         ls.user.log("album.merge.from", obj=merged_album.id)
-        rr_session.delete(merged_album)
+        ss.delete(merged_album)
 
-    rr_session.commit()
-    rr_session.close()
+    ss.commit()
+    ss.close()
 
     ls.session.commit()
     return f.Response(status_code=204)

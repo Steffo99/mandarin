@@ -1,11 +1,11 @@
 import celery
 
-from ..config import config
+from ..config import lazy_config
 
 
 class CeleryConfig:
-    broker_url = config["taskbus.broker"]
-    result_backend = config["taskbus.backend"]
+    broker_url = lazy_config.e["taskbus.broker"]
+    result_backend = lazy_config.e["taskbus.backend"]
     imports = ["mandarin.taskbus.tasks"]
     task_serializer = "pickle"
     accept_content = ["application/json", "application/x-python-serialize"]
@@ -13,6 +13,7 @@ class CeleryConfig:
 
 app = celery.Celery("mandarin")
 app.config_from_object(CeleryConfig)
+
 
 __all__ = (
     "app",
