@@ -1,10 +1,8 @@
 Celery taskbus
 ==============
 
-.. error:: It currently isn't possible to import this module without side effects.
-
-.. currentmodule:: mandarin.taskbus.celery
-.. automodule:: mandarin.taskbus.celery
+.. currentmodule:: mandarin.taskbus.__main__
+.. automodule:: mandarin.taskbus.__main__
    :members:
    :undoc-members:
    :imported-members:
@@ -13,7 +11,7 @@ Celery taskbus
 Tasks
 -----
 
-.. error:: It currently isn't possible to import this module without side effects.
+.. error:: It currently isn't possible to document this module, as docstrings of tasks appear to be discarded.
 
 .. currentmodule:: mandarin.taskbus.tasks
 .. automodule:: mandarin.taskbus.tasks
@@ -24,8 +22,6 @@ Tasks
 
 Utilities
 ---------
-
-.. error:: It currently isn't possible to import this module without side effects.
 
 .. currentmodule:: mandarin.taskbus.utils
 .. automodule:: mandarin.taskbus.utils
