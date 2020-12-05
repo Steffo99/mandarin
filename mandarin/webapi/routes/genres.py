@@ -3,7 +3,7 @@ from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm
 
-from ...database import tables, Session
+from ...database import tables, lazy_Session
 from ...taskbus import tasks
 from .. import models
 from .. import dependencies
@@ -107,6 +107,7 @@ def get_tree(
 )
 def merge(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+    ss: sqlalchemy.orm.Session = f.Depends(dependencies.dependency_db_session_serializable),
     genre_ids: List[int] = f.Query(..., description="The ids of the genres to merge."),
 ):
     """
@@ -117,16 +118,12 @@ def merge(
     if len(genre_ids) < 2:
         raise f.HTTPException(400, "Not enough genres specified")
 
-    # Create a new session in SERIALIZABLE isolation mode, so nothing can be added to the genres to be merged.
-    rr_session: sqlalchemy.orm.session.Session = Session()
-    rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
-
     # Get the first genre
-    main_genre = rr_session.query(tables.Genre).get(genre_ids[0])
+    main_genre = ss.query(tables.Genre).get(genre_ids[0])
     ls.user.log("genre.merge.to", obj=main_genre.id)
 
     # Get the other genres
-    other_genres = rr_session.query(tables.Genre).filter(tables.Genre.id.in_(genre_ids[1:])).all()
+    other_genres = ss.query(tables.Genre).filter(tables.Genre.id.in_(genre_ids[1:])).all()
 
     # Replace and delete the other genres
     for merged_genre in other_genres:
@@ -137,10 +134,10 @@ def merge(
             album.genres.remove(merged_genre)
             album.genres.append(main_genre)
         ls.user.log("genre.merge.from", obj=merged_genre.id)
-        rr_session.delete(merged_genre)
+        ss.delete(merged_genre)
 
-    rr_session.commit()
-    rr_session.close()
+    ss.commit()
+    ss.close()
 
     ls.session.commit()
     return f.Response(status_code=204)

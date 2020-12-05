@@ -3,7 +3,7 @@ from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm
 
-from ...database import tables, Session
+from ...database import tables, lazy_Session
 from ...taskbus import tasks
 from .. import models
 from .. import dependencies
@@ -84,6 +84,7 @@ def count(
 )
 def merge(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+    ss: sqlalchemy.orm.Session = f.Depends(dependencies.dependency_db_session_serializable),
     people_ids: List[int] = f.Query(..., description="The ids of the people to merge."),
 ):
     """
@@ -94,16 +95,12 @@ def merge(
     if len(people_ids) < 2:
         raise f.HTTPException(400, "Not enough people specified")
 
-    # Create a new session in SERIALIZABLE isolation mode, so nothing can be added to the genres to be merged.
-    rr_session: sqlalchemy.orm.session.Session = Session()
-    rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
-
     # Get the first genre
-    main_person = rr_session.query(tables.Person).get(people_ids[0])
+    main_person = ss.query(tables.Person).get(people_ids[0])
     ls.user.log("person.merge.to", obj=main_person.id)
 
     # Get the other genres
-    other_people = rr_session.query(tables.Person).filter(tables.Person.id.in_(people_ids[1:])).all()
+    other_people = ss.query(tables.Person).filter(tables.Person.id.in_(people_ids[1:])).all()
 
     # Replace and delete the other genres
     for merged_person in other_people:
@@ -112,10 +109,10 @@ def merge(
         for album_involvement in merged_person.album_involvements:
             album_involvement.person = main_person
         ls.user.log("person.merge.from", obj=merged_person.id)
-        rr_session.delete(merged_person)
+        ss.delete(merged_person)
 
-    rr_session.commit()
-    rr_session.close()
+    ss.commit()
+    ss.close()
 
     ls.session.commit()
     return f.Response(status_code=204)

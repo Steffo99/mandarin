@@ -14,7 +14,7 @@ Tables
 .. currentmodule:: mandarin.database.tables
 .. automodule:: mandarin.database.tables
    :members:
-   :no-members: __init__
+   :exclude-members: __init__, metadata
    :undoc-members:
    :imported-members:
    :inherited-members:

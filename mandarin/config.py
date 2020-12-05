@@ -1,8 +1,11 @@
 import pathlib
-import royalnet.scrolls
+import royalnet.scrolls as s
+import royalnet.lazy as l
 
-config = royalnet.scrolls.Scroll.from_file("MANDARIN", pathlib.Path("config.toml"), require_file=False)
+
+lazy_config = l.Lazy(lambda: s.Scroll.from_file("MANDARIN", pathlib.Path("config.toml")))
+
 
 __all__ = (
-    "config",
+    "lazy_config",
 )

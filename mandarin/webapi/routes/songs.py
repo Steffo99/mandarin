@@ -3,7 +3,7 @@ from royalnet.typing import *
 import fastapi as f
 import sqlalchemy.orm
 
-from ...database import tables, Session
+from ...database import tables, lazy_Session
 from ...taskbus import tasks
 from .. import models
 from .. import dependencies
@@ -285,6 +285,7 @@ def edit_multiple_calendarize(
 )
 def merge(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+    ss: sqlalchemy.orm.Session = f.Depends(dependencies.dependency_db_session_serializable),
     song_ids: List[int] = f.Query(..., description="The ids of the genres to merge."),
 ):
     """
@@ -295,16 +296,12 @@ def merge(
     if len(song_ids) < 2:
         raise f.HTTPException(400, "Not enough songs specified")
 
-    # Create a new session in SERIALIZABLE isolation mode, so nothing can be added to the genres to be merged.
-    rr_session: sqlalchemy.orm.session.Session = Session()
-    rr_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
-
     # Get the first genre
-    main_song = rr_session.query(tables.Song).get(song_ids[0])
+    main_song = ss.query(tables.Song).get(song_ids[0])
     ls.user.log("song.merge.to", obj=main_song.id)
 
     # Get the other genres
-    other_songs = rr_session.query(tables.Song).filter(tables.Song.id.in_(song_ids[1:])).all()
+    other_songs = ss.query(tables.Song).filter(tables.Song.id.in_(song_ids[1:])).all()
 
     # Replace and delete the other genres
     for merged_song in other_songs:
@@ -312,10 +309,10 @@ def merge(
             layer.song = main_song
 
         ls.user.log("song.merge.from", obj=merged_song.id)
-        rr_session.delete(merged_song)
+        ss.delete(merged_song)
 
-    rr_session.commit()
-    rr_session.close()
+    ss.commit()
+    ss.close()
 
     ls.session.commit()
 

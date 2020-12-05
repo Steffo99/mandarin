@@ -1,33 +1,62 @@
-from royalnet.typing import *
 import fastapi as f
-import fastapi.security as fs
+import fastapi.openapi.models as fom
+import fastapi.security.base as fsb
+import fastapi.security.utils as fsu
 import requests
+import royalnet.lazy as l
 import sqlalchemy.orm
-import dataclasses
+from royalnet.typing import *
+
 from mandarin.config import *
 from mandarin.database.tables import *
-from mandarin.database.eng import *
-
 from .db import *
 from ..utils.loginsession import LoginSession
 
 
-auth0_scheme = fs.OAuth2AuthorizationCodeBearer(
-    authorizationUrl=config["auth.authorization"],
-    tokenUrl=config["auth.token"],
-    scopes={
-        "profile": "[Required] Get name, nickname and picture",
-        "email": "[Required] Get email and email_verified",
-        "openid": "[Required] Additional OpenID Connect info"
-    }
-)
+class LazyAuthorizationCodeBearer(fsb.SecurityBase):
+    def __init__(self,
+                 lazy_config: l.Lazy,
+                 scheme_name: Optional[str] = None,
+                 auto_error: Optional[bool] = True):
+        super().__init__()
+        self.lazy_config: l.Lazy = lazy_config
+        self.scheme_name = scheme_name or self.__class__.__name__
+        self.auto_error = auto_error
+
+    async def __call__(self, request: f.Request) -> Optional[str]:
+        authorization: str = request.headers.get("Authorization")
+        scheme, param = fsu.get_authorization_scheme_param(authorization)
+        if not authorization or scheme.lower() != "bearer":
+            if self.auto_error:
+                raise f.HTTPException(
+                    status_code=401,
+                    detail="Not authenticated",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            return None
+        return param
+
+    @property
+    def model(self):
+        return fom.OAuth2(flows=fom.OAuthFlows(
+            authorizationCode={
+                "authorizationUrl": self.lazy_config.evaluate()["auth.authorization"],
+                "tokenUrl": self.lazy_config.evaluate()["auth.token"],
+                "refreshUrl": self.lazy_config.evaluate()["auth.refresh"],
+                "scopes": {
+                    "profile": "[Required] Get name, nickname and picture",
+                    "email": "[Required] Get email and email_verified",
+                    "openid": "[Required] Additional OpenID Connect info"
+                },
+            }
+        ))
 
 
 def dependency_access_token(
-    token: str = f.Depends(auth0_scheme)
+        token: str = f.Security(LazyAuthorizationCodeBearer(lazy_config=lazy_config))
 ) -> JSON:
     # May want to cache this
-    return requests.get(config["auth.userinfo"], headers={
+    return requests.get(lazy_config.e["auth.userinfo"], headers={
         "Authorization": f"Bearer {token}"
     }).json()
 
@@ -48,7 +77,7 @@ def dependency_login_session(
 
 
 __all__ = (
-    "auth0_scheme",
+    "LazyAuthorizationCodeBearer",
     "dependency_access_token",
     "LoginSession",
     "dependency_login_session",

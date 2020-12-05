@@ -8,12 +8,11 @@ import mimetypes
 import sqlalchemy.orm
 import mutagen
 import logging
-import io
 
-from ..celery import app as celery
+from ..__main__ import app as celery
 from ..utils import MutagenParse
-from ...config import config
-from ...database import tables, Session
+from ...config import lazy_config
+from ...database import tables, lazy_Session
 
 
 log = logging.getLogger(__name__)
@@ -107,7 +106,7 @@ def determine_filename(stream: IO[bytes], original_path: os.PathLike) -> pathlib
     :return: A :class:`pathlib.Path` object representing the path that the file should have.
     """
     filename = hash_file(stream).hexdigest()
-    musicdir = pathlib.Path(config["storage.music.dir"])
+    musicdir = pathlib.Path(lazy_config["storage.music.dir"])
     extension = determine_extension(original_path)
     return musicdir.joinpath(f"{filename}{extension}")
 
@@ -132,7 +131,7 @@ def find_album_from_tag(session: sqlalchemy.orm.session.Session,
     :param mp: The :class:`.MutagenParse` object.
     :return: The found :class:`~mandarin.database.tables.Album`, or :data:`None` if no matches were found.
     """
-    role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
+    role_artist = tables.Role.make(session=session, name=lazy_config["apps.files.roles.artist"])
 
     query = None
     for artist in mp.album.artists:
@@ -165,7 +164,7 @@ def find_song_from_tag(session: sqlalchemy.orm.session.Session,
     :param mp: The :class:`.MutagenParse` object.
     :return: The found :class:`~mandarin.database.tables.Song`, or :data:`None` if no matches were found.
     """
-    role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
+    role_artist = tables.Role.make(session=session, name=lazy_config["apps.files.roles.artist"])
 
     query = None
     for artist in mp.song.artists:
@@ -202,9 +201,9 @@ def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
     :param layer: The :class:`~mandarin.database.tables.Layer` to associate the created entities with.
     :param mp: The :class:`.MutagenParse` to source the information from.
     """
-    role_artist = tables.Role.make(session=session, name=config["apps.files.roles.artist"])
-    role_composer = tables.Role.make(session=session, name=config["apps.files.roles.composer"])
-    role_performer = tables.Role.make(session=session, name=config["apps.files.roles.performer"])
+    role_artist = tables.Role.make(session=session, name=lazy_config["apps.files.roles.artist"])
+    role_composer = tables.Role.make(session=session, name=lazy_config["apps.files.roles.composer"])
+    role_performer = tables.Role.make(session=session, name=lazy_config["apps.files.roles.performer"])
 
     album = find_album_from_tag(session=session, mp=mp)
     if album is None:
@@ -272,7 +271,7 @@ def process_music(stream: IO[bytes],
     if layer_data is None:
         layer_data: Dict[str, Any] = {}
 
-    session = Session()
+    session = lazy_Session()
     session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
 
     mp: MutagenParse = tag_process(stream=stream)

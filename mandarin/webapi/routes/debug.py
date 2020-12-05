@@ -2,7 +2,7 @@ from __future__ import annotations
 from royalnet.typing import *
 import fastapi as f
 
-from ...database import tables, Base, engine
+from ...database import tables, Base, lazy_engine
 from ...taskbus import tasks
 from .. import models
 from .. import dependencies
@@ -22,8 +22,8 @@ def database_reset():
 
     **THIS DELETES ALL DATA FROM THE DATABASE!**
     """
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.drop_all(bind=lazy_engine.evaluate())
+    Base.metadata.create_all(bind=lazy_engine.evaluate())
     return f.Response(status_code=204)
 
 

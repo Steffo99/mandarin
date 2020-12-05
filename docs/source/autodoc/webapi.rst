@@ -12,19 +12,18 @@ Apps
 Debug
 ~~~~~
 
-.. error:: It currently isn't possible to import this module without side effects.
+.. error:: For some reason, the contents of this module are not displayed.
 
 .. currentmodule:: mandarin.webapi.apps.debug
 .. automodule:: mandarin.webapi.apps.debug
    :members:
    :undoc-members:
    :imported-members:
+   :inherited-members:
 
 
 Dependencies
 ------------
-
-.. error:: It currently isn't possible to import this module without side effects.
 
 .. currentmodule:: mandarin.webapi.dependencies
 .. automodule:: mandarin.webapi.dependencies
