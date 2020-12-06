@@ -9,6 +9,7 @@ Documentation
 .. toctree::
    :maxdepth: 1
 
+   installation/index
    autodoc/index
 
 
