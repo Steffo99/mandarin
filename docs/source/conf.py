@@ -81,9 +81,19 @@ intersphinx_mapping = {
 def setup(app):
     app.add_css_file('mandarin.css')
 
+
 # -- Substitutions -----------------------------------------------------------
 
 
 rst_prolog = """
 
 """
+
+# -- Automodule settings -----------------------------------------------------
+
+autodoc_default_options = {
+    'members': True,
+    'member-order': 'bysource',
+    'special-members': '__init__',
+    'undoc-members': True,
+}
