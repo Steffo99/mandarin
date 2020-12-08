@@ -17,6 +17,34 @@ the package manager of your Linux distribution.
              You will need to compile it from source!
 
 
+Pip
+---
+
+Python packages are usually installed through pip, and Mandarin is no exception.
+
+Most Python distributions come with pip preinstalled; to check if it's available, enter the following command in a terminal:
+
+.. code-block:: bash
+
+   pip -V
+
+If it's not available, you probably need to `install it <https://pip.pypa.io/en/stable/installing/>`.
+
+
+Virtualenv
+----------
+
+Usually packaged with Python, virtualenv (or ``venv``) allows to isolate the dependencies of Python scripts from other scripts and the rest of the system.
+
+To check if virtualenv is installed, enter the following command:
+
+.. code-block:: bash
+
+   python -m venv
+
+If it's not available, follow the guide for installing :ref:`Pip`.
+
+
 PostgreSQL
 ----------
 
