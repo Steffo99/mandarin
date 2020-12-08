@@ -79,3 +79,16 @@ If you intend to make dependency-related changes to Mandarin, you'll need to hav
 the ``poetry.lock`` file.
 
 You can download Poetry on its `website <https://python-poetry.org/docs/#installation>`_.
+
+
+IntelliJ IDEA / PyCharm
+-----------------------
+
+Mandarin includes some things that make its development using an IntelliJ IDE a bit more simple.
+
+While **not mandatory**, if you intend to contribute to Mandarin it is suggested that you use either IDEA with the Python plugin or PyCharm.
+
+You can download those from their respective website:
+- `PyCharm <https://www.jetbrains.com/pycharm/>`_
+- `IDEA <https://www.jetbrains.com/idea/download/>`_
+
