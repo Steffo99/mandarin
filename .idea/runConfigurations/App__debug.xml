@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="App: debug" type="PythonConfigurationType" factoryName="Python">
-    <module name="mandarin" />
+    <module name="Mandarin" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>

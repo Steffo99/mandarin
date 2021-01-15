@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/mandarin.iml" filepath="$PROJECT_DIR$/.idea/mandarin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Mandarin.iml" filepath="$PROJECT_DIR$/.idea/Mandarin.iml" />
     </modules>
   </component>
 </project>
