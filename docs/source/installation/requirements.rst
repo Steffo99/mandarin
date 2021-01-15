@@ -4,8 +4,8 @@ Requirements
 Mandarin requires the following software to function properly.
 
 
-Python 3.8
-----------
+Python 3.8 or greater
+---------------------
 
 Mandarin is written in Python, which is an interpreted programming language; therefore, a Python interpreter must be
 installed on your system for Mandarin to run.
@@ -20,8 +20,8 @@ the package manager of your Linux distribution.
 PostgreSQL
 ----------
 
-Mandarin uses a relational database to store song metadata. Thanks to :mod:`sqlalchemy`, it should work with a multitude of
-database engines; however, only PostgreSQL is officialy supported.
+Mandarin uses a relational database to store song metadata. Thanks to :mod:`sqlalchemy`, it should work with a
+multitude of database engines; however, only PostgreSQL is officially supported.
 
 The used database engine is specified in the config, through either the ``MANDARIN_DATABASE_URI`` environment variable
 or the ``database.uri`` key in the ``config.toml`` file.
@@ -63,7 +63,8 @@ Redis
 
 Mandarin uses :mod:`celery` to asyncronously run some tasks.
 
-It requires a interprocess message broker: while `multiple can be used <https://docs.celeryproject.org/en/stable/getting-started/brokers/>`_,
+It requires a interprocess message broker: while
+`multiple can be used <https://docs.celeryproject.org/en/stable/getting-started/brokers/>`_,
 the only one officially supported by Mandarin is Redis.
 
 You can download Redis from `its website <https://redis.io/download>`_ or the package manager of your
