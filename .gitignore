@@ -2,6 +2,9 @@ config.toml
 data/
 **/__deleted__/**/*
 
+# Github Codespaces
+pythonenv3.8/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -132,3 +135,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
