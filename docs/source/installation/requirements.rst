@@ -22,19 +22,21 @@ Pip
 
 Python packages are usually installed through pip, and Mandarin is no exception.
 
-Most Python distributions come with pip preinstalled; to check if it's available, enter the following command in a terminal:
+Most Python distributions come with pip preinstalled; to check if it's available, enter the following command in a
+terminal:
 
 .. code-block:: bash
 
    pip -V
 
-If it's not available, you probably need to `install it <https://pip.pypa.io/en/stable/installing/>`.
+If it's not available, you probably need to `install it <https://pip.pypa.io/en/stable/installing/>`_ .
 
 
 Virtualenv
 ----------
 
-Usually packaged with Python, virtualenv (or ``venv``) allows to isolate the dependencies of Python scripts from other scripts and the rest of the system.
+Usually packaged with Python, virtualenv (or ``venv``) allows to isolate the dependencies of Python scripts from other
+scripts and the rest of the system.
 
 To check if virtualenv is installed, enter the following command:
 
@@ -115,7 +117,8 @@ IntelliJ IDEA / PyCharm
 
 Mandarin includes some things that make its development using an IntelliJ IDE a bit more simple.
 
-While **not mandatory**, if you intend to contribute to Mandarin it is suggested that you use either IDEA with the Python plugin or PyCharm.
+While **not mandatory**, if you intend to contribute to Mandarin it is suggested that you use either IDEA with the
+Python plugin or PyCharm.
 
 You can download those from their respective website:
 - `PyCharm <https://www.jetbrains.com/pycharm/>`_
