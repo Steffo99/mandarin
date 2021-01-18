@@ -47,3 +47,45 @@ You can generate one using Poetry by entering the project's directory and runnin
     poetry install
 
 
+Create a configuration file
+---------------------------
+
+Before running Mandarin, you'll need to create a ``config.toml`` file from which certain settings will be loaded.
+
+A sample config file is as follows:
+
+.. code-block:: toml
+
+    [auth]
+    authorization = "https://mandarin.eu.auth0.com/authorize"
+    device = "https://mandarin.eu.auth0.com/oauth/device/code"
+    token = "https://mandarin.eu.auth0.com/oauth/token"
+    refresh = "https://mandarin.eu.auth0.com/oauth/token"
+    userinfo = "https://mandarin.eu.auth0.com/userinfo"
+    openidcfg = "https://mandarin.eu.auth0.com/.well-known/openid-configuration"
+    jwks = "https://mandarin.eu.auth0.com/.well-known/jwks.json"
+
+    [database]
+    uri = "postgres://steffo@/mandarin_dev"
+
+    [storage]
+    [storage.music]
+    dir = "./data/music"
+    [storage.tmp]
+    dir = "./data/tmp"
+
+    [apps]
+    [apps.files]
+    port = 30009
+
+    [apps.files.roles]
+    artist = "Artist"
+    composer = "Composer"
+    performer = "Performer"
+
+    [taskbus]
+    broker = "redis://localhost"
+    backend = "redis://localhost"
+
+
+.. todo:: Document the config file options.
