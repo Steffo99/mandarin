@@ -18,7 +18,7 @@ class CeleryConfig:
 
 
 app = celery.Celery("mandarin")
-app.config_from_object(CeleryConfig)
+app.config_from_object(CeleryConfig())
 
 
 __all__ = (
