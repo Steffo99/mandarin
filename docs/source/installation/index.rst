@@ -6,4 +6,4 @@ Installation
 
    requirements
    dev_installation
-
+   dev_run
