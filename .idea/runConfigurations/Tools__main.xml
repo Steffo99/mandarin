@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Tools: upload" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="Tools: main" type="PythonConfigurationType" factoryName="Python">
     <module name="Mandarin" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -12,8 +12,8 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="mandarin.tools.upload" />
-    <option name="PARAMETERS" value="-u https://mandarin.steffo.eu $USER_HOME$/Music $USER_HOME$/Videos" />
+    <option name="SCRIPT_NAME" value="mandarin.tools" />
+    <option name="PARAMETERS" value="-i http://lo.steffo.eu:30009 upload mandarin/testing/samples/noise.mp3" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="true" />
     <option name="MODULE_MODE" value="true" />
