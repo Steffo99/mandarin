@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 # Code
-@click.group()
+@click.group("mandarin")
 @click.option(
     "-i", "--instance",
     help="The base url of the Mandarin instance to interact with.",
@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
     type=MANDARIN_INSTANCE_TYPE,
 )
 @click.pass_context
-def instanceful(
+def _group_mandarin(
         ctx: click.Context,
         instance: MandarinInstance,
 ):
@@ -34,14 +34,23 @@ def instanceful(
     ctx.obj["INSTANCE"] = instance
 
 
-@instanceful.command()
+@_group_mandarin.group("auth")
+@click.pass_context
+def _group_auth(
+        ctx: click.Context,
+):
+    instance = ctx
+    ...
+
+
+@_group_auth.command("upload")
 @click.argument(
     "files",
     type=click.File(mode="rb", lazy=True),
     nargs=-1,
 )
 @click.pass_context
-def upload(
+def _(
         ctx: click.Context,
         files: t.Collection[t.BinaryIO]
 ):
@@ -84,4 +93,4 @@ def upload(
 
 
 if __name__ == "__main__":
-    instanceful()
+    instanceful(auto_envvar_prefix="MANDARIN")
