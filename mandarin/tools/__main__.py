@@ -9,6 +9,7 @@ import time
 import typing as t
 
 import click
+import coloredlogs
 import requests
 import toml
 
@@ -27,11 +28,35 @@ log = logging.getLogger(__name__)
     required=True,
     type=MANDARIN_INSTANCE_TYPE,
 )
+@click.option(
+    "-D", "--debug",
+    help="Display the full debug log while running the command. Might break progress bars.",
+    is_flag=True,
+)
 @click.pass_context
 def _group_mandarin(
         ctx: click.Context,
         instance: MandarinInstance,
+        debug: bool,
 ):
+    coloredlogs.install(
+        level="DEBUG" if debug else "WARNING",
+        fmt="{asctime} {levelname} {name}: {message}",
+        style="{",
+        field_styles={
+            "asctime": {"color": "white"},
+            "levelname": {"color": "white", "bold": True},
+            "name": {"color": "blue"},
+        },
+        level_styles={
+            "debug": {"color": "white"},
+            "info": {"color": "blue"},
+            "warning": {"color": "yellow"},
+            "error": {"color": "red"},
+            "critical": {"color": "red", "bold": True},
+        }
+    )
+
     log.debug(f"Using: {instance!r}")
     click.echo(f"Using {instance}")
     ctx.ensure_object(dict)
@@ -89,96 +114,159 @@ def _group_auth(
 
         if instance.url not in global_data:
 
-            # Phase 1: get static data
+            # Phase 0: ensure options were specified
 
-            log.debug(f"Getting auth config data for: {instance!r}")
+            if client_id is None:
+                raise click.ClickException(
+                    "--client-id was not specified and no tokens were ever generated for the instance."
+                )
+
+            # Phase 1: get auth config
+
+            log.debug(f"Getting auth config for: {instance!r}")
             try:
                 r = instance.get("/auth/config")
             except requests.exceptions.ConnectionError as e:
-                log.info(f"Could not retrieve auth config of the Mandarin instance")
-                raise click.ClickException(f"Could not retrieve auth config of the Mandarin instance")
+                raise click.ClickException(f"Could not retrieve Mandarin auth config due to a connection error: {e}")
 
-            log.debug(f"Response status: {r.status_code!r}")
             if r.status_code >= 400:
-                log.info(f"Mandarin auth config retrieval returned HTTP status: {r.status_code!r}")
-                raise click.ClickException(f"Mandarin auth config retrieval returned HTTP status: {r.status_code!r}")
+                raise click.ClickException(
+                    f"Could not retrieve Mandarin auth config due to a HTTP error: {r.status_code}"
+                )
 
-            log.debug(f"Parsing response JSON...")
-            instance_data: dict = r.json()
+            log.debug(f"Parsing Mandarin auth config...")
+            try:
+                instance_data: dict = r.json()
+            except ValueError as e:
+                log.info(f"Could not parse Mandarin auth config due to a JSON error: {e!r}")
+                raise click.ClickException(f"Could not parse Mandarin auth config due to a JSON error: {e}")
 
-            # Phase 2: get token
+            log.debug(f"Reading Mandarin auth config: {instance_data!r}")
 
-            device_code_url = instance_data["device"]
-            log.debug(f"Device Code URL is: {device_code_url!r}")
+            if device_code_url := instance_data.get("device"):
+                log.debug(f"Device Codes can be obtained at: {device_code_url!r}")
+            else:
+                raise click.ClickException(f"Mandarin auth config is missing the 'device' key")
 
-            token_url = instance_data["token"]
-            log.debug(f"Token URL is: {token_url!r}")
+            if token_url := instance_data.get("token"):
+                log.debug(f"Tokens can be exchanged at: {token_url!r}")
+            else:
+                raise click.ClickException(f"Mandarin auth config is missing the 'token' key")
 
-            if client_id is None:
-                raise click.ClickException("Client ID not specified.")
+            if user_info_url := instance_data.get("userinfo"):
+                log.debug(f"User info can be obtained at: {user_info_url}")
+            else:
+                raise click.ClickException(f"Mandarin auth config is missing the 'userinfo' key")
 
-            log.debug(f"Requesting device code from: {device_code_url!r}")
+            # Phase 2: get device code
+
+            log.debug(f"Requesting a Device Code from: {device_code_url!r}")
             try:
                 r = requests.post(device_code_url, data={
                     "client_id": client_id,
                     "audience": audience,
-                    "scope": "profile email openid",  # Add more scopes here as required
+                    "scope": "profile email openid",  # Add more scopes here if required
                 })
             except requests.exceptions.ConnectionError as e:
-                log.info(f"Could not request device code from: {device_code_url!r}")
-                raise click.ClickException(f"Could not request device code from: {device_code_url!r}")
+                raise click.ClickException(f"Could not request a Device Code due to a connection error: {e}")
 
-            log.debug(f"Parsing response JSON...")
-            device_code_data: dict = r.json()
+            log.debug(f"Parsing Device Code response...")
+            try:
+                device_code_data: dict = r.json()
+            except ValueError as e:
+                raise click.ClickException(f"Could not parse Device Code response due to a JSON error: {e}")
 
-            log.debug(f"Response status: {r.status_code!r}")
             if r.status_code >= 400:
-                log.info(f"Device Code request returned HTTP status: {r.status_code!r}")
-                raise click.ClickException(f"Device Code request returned HTTP status: {r.status_code!r}")
+                raise click.ClickException(f"Device Code response contained HTTP status: {r.status_code!r}")
 
-            device_code = device_code_data["device_code"]
-            log.debug(f"Found device code: {device_code!r}")
+            if device_code := device_code_data.get("device_code"):
+                log.debug(f"Found device code: {device_code!r}")
+            else:
+                raise click.ClickException(f"Device Code response is missing the 'device_code' key")
 
-            user_code = device_code_data["user_code"]
-            log.debug(f"Found user code: {user_code!r}")
+            if user_code := device_code_data.get("user_code"):
+                log.debug(f"Found user code: {user_code!r}")
+            else:
+                raise click.ClickException(f"Device Code response is missing the 'user_code' key")
 
-            verification_uri_complete = device_code_data["verification_uri_complete"]
-            log.debug(f"Found verification URL: {verification_uri_complete!r}")
+            if verification_uri_complete := device_code_data.get("verification_uri_complete"):
+                log.debug(f"Found verification URL: {verification_uri_complete!r}")
+            else:
+                raise click.ClickException(f"Device Code response is missing the 'verification_uri_complete' key")
 
-            time_left = device_code_data["expires_in"]
-            log.debug(f"Found seconds until expiration: {time_left!r}")
+            if time_left := device_code_data.get("expires_in"):
+                log.debug(f"Found seconds until expiration: {time_left!r}")
+            else:
+                raise click.ClickException(f"Device Code response is missing the 'expires_in' key")
 
-            interval = device_code_data["interval"]
-            log.debug(f"Found interval: {interval!r}")
+            if interval := device_code_data.get("interval"):
+                log.debug(f"Found interval: {interval!r}")
+            else:
+                raise click.ClickException(f"Device Code response is missing the 'interval' key")
+
+            # Phase 3: wait for user authentication
 
             click.echo(f"To authorize Mandarin CLI, please login at: {verification_uri_complete}")
             click.echo(f"The following code should be displayed: {user_code}")
 
             while time_left:
+                log.debug(f"Waiting for the interval to pass: {interval!r}s")
                 time.sleep(interval)
 
                 time_left -= interval
-                log.debug(f"Time left: {time_left}s")
+                log.debug(f"Time left: {time_left!r}s")
 
-                log.debug(f"Requesting token at: {token_url}")
+                log.debug(f"Requesting token at: {token_url!r}")
                 r = requests.post(token_url, data={
                     "client_id": client_id,
                     "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
                     "device_code": device_code,
                 })
 
-                if 400 <= r.status_code < 500:
-                    log.debug("Not authenticated yet")
+                if r.status_code >= 400:
+                    log.debug("Not authenticated yet, retrying...")
                     continue
-                r.raise_for_status()
 
                 log.debug("Parsing token data...")
                 token_data = r.json()
                 break
             else:
-                raise click.ClickException(f"Device verification URL expired, please hurry up next time!")
+                raise click.ClickException(f"Device verification URL expired. Please try logging in faster next time!")
 
-            # TODO: Validate token and get user data
+            # Phase 4: validate token and get user info
+
+            log.debug(f"Getting User Info...")
+            try:
+                r = requests.get(
+                    user_info_url,
+                    headers={
+                        "Authorization": f"{token_data['token_type']} {token_data['access_token']}"
+                    }
+                )
+            except requests.exceptions.ConnectionError as e:
+                raise click.ClickException(f"Could not retrieve User Info due to a connection error: {e}")
+
+            if r.status_code >= 400:
+                raise click.ClickException(
+                    f"Could not retrieve User Info due to a HTTP error: {r.status_code}"
+                )
+
+            log.debug(f"Parsing User Info...")
+            try:
+                user_info: dict = r.json()
+            except ValueError as e:
+                log.info(f"Could not parse User Info due to a JSON error: {e!r}")
+                raise click.ClickException(f"Could not parse User Info due to a JSON error: {e}")
+
+            if name := user_info.get("name"):
+                log.debug(f"Found name: {name}")
+            else:
+                raise click.ClickException(f"User Info is missing the 'name' key")
+
+            if sub := user_info.get("sub"):
+                log.debug(f"Found sub: {name}")
+            else:
+                raise click.ClickException(f"User Info is missing the 'sub' key")
 
             log.debug("Integrating token data with instance_data...")
             instance_data["login_data"] = token_data
@@ -189,7 +277,7 @@ def _group_auth(
             log.debug("Saving file as toml...")
             toml.dump(global_data, file)
 
-            click.echo("Logged in successfully!")
+            click.echo(f"Logged in as: {name!r} ({sub!r})")
 
     ctx.ensure_object(dict)
     ctx.obj["AUTH"] = global_data[instance.url]
@@ -246,6 +334,7 @@ def _(
 
             log.debug(f"Parsing response JSON...")
             j: str = r.json()
+            log.debug(f"Parsed response: {j!r}")
 
     click.echo("Success!")
 

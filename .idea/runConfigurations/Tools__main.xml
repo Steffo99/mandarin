@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="mandarin.tools" />
-    <option name="PARAMETERS" value="-i http://lo.steffo.eu:30009 auth --client-id OGRdHAUDzny1ioTv8RwcbphzOFOaO6pC upload mandarin/testing/samples/noise.mp3" />
+    <option name="PARAMETERS" value="-D -i http://lo.steffo.eu:30009 auth --client-id OGRdHAUDzny1ioTv8RwcbphzOFOaO6pC upload mandarin/testing/samples/noise.mp3" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="true" />
     <option name="MODULE_MODE" value="true" />
