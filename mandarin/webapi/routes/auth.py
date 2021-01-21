@@ -1,11 +1,9 @@
 import fastapi as f
 
-from ...database import tables
-from ...taskbus import tasks
-from .. import models
 from .. import dependencies
+from .. import models
 from .. import responses
-
+from ...config import lazy_config
 
 router_auth = f.APIRouter()
 
@@ -39,7 +37,7 @@ def access_token(
     response_model=models.UserOutput
 )
 def current_user(
-    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session)
+        ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session)
 ):
     """
     Returns information about the user that matches the passed bearer token.
@@ -47,6 +45,26 @@ def current_user(
     Can be used to debug the authentication process.
     """
     return ls.user
+
+
+@router_auth.get(
+    "/config",
+    summary="Get the current authentication settings.",
+    response_model=models.AuthConfig,
+)
+def config():
+    """
+    Returns the authentication config settings of this Mandarin instance.
+    """
+    return models.AuthConfig(
+        authorization=lazy_config.e["auth.authorization"],
+        device=lazy_config.e["auth.device"],
+        token=lazy_config.e["auth.token"],
+        refresh=lazy_config.e["auth.refresh"],
+        userinfo=lazy_config.e["auth.userinfo"],
+        openidcfg=lazy_config.e["auth.openidcfg"],
+        jwks=lazy_config.e["auth.jwks"],
+    )
 
 
 __all__ = (

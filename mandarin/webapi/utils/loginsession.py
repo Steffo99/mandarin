@@ -1,19 +1,19 @@
 from __future__ import annotations
-from royalnet.typing import *
+
 import dataclasses
-import sqlalchemy.orm
+
 import fastapi
+import sqlalchemy.orm
+from royalnet.typing import *
 
-from ..models import enums
-from ...database import *
-
+from ...database import tables
 
 RowType = TypeVar("RowType")
 
 
 @dataclasses.dataclass()
 class LoginSession:
-    user: User
+    user: tables.User
     session: sqlalchemy.orm.session.Session
 
     def get(self, table: Type[RowType], id_: Any) -> RowType:

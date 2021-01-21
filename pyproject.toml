@@ -21,6 +21,9 @@ mutagen = "^1.45.1"
 redis = "^3.5.3"
 hiredis = "^1.1.0"
 click = "^7.1.2"
+validators = "^0.18.2"
+semver = "^2.13.0"
+coloredlogs = "^15.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
