@@ -271,13 +271,12 @@ class UserInfo(pydantic.BaseModel):
 
     .. seealso:: :class:`mandarin.webapi.models.b_basic.User`
     """
-    id: int
     sub: str
     name: str
     nickname: str
     picture: str
     email: str
-    email_verified: str
+    email_verified: bool
     updated_at: datetime.datetime
 
 

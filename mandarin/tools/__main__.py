@@ -131,8 +131,8 @@ def _group_auth(
         if not auth:
             raise click.ClickException("Failed to authenticate.")
 
-        storage_data[instance.url] = auth
-        toml.dump(file)
+        storage_data[instance.url] = auth.data
+        toml.dump(storage_data, file)
 
     ctx.ensure_object(dict)
     ctx.obj["AUTH"] = auth
@@ -150,7 +150,7 @@ def _(
         files: t.Collection[t.BinaryIO]
 ):
     instance: MandarinInstance = ctx.obj["INSTANCE"]
-    auth: dict = ctx.obj["AUTH"]
+    auth: MandarinAuth = ctx.obj["AUTH"]
 
     log.debug("Creating progress bar...")
     with click.progressbar(
@@ -174,9 +174,7 @@ def _(
                     files={
                         "file": (file.name, file)
                     },
-                    headers={
-                        "Authorization": f"{auth['token']['token_type']} {auth['token']['access_token']}"
-                    }
+                    headers=auth.data.token.access_header(),
                 )
             except requests.exceptions.ConnectionError as e:
                 log.info(f"Could not connect to the upload endpoint: {e!r}")
