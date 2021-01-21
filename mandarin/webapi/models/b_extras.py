@@ -5,7 +5,7 @@ Extra models are :class:`.MandarinModel`\\ s which represent data not contained 
 from . import a_base as base
 
 
-class AuthUrls(base.MandarinModel):
+class AuthConfig(base.MandarinModel):
     authorization: str
     device: str
     token: str
@@ -16,5 +16,5 @@ class AuthUrls(base.MandarinModel):
 
 
 __all__ = (
-    "AuthUrls",
+    "AuthConfig",
 )

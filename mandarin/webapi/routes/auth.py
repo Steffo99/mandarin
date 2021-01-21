@@ -50,13 +50,13 @@ def current_user(
 @router_auth.get(
     "/config",
     summary="Get the current authentication settings.",
-    response_model=models.AuthUrls,
+    response_model=models.AuthConfig,
 )
 def config():
     """
     Returns the authentication config settings of this Mandarin instance.
     """
-    return models.AuthUrls(
+    return models.AuthConfig(
         authorization=lazy_config.e["auth.authorization"],
         device=lazy_config.e["auth.device"],
         token=lazy_config.e["auth.token"],

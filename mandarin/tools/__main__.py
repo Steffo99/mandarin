@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import os
 import pathlib
-import time
 import typing as t
 
 import click
@@ -15,7 +14,6 @@ import toml
 
 # Internal imports
 from .utils import MandarinInstance, MANDARIN_INSTANCE_TYPE
-from .utils import jrequests as jr
 
 # Special global objects
 log = logging.getLogger(__name__)
@@ -107,13 +105,8 @@ def _group_auth(
     log.debug(f"Opening auth file: {file_path!r}")
     with open(file_path, "r+") as file:
 
-        log.debug(f"Loading file as toml: {file!r}")
-        global_data = toml.load(file)
 
-        log.debug(f"Seeking back to the beginning...")
-        file.seek(0)
-
-        if instance.url not in global_data:
+        if instance.url not in global_auth_data:
 
             # Phase 0: ensure options were specified
 
@@ -124,56 +117,19 @@ def _group_auth(
 
             # Phase 1: get auth config
 
-            auth_config = jr.request(instance.get, "/auth/config", operation="Auth Config", keys=[
-                "authorization",
-                "device",
-                "token",
-                "refresh",
-                "userinfo",
-                "openidcfg",
-                "jwks",
-            ])
-
             # Phase 2: get device code
-
-            device_request = jr.request(
-                requests.post,
-                auth_config["device"],
-                operation="Device Request",
-                keys=[
-                    "device_code",
-                    "user_code",
-                    "verification_uri",
-                    "expires_in",
-                    "interval",
-                ],
-                data={
-                    "client_id": client_id,
-                    "audience": audience,
-                    "scope": "profile email openid",
-                }
-            )
 
             # Phase 3: wait for user authentication
 
-            click.echo(f"To authorize Mandarin CLI, you will need to login at the following URL:")
-            click.echo(click.style(device_request["verification_uri"], fg="blue", bold=True))
-            click.echo()
-            click.echo(f"Once there, you will have to input the following code:")
-            click.echo(click.style(device_request["user_code"], fg="yellow", bold=True))
-
-            seconds_left = device_request["expires_in"]
-            interval = device_request["interval"]
+            seconds_left = device["expires_in"]
+            interval = device["interval"]
 
             while seconds_left >= 0:
-                log.debug(f"Waiting for {interval!r}s, {seconds_left!r}s until expiration.")
-                time.sleep(interval)
-                seconds_left -= interval
 
                 try:
-                    token_request = jr.request(
+                    token = jr.request(
                         requests.post,
-                        auth_config["token"],
+                        config["token"],
                         operation="Token Request",
                         keys=[
                             "access_token",
@@ -184,7 +140,7 @@ def _group_auth(
                         data={
                             "client_id": client_id,
                             "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-                            "device_code": device_request["device_code"]
+                            "device_code": device["device_code"]
                         }
                     )
                 except jr.HTTPError:
@@ -197,41 +153,25 @@ def _group_auth(
 
             # Phase 4: validate token and get user info
 
-            user_info = jr.request(
-                requests.get,
-                auth_config["userinfo"],
-                operation="User Info",
-                keys=[
-                    "sub",
-                    "name",
-                    "nickname",
-                    "email",
-                    "email_verified",
-                    "updated_at",
-                ],
-                headers={
-                    "Authorization": f"{token_request['token_type']} {token_request['access_token']}"
-                }
-            )
 
             # Phase 5: store all data
 
             instance_data = {
-                "config": auth_config,
-                "token": token_request,
-                "user": user_info,
+                "config": config,
+                "token": token,
+                "user": user,
             }
 
             log.debug("Writing instance data in global_data...")
-            global_data[instance.url] = instance_data
+            global_auth_data[instance.url] = instance_data
 
             log.debug("Saving file as toml...")
-            toml.dump(global_data, file)
+            toml.dump(global_auth_data, file)
 
-            click.echo(f"Logged in as: {user_info['name']} ({user_info['sub']})")
+            click.echo(f"Logged in as: {user['name']} ({user['sub']})")
 
     ctx.ensure_object(dict)
-    ctx.obj["AUTH"] = global_data[instance.url]
+    ctx.obj["AUTH"] = global_auth_data[instance.url]
 
 
 @_group_auth.command("upload")
@@ -271,7 +211,7 @@ def _(
                         "file": (file.name, file)
                     },
                     headers={
-                        "Authorization": f"{auth['login_data']['token_type']} {auth['login_data']['access_token']}"
+                        "Authorization": f"{auth['token']['token_type']} {auth['token']['access_token']}"
                     }
                 )
             except requests.exceptions.ConnectionError as e:

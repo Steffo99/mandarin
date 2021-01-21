@@ -1,11 +1,11 @@
 # Special imports
 from __future__ import annotations
 
-import dataclasses
 # External imports
 import logging
 
 import click
+import pydantic
 import requests
 import semver
 import validators
@@ -15,15 +15,14 @@ log = logging.getLogger(__name__)
 
 
 # Code
-@dataclasses.dataclass()
-class MandarinInstance:
+class MandarinInstance(pydantic.BaseModel):
     url: str
     version: semver.VersionInfo
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__qualname__} {self.version} ({self.url!r})>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Mandarin {self.version} @ {self.url}"
 
     def absolute(self, path: str):
