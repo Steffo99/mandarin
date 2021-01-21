@@ -12,6 +12,7 @@ import coloredlogs
 import requests
 import toml
 
+from .utils import MandarinAuth, LocalConfig
 # Internal imports
 from .utils import MandarinInstance, MANDARIN_INSTANCE_TYPE
 
@@ -66,7 +67,7 @@ def _group_mandarin(
 @click.option(
     "-f", "--file", "file_str",
     help="The file where authentication information should be stored in.",
-    default=f"{pathlib.Path.home()}/.config/mandarin/auth.toml",
+    default=f"{pathlib.Path.home()}/.config/mandarin/cli/auth.toml",
     type=click.Path(dir_okay=False, writable=True)
 )
 @click.option(
@@ -78,7 +79,7 @@ def _group_mandarin(
 @click.option(
     "--audience",
     help="The audience to use if requesting a new Device Code.",
-    default="mandarin-api",
+    required=False,
     type=str,
 )
 @click.pass_context
@@ -86,92 +87,55 @@ def _group_auth(
         ctx: click.Context,
         file_str: str,
         client_id: t.Optional[str],
-        audience: str,
+        audience: t.Optional[str],
 ):
     instance: MandarinInstance = ctx.obj["INSTANCE"]
 
     log.debug(f"Converting the string parameter to a path: {file_str!r}")
     file_path = pathlib.Path(file_str)
-    dir_path = file_path.stem
+    dir_path = file_path.parent
 
     log.debug(f"Ensuring the path directories exist: {dir_path!r}")
     os.makedirs(dir_path, exist_ok=True)
 
     if not file_path.exists():
-        log.debug(f"Creating auth file: {file_path!r}")
+        log.debug(f"Creating storage file: {file_path!r}")
         with open(file_path, "w"):
             pass
 
-    log.debug(f"Opening auth file: {file_path!r}")
+    log.debug(f"Opening storage file: {file_path!r}")
     with open(file_path, "r+") as file:
 
+        log.debug(f"Loading storage file: {file!r}")
+        storage_data = toml.load(file)
 
-        if instance.url not in global_auth_data:
+        log.debug(f"Seeking storage file back to the beginning...")
+        file.seek(0)
 
-            # Phase 0: ensure options were specified
+        auth = None
+        if storage_data:
+            auth = MandarinAuth.from_storage_file(
+                storage_data=storage_data,
+                instance=instance,
+            )
 
-            if client_id is None:
-                raise click.ClickException(
-                    "--client-id was not specified and no tokens were ever generated for the instance."
-                )
+        if not auth:
+            if not (client_id and audience):
+                raise click.ClickException("To authenticate, a --client-id and an --audience are required.")
 
-            # Phase 1: get auth config
+            auth = MandarinAuth.from_device_login(
+                local_config=LocalConfig(client_id=client_id, audience=audience),
+                instance=instance
+            )
 
-            # Phase 2: get device code
+        if not auth:
+            raise click.ClickException("Failed to authenticate.")
 
-            # Phase 3: wait for user authentication
-
-            seconds_left = device["expires_in"]
-            interval = device["interval"]
-
-            while seconds_left >= 0:
-
-                try:
-                    token = jr.request(
-                        requests.post,
-                        config["token"],
-                        operation="Token Request",
-                        keys=[
-                            "access_token",
-                            "id_token",
-                            "token_type",
-                            "expires_in",
-                        ],
-                        data={
-                            "client_id": client_id,
-                            "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-                            "device_code": device["device_code"]
-                        }
-                    )
-                except jr.HTTPError:
-                    log.debug("Not authenticated yet, retrying...")
-                else:
-                    break
-
-            else:
-                raise click.ClickException(f"Device verification URL expired. Please try logging in faster next time!")
-
-            # Phase 4: validate token and get user info
-
-
-            # Phase 5: store all data
-
-            instance_data = {
-                "config": config,
-                "token": token,
-                "user": user,
-            }
-
-            log.debug("Writing instance data in global_data...")
-            global_auth_data[instance.url] = instance_data
-
-            log.debug("Saving file as toml...")
-            toml.dump(global_auth_data, file)
-
-            click.echo(f"Logged in as: {user['name']} ({user['sub']})")
+        storage_data[instance.url] = auth
+        toml.dump(file)
 
     ctx.ensure_object(dict)
-    ctx.obj["AUTH"] = global_auth_data[instance.url]
+    ctx.obj["AUTH"] = auth
 
 
 @_group_auth.command("upload")

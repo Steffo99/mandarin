@@ -11,7 +11,6 @@ import typing as t
 import click
 import pydantic
 import requests
-import toml
 
 # Internal imports
 from .instance import MandarinInstance
@@ -22,12 +21,32 @@ Model = t.TypeVar("Model")
 
 
 # Code
+def jrequest(method: str, url: str, model: t.Type[Model], **kwargs) -> Model:
+    """
+    .. todo:: Document :func:`.jrequest`.
+    """
+    r: requests.Response = requests.request(method=method, url=url, **kwargs)
+    r.raise_for_status()
+    j: dict = r.json()
+    if "expires_in" in j:
+        j["expiration"] = datetime.datetime.now() + datetime.timedelta(seconds=j["expires_in"])
+    return model(**j)
+
+
 class LocalConfig(pydantic.BaseModel):
+    """
+    OAuth2 Client configuration.
+    """
     client_id: str
     audience: str
 
 
 class RemoteConfig(pydantic.BaseModel):
+    """
+    Mandarin OAuth2 configuration.
+
+    .. seealso:: :class:`mandarin.webapi.models.b_extras.AuthConfig`
+    """
     authorization: str
     device: str
     token: str
@@ -36,8 +55,222 @@ class RemoteConfig(pydantic.BaseModel):
     openidcfg: str
     jwks: str
 
+    @classmethod
+    def from_instance(cls, instance: MandarinInstance) -> RemoteConfig:
+        """
+        Retrieve the :class:`.RemoteConfig` of a :class:`.MandarinInstance`.
+
+        :param instance: The instance to retrieve the config of.
+        :return: The retrieved config.
+        """
+
+        log.debug(f"Fetching RemoteConfig of: {instance!r}")
+        return jrequest("GET", instance.absolute("/auth/config"), cls)
+
+
+class DeviceCode(pydantic.BaseModel):
+    """
+    A device code and some other related information obtained from the ``/device/code`` OAuth2 server endpoint.
+    """
+    device_code: str
+    user_code: str
+    verification_uri: str
+    verification_uri_complete: str
+    expires_in: int
+    expiration: datetime.datetime
+    interval: int
+
+    @classmethod
+    def from_request(cls, local_config: LocalConfig, remote_config: RemoteConfig) -> DeviceCode:
+        """
+        Request a new device code from the OAuth2 server.
+
+        :param local_config: The :class:`.LocalConfig` to use in the request.
+        :param remote_config: The :class`.RemoteConfig` to use in the request.
+        :return: The obtained :class:`.DeviceCode`.
+        """
+        log.debug(f"Fetching DeviceCodeResponse with {local_config=} and {remote_config=}")
+        return jrequest("POST", remote_config.device, cls, data={
+            "client_id": local_config.client_id,
+            "audience": local_config.audience,
+            "scope": "profile email openid",
+        })
+
+    def expired(self) -> bool:
+        """
+        :return: :data:`True` if the device code has expired, :data:`False` if it hasn't yet.
+        """
+        return datetime.datetime.now() >= self.expiration
+
+    def login_prompt(self) -> None:
+        """
+        Display the login prompt for this device code in the terminal.
+        """
+        log.debug("Prompting for device login")
+
+        click.echo(click.style("=== AUTHORIZATION REQUIRED ===", bold=True))
+        click.echo(f"Mandarin CLI needs to be logged in as an user to perform the requested action.")
+        click.echo()
+        click.echo(f"Please visit the following URL, check that the code matches with the one below and then "
+                   f"complete the login: ")
+        click.echo(click.style(self.verification_uri_complete, fg="blue"))
+        click.echo(click.style(self.user_code, fg="cyan", bold=True))
+
+
+class BearerToken(pydantic.BaseModel):
+    """
+    A bearer token obtained by exchanging a code at the ``/token`` OAuth2 server endpoint.
+    """
+    access_token: str
+    id_token: str
+    token_type: str
+    expires_in: int
+    expiration: datetime.datetime
+
+    @classmethod
+    def from_device_code_exchange(
+            cls,
+            local_config: LocalConfig,
+            remote_config: RemoteConfig,
+            device_code: DeviceCode
+    ) -> t.Optional[BearerToken]:
+        """
+        Obtain a bearer token by exchanging a :class:`.DeviceCode` with the OAuth2 server.
+
+        :param local_config: The :class:`.LocalConfig` to use in the request.
+        :param remote_config: The :class`.RemoteConfig` to use in the request.
+        :param device_code: The :class:`.DeviceCode` to exchange.
+        :return: The obtained :class:`.BearerToken`, or :data:`None` if the device code expired before the exchange was
+                 possible.
+        """
+        while not device_code.expired():
+            log.debug(f"Waiting for {device_code.interval!r}s")
+            time.sleep(device_code.interval)
+            try:
+                return jrequest("POST", remote_config.token, BearerToken, data={
+                    "client_id": local_config.client_id,
+                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                    "device_code": device_code.device_code
+                })
+            except requests.HTTPError:
+                log.debug("User has not logged in yet, retrying...")
+                continue
+        else:
+            return None
+
+    def expired(self) -> bool:
+        """
+        :return: :data:`True` if the token has expired, :data:`False` if it hasn't yet.
+        """
+        return datetime.datetime.now() >= self.expiration
+
+    def access_header(self) -> t.Dict[str, str]:
+        """
+        Use the :attr:`access_token` as a HTTP ``Authorization`` header.
+
+        :return: A dict with the header.
+        """
+        return {
+            "Authorization": f"{self.token_type} {self.access_token}"
+        }
+
+    def jwt_header(self) -> t.Dict[str, str]:
+        """
+        Use the :attr:`id_token` as a HTTP ``Authorization`` header.
+
+        :return: A dict with the header.
+        """
+        return {
+            "Authorization": f"{self.token_type} {self.id_token}"
+        }
+
+
+class AuthData(pydantic.BaseModel):
+    """
+    Authentication data for an instance which can be stored in a file.
+    """
+
+    instance: MandarinInstance
+    config: RemoteConfig
+    token: BearerToken
+
+    def get_user_info(self) -> t.Optional[UserInfo]:
+        """
+        Using this :class:`AuthData`, validate the token and try retrieving its associated :class`.UserInfo`.
+
+        :return: The :class:`.UserInfo` if the token is valid, or :data:`None` if it isn't.
+        """
+        log.debug(f"Getting UserInfo for: {self.token!r}")
+
+        if self.token.expired():
+            log.debug(f"Token has expired: {self.token!r}")
+            return None
+
+        try:
+            user_info = jrequest("GET", self.config.userinfo, UserInfo, headers=self.token.access_header())
+        except requests.HTTPError as e:
+            log.debug(f"UserInfo retrieval failed with an HTTP error: {e!r}")
+            return None
+
+        return user_info
+
+    @classmethod
+    def from_storage_data(cls, data: t.Dict[str, t.Any], instance: MandarinInstance) -> t.Optional[AuthData]:
+        """
+        Retrieve the :class:`AuthData` of an instance from previously loaded storage data.
+
+        :param data: The loaded storage data.
+        :param instance: The instance to get the data of.
+        :return: The :class:`AuthData` if it was stored, otherwise :data:`None`.
+
+        .. seealso:: :meth:`.load_storage_file`
+        """
+        log.debug(f"Getting AuthConfig for: {instance!r}")
+        auth_config = data.get(instance.url)
+
+        if auth_config is None:
+            return None
+
+        log.debug(f"Building AuthConfig object from: {auth_config!r}")
+        return cls(**auth_config)
+
+    @classmethod
+    def from_login(
+            cls,
+            instance: MandarinInstance,
+            local_config: LocalConfig,
+    ) -> t.Optional[AuthData]:
+        """
+        Create a new :class:`.AuthData` by requesting the user to perform the login procedure.
+
+        :param instance: The instance to login on.
+        :param local_config: The config of the local OAuth2 Client.
+        :return: The created :class:`.AuthData` if the login is successful, :data:`None` otherwise.
+        """
+        remote_config = RemoteConfig.from_instance(instance=instance)
+        device_code = DeviceCode.from_request(local_config=local_config, remote_config=remote_config)
+        device_code.login_prompt()
+        bearer_token = BearerToken.from_device_code_exchange(
+            local_config=local_config,
+            remote_config=remote_config,
+            device_code=device_code
+        )
+        if bearer_token:
+            return cls(
+                instance=instance,
+                config=remote_config,
+                token=bearer_token,
+            )
+        else:
+            return None
+
 
 class UserInfo(pydantic.BaseModel):
+    """
+    Info about an user obtained from the `/userinfo` OAuth2 server endpoint.
+
+    .. seealso:: :class:`mandarin.webapi.models.b_basic.User`
+    """
     id: int
     sub: str
     name: str
@@ -48,232 +281,46 @@ class UserInfo(pydantic.BaseModel):
     updated_at: datetime.datetime
 
 
-class DeviceCodeResponse(pydantic.BaseModel):
-    device_code: str
-    user_code: str
-    verification_uri: str
-    verification_uri_complete: str
-    expires_in: int
-    expiration: datetime.datetime
-    interval: int
-
-    def is_valid(self) -> bool:
-        return datetime.datetime.now() <= self.expiration
-
-
-class TokenResponse(pydantic.BaseModel):
-    access_token: str
-    id_token: str
-    token_type: str
-    expires_in: int
-    expiration: datetime.datetime
-
-    def is_valid(self) -> bool:
-        return datetime.datetime.now() <= self.expiration
-
-    def access_header(self) -> t.Dict[str, str]:
-        return {
-            "Authorization": f"{self.token_type} {self.access_token}"
-        }
-
-    def jwt_header(self) -> t.Dict[str, str]:
-        return {
-            "Authorization": f"{self.token_type} {self.id_token}"
-        }
-
-
-class InstanceData(pydantic.BaseModel):
-    instance: MandarinInstance
-    config: RemoteConfig
-    token: TokenResponse
-
-
-class JRequestError(Exception):
-    pass
-
-
-class JConnectionError(JRequestError):
-    pass
-
-
-class JStatusCodeError(JRequestError):
-    pass
-
-
-class JJSONDecodeError(JRequestError):
-    pass
-
-
-def jrequest(method: str, url: str, model: t.Type[Model], **kwargs) -> Model:
-    r: requests.Response = requests.request(method=method, url=url, **kwargs)
-    r.raise_for_status()
-    j: dict = r.json()
-    if "expires_in" in j:
-        j["expiration"] = datetime.datetime.now() + datetime.timedelta(seconds=j["expires_in"])
-    return model(**j)
-
-
 @dataclasses.dataclass()
 class MandarinAuth:
-    instance: MandarinInstance
-    local_config: LocalConfig
-    remote_config: RemoteConfig
-    token: TokenResponse
+    """
+    Authentication data for an instance completed with some runtime values.
+    """
+    data: AuthData
     user: UserInfo
-
-    @classmethod
-    def _load_storage_file(cls, file: t.TextIO) -> t.Dict[str, t.Any]:
-        log.debug(f"Loading storage file: {file!r}")
-        data = toml.load(file)
-
-        log.debug(f"Seeking storage file back to the beginning...")
-        file.seek(0)
-
-        log.debug(f"Returning loaded data: {data!r}")
-        return data
-
-    @classmethod
-    def _validate_token(cls, config: RemoteConfig, token: TokenResponse) -> t.Optional[UserInfo]:
-        log.debug(f"Validating token: {token!r}")
-
-        if not token.is_valid():
-            log.debug(f"Token has expired: {token!r}")
-            return None
-
-        try:
-            user_info = jrequest("GET", config.userinfo, UserInfo, headers=token.access_header())
-        except requests.HTTPError as e:
-            log.debug(f"UserInfo retrieval failed with an HTTP error: {e!r}")
-            return None
-
-        return user_info
 
     @classmethod
     def from_storage_file(
             cls,
-            storage_file: t.TextIO,
+            storage_data: t.Dict[str, t.Any],
+            instance: MandarinInstance,
+    ) -> t.Optional[MandarinAuth]:
+        auth_data = AuthData.from_storage_data(data=storage_data, instance=instance)
+        user_info = auth_data.get_user_info()
+        if user_info is None:
+            return None
+        return cls(data=auth_data, user=user_info)
+
+    @classmethod
+    def from_device_login(
+            cls,
             local_config: LocalConfig,
             instance: MandarinInstance,
     ) -> t.Optional[MandarinAuth]:
-        global_data: t.Dict[str, dict] = cls._load_storage_file(file=storage_file)
-
-        log.debug(f"Unpacking InstanceData for: {instance!r}")
-        instance_data = global_data.get(instance.url)
-
-        log.debug(f"Building InstanceData object from: {instance_data!r}")
-        instance_data = InstanceData(**instance_data)
-
-        log.debug(f"Loaded InstanceData: {instance_data!r}")
-
-        user = cls._validate_token(config=instance_data.config, token=instance_data.token)
-
-        if user is None:
-            log.debug("Token validation failed, cannot create MandarinAuth")
+        auth_data = AuthData.from_login(instance=instance, local_config=local_config)
+        user_info = auth_data.get_user_info()
+        if user_info is None:
             return None
-
-        log.debug(f"Token validated, it belongs to: {user!r}")
-
-        log.debug(f"Creating MandarinAuth...")
-        return MandarinAuth(
-            instance=instance,
-            local_config=local_config,
-            remote_config=instance_data.config,
-            token=instance_data.token,
-            user=user,
-        )
-
-    @classmethod
-    def _fetch_remote_config(cls, instance: MandarinInstance) -> RemoteConfig:
-        log.debug(f"Fetching RemoteConfig of: {instance!r}")
-
-        return jrequest("GET", instance.absolute("/auth/config"), RemoteConfig)
-
-    @classmethod
-    def _get_device_code(cls, local_config: LocalConfig, remote_config: RemoteConfig) -> DeviceCodeResponse:
-        log.debug(f"Fetching DeviceCodeResponse with {local_config=} and {remote_config=}")
-
-        return jrequest("POST", remote_config.device, DeviceCodeResponse, data={
-            "client_id": local_config.client_id,
-            "audience": local_config.audience,
-            "scope": "profile email openid",
-        })
-
-    @classmethod
-    def _prompt_for_device_login(cls, url: str, user_code: str):
-        log.debug("Prompting for device login")
-
-        click.echo(click.style("=== AUTHORIZATION REQUIRED ===", bold=True))
-        click.echo(f"Mandarin CLI needs to be logged in as an user to perform the requested action.")
-        click.echo()
-        click.echo(f"Please visit the following URL, check that the code matches with the one below and then "
-                   f"complete the login: ")
-        click.echo(click.style(url, fg="blue"))
-        click.echo(click.style(user_code, fg="cyan", bold=True))
-
-    @classmethod
-    def _perform_device_login(
-            cls,
-            local_config: LocalConfig,
-            remote_config: RemoteConfig,
-            device_code: DeviceCodeResponse,
-    ) -> TokenResponse:
-        log.debug("Performing device login")
-
-        cls._prompt_for_device_login(url=device_code.verification_uri_complete, user_code=device_code.user_code)
-
-        seconds_left = device_code.expires_in
-        interval = device_code.interval
-        while seconds_left >= 0:
-            log.debug(f"Waiting for {interval!r}s; {seconds_left!r}s until device code expiration.")
-            time.sleep(interval)
-            seconds_left -= interval
-
-            try:
-                return jrequest("POST", remote_config.token, TokenResponse, data={
-                    "client_id": local_config.client_id,
-                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-                    "device_code": device_code.device_code
-                })
-            except requests.HTTPError:
-                log.debug("User has not logged in yet, retrying...")
-                continue
-
-    @classmethod
-    def from_login(
-            cls,
-            instance: MandarinInstance,
-            local_config: LocalConfig,
-    ) -> t.Optional[MandarinAuth]:
-        remote_config = cls._fetch_remote_config(instance=instance)
-        device_code = cls._get_device_code(local_config=local_config, remote_config=remote_config)
-        token = cls._perform_device_login(
-            local_config=local_config,
-            remote_config=remote_config,
-            device_code=device_code
-        )
-
-        user = cls._validate_token(config=remote_config, token=token)
-
-        if user is None:
-            log.debug("Token validation failed, cannot create MandarinAuth")
-            return None
-
-        log.debug(f"Token validated, it belongs to: {user!r}")
-
-        log.debug(f"Creating MandarinAuth...")
-        return MandarinAuth(
-            instance=instance,
-            local_config=local_config,
-            remote_config=remote_config,
-            token=token,
-            user=user,
-        )
+        return cls(data=auth_data, user=user_info)
 
 
 # Objects exported by this module
 __all__ = (
+    "LocalConfig",
     "RemoteConfig",
+    "DeviceCode",
+    "BearerToken",
+    "AuthData",
     "UserInfo",
-    "DeviceCodeResponse",
-    "TokenResponse",
+    "MandarinAuth",
 )

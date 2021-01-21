@@ -19,6 +19,9 @@ class MandarinInstance(pydantic.BaseModel):
     url: str
     version: semver.VersionInfo
 
+    class Config(pydantic.BaseConfig):
+        arbitrary_types_allowed = True
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__qualname__} {self.version} ({self.url!r})>"
 
