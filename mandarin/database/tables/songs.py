@@ -1,11 +1,11 @@
-from royalnet.typing import *
+import royalnet.alchemist as a
 import sqlalchemy as s
 import sqlalchemy.orm as o
-import royalnet.alchemist as a
+from royalnet.typing import *
 
-from ..base import Base
 from .songgenres import songgenres
 from .songinvolvements import SongInvolvement
+from ..base import Base
 
 if TYPE_CHECKING:
     from .people import Person
@@ -21,7 +21,8 @@ class Song(Base, a.ColRepr, a.Updatable):
     id = s.Column(s.Integer, primary_key=True)
 
     title = s.Column(s.String, nullable=False, default="")
-    description = s.Column(s.String, nullable=False, default="")
+    description = s.Column(s.Text, nullable=False, default="")
+    lyrics = s.Column(s.Text, nullable=False, default="")
 
     disc = s.Column(s.Integer)
     track = s.Column(s.Integer)
@@ -31,10 +32,11 @@ class Song(Base, a.ColRepr, a.Updatable):
     album = o.relationship("Album", back_populates="songs")
 
     layers = o.relationship("Layer", back_populates="song")
-    involvements = o.relationship("SongInvolvement", back_populates="song", cascade="all, delete")
+    involvements: List[SongInvolvement] = o.relationship("SongInvolvement", back_populates="song",
+                                                         cascade="all, delete")
     genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
-    def involve(self, people: Iterable["Person"], role: "Role") -> Set["SongInvolvement"]:
+    def involve(self, people: Iterable["Person"], role: "Role") -> Set[SongInvolvement]:
         """
         Involve people with this song, assigning them the specified role, and return all the resulting involvements.
 
