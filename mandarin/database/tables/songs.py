@@ -92,7 +92,7 @@ class Song(Base, a.ColRepr, a.Updatable):
             self.lyrics = data.lyrics
 
         self.title = data.title
-        self.description = data.description
+        self.description = data.description["plain"]
 
 
 __all__ = ("Song",)
