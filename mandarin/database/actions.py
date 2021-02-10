@@ -1,7 +1,7 @@
 from . import eng, base, tables
 
 
-def create_all():
+def create_all() -> None:
     # Create the session
     session = eng.lazy_Session.evaluate()()
     # Create all tables
@@ -9,6 +9,8 @@ def create_all():
     # Create the root genre
     root_genre = session.query(tables.Genre).get(0)
     if root_genre is None:
+        # SQLAlchemy type is wrong
+        # noinspection PyTypeChecker
         root_genre = tables.Genre(
             id=0,
             name="Root",
