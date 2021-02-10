@@ -3,11 +3,11 @@ import lyricsgenius.types
 import royalnet.alchemist as a
 import sqlalchemy as s
 import sqlalchemy.orm as o
-from royalnet.lazy import Lazy
 from royalnet.typing import *
 
 from mandarin import exc
 from mandarin.config import lazy_config
+from mandarin.genius import lazy_genius
 from .roles import Role
 from .songgenres import songgenres
 from .songinvolvements import SongInvolvement
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from .people import Person
     from .roles import Role
 
-lazy_genius = Lazy(lambda c: lyricsgenius.Genius(c["genius.token"], verbose=False), c=lazy_config)
 
 
 class Song(Base, a.ColRepr, a.Updatable):

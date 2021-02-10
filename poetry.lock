@@ -407,7 +407,7 @@ docs = ["sphinx (>=3.3,<4.0)", "sphinx-rtd-theme"]
 type = "git"
 url = "https://github.com/Steffo99/LyricsGenius"
 reference = "master"
-resolved_reference = "bb948b1fe83dd86d27b68b2cd946c10a05c6de89"
+resolved_reference = "f67f429dd022d80bf97c115c6cee9432bbbbd2cd"
 
 [[package]]
 name = "markupsafe"

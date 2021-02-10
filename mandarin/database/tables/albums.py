@@ -1,11 +1,11 @@
-from royalnet.typing import *
+import royalnet.alchemist as a
 import sqlalchemy as s
 import sqlalchemy.orm as o
-import royalnet.alchemist as a
+from royalnet.typing import *
 
-from ..base import Base
 from .albumgenres import albumgenres
 from .albuminvolvements import AlbumInvolvement
+from ..base import Base
 
 if TYPE_CHECKING:
     from .people import Person
@@ -22,7 +22,7 @@ class Album(Base, a.ColRepr, a.Updatable):
     title = s.Column(s.String, nullable=False, default="")
     description = s.Column(s.Text, nullable=False, default="")
 
-    involvements = o.relationship("AlbumInvolvement", back_populates="album")
+    involvements: List[AlbumInvolvement] = o.relationship("AlbumInvolvement", back_populates="album")
     songs = o.relationship("Song", back_populates="album")
     genres = o.relationship("Genre", secondary=albumgenres, back_populates="albums")
 
