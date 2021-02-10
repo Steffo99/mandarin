@@ -1,13 +1,15 @@
 from __future__ import annotations
-from royalnet.typing import *
+
+import celery.exceptions
 import fastapi as f
 import sqlalchemy.orm
+from royalnet.typing import *
 
-from ...database import tables, lazy_Session
-from ...taskbus import tasks
-from .. import models
 from .. import dependencies
+from .. import models
 from .. import responses
+from ...database import tables
+from ...taskbus import tasks
 
 router_songs = f.APIRouter()
 
@@ -327,13 +329,40 @@ def merge(
     response_model=models.SongOutput
 )
 def get_single(
-    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-    song_id: int = f.Path(..., description="The id of the song to be retrieved.")
+        ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+        song_id: int = f.Path(..., description="The id of the song to be retrieved.")
 ):
     """
     Get full information for the song with the specified `song_id`.
     """
     return ls.get(tables.Song, song_id)
+
+
+@router_songs.post(
+    "/{song_id}/genius",
+    summary="Update the song with information from Genius.",
+    responses={
+        **responses.login_error,
+        **responses.celery_timeout,
+        404: {"description": "Song not found"},
+    },
+    response_model=models.SongOutput
+)
+def post_genius(
+        ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+        song_id: int = f.Path(..., description="The id of the song to be retrieved.")
+):
+    """
+    Start a task to **overwrite** some of the song fields with information retrieved from Genius.
+    """
+    task = tasks.genius_fetch.delay(tables.Song, song_id)
+
+    try:
+        task.get(timeout=15)
+    except celery.exceptions.TimeoutError:
+        raise f.HTTPException(202, "Task queued, but didn't finish in less than 15 seconds")
+
+    return ls.get(table=tables.Song, id_=song_id)
 
 
 @router_songs.put(
