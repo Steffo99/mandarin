@@ -1,19 +1,14 @@
-import lyricsgenius
-import lyricsgenius.types
 import royalnet.alchemist as a
+import royalnet.typing as t
 import sqlalchemy as s
 import sqlalchemy.orm as o
-from royalnet.typing import *
 
-from mandarin import exc
-from mandarin.config import lazy_config
-from mandarin.genius import lazy_genius
 from .roles import Role
 from .songgenres import songgenres
 from .songinvolvements import SongInvolvement
 from ..base import Base
 
-if TYPE_CHECKING:
+if t.TYPE_CHECKING:
     from .people import Person
     from .roles import Role
 
@@ -39,11 +34,11 @@ class Song(Base, a.ColRepr, a.Updatable):
     album = o.relationship("Album", back_populates="songs")
 
     layers = o.relationship("Layer", back_populates="song")
-    involvements: List[SongInvolvement] = o.relationship("SongInvolvement", back_populates="song",
-                                                         cascade="all, delete")
+    involvements: t.List[SongInvolvement] = o.relationship("SongInvolvement", back_populates="song",
+                                                           cascade="all, delete")
     genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
-    def involve(self, people: Iterable["Person"], role: "Role") -> Set[SongInvolvement]:
+    def involve(self, people: t.Iterable["Person"], role: "Role") -> t.Set[SongInvolvement]:
         """
         Involve people with this song, assigning them the specified role, and return all the resulting involvements.
 
@@ -62,37 +57,6 @@ class Song(Base, a.ColRepr, a.Updatable):
             involvements.add(involvement)
 
         return involvements
-
-    def genius(self):
-        """
-        Update the fields of the song with information from Genius.
-
-        :raises FetchingError: If the song isn't found on Genius.
-        """
-        config = lazy_config.evaluate()
-        genius: lyricsgenius.Genius = lazy_genius.evaluate()
-        session: o.Session = o.object_session(self)
-
-        # Find the Artist role
-        artist_role = session.query(Role).filter(Role.name == config["apps.files.roles.artist"])
-
-        # Find the artists of the song
-        artists = [involvement.person for involvement in self.involvements if involvement.role == artist_role]
-
-        # TODO: For now, just concatenate artists, as they are passed as it is to the Genius Search
-        artist = " ".join([artist.name for artist in artists])
-
-        # Search for the song on Genius
-        data: lyricsgenius.types.Song = genius.search_song(title=self.title, artist=artist)
-        if data is None:
-            raise exc.GeniusError("No such song.")
-
-        # Only scrape lyrics if it is enabled in the config
-        if config["genius.lyrics"]:
-            self.lyrics = data.lyrics
-
-        self.title = data.title
-        self.description = data.description["plain"]
 
 
 __all__ = ("Song",)

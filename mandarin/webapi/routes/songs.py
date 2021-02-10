@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-import celery.exceptions
 import fastapi as f
+import lyricsgenius
+import lyricsgenius.types
+import royalnet.scrolls
 import sqlalchemy.orm
 from royalnet.typing import *
 
 from .. import dependencies
 from .. import models
 from .. import responses
+from ...config import lazy_config
 from ...database import tables
-from ...taskbus import tasks
+from ...genius import lazy_genius
 
 router_songs = f.APIRouter()
 
@@ -338,31 +341,64 @@ def get_single(
     return ls.get(tables.Song, song_id)
 
 
-@router_songs.post(
+@router_songs.get(
     "/{song_id}/genius",
-    summary="Update the song with information from Genius.",
+    summary="Retrieve information about the song from Genius.",
     responses={
         **responses.login_error,
-        **responses.celery_timeout,
         404: {"description": "Song not found"},
     },
-    response_model=models.SongOutput
+    response_model=models.SongInput
 )
-def post_genius(
+def get_genius(
         ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+        scrape_title: bool = f.Query(True, description="Whether the song title should be overwritten or not."),
+        scrape_description: bool = f.Query(True,
+                                           description="Whether the song description should be overwritten or not."),
+        scrape_lyrics: bool = f.Query(False, description="Whether song lyrics should be overwritten or not."),
+        scrape_year: bool = f.Query(True, description="Whether the song year should be overwritten or not."),
         song_id: int = f.Path(..., description="The id of the song to be retrieved.")
 ):
     """
-    Start a task to **overwrite** some of the song fields with information retrieved from Genius.
+    Retrieve information about the song from Genius.
+
+    The data returned by this method can be passed to `PUT /songs/{song_id}` to update the song metadata.
+
+    **Please note that scraping lyrics is against the Genius Terms of Service**; therefore, lyrics scraping must be
+    manually switched on in both the query and Mandarin's config.
     """
-    task = tasks.genius_fetch.delay(tables.Song, song_id)
+    config: royalnet.scrolls.Scroll = lazy_config.evaluate()
+    genius: lyricsgenius.Genius = lazy_genius.evaluate()
 
-    try:
-        task.get(timeout=15)
-    except celery.exceptions.TimeoutError:
-        raise f.HTTPException(202, "Task queued, but didn't finish in less than 15 seconds")
+    song = ls.get(tables.Song, song_id)
 
-    return ls.get(table=tables.Song, id_=song_id)
+    # Find the Artist role
+    artist_role = ls.session.query(tables.Role).filter(tables.Role.name == config["apps.files.roles.artist"])
+
+    # Find the artists of the song
+    artists = [involvement.person for involvement in song.involvements if involvement.role == artist_role]
+
+    # TODO: For now, just concatenate artists, as they are passed as it is to the Genius Search
+    artist = " ".join([artist.name for artist in artists])
+
+    # Search for the song on Genius
+    data: lyricsgenius.types.Song = genius.search_song(title=song.title, artist=artist)
+
+    result = models.SongInput.from_orm(song)
+
+    if scrape_title and data.title:
+        result.title = data.title
+
+    if scrape_description and "description" in data._body:
+        result.description = data._body["description"]["plain"]
+
+    if scrape_lyrics and config["genius.allow_scraping_lyrics"] and data.lyrics:
+        result.lyrics = data.lyrics
+
+    if scrape_year and data.release_date:
+        result.year = data.release_date.split("-")[0]
+
+    return result
 
 
 @router_songs.put(
