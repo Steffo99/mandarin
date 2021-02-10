@@ -28,7 +28,7 @@ from mandarin.database import tables
 
 # Special global objects
 log = logging.getLogger(__name__)
-lazy_genius = l.Lazy(lambda c: lyricsgenius.Genius(c["genius.token"]), c=lazy_config)
+lazy_genius = l.Lazy(lambda c: lyricsgenius.Genius(c["genius.token"], verbose=False), c=lazy_config)
 
 
 # Code
