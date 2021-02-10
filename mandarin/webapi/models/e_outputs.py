@@ -8,9 +8,12 @@ They are returned by most methods of the API.
 """
 
 from __future__ import annotations
-from royalnet.typing import *
-import pydantic
+
 import datetime
+
+import pydantic
+from royalnet.typing import *
+
 from . import a_base as base
 from . import b_basic as basic
 from . import c_involvements as involvements
@@ -94,6 +97,7 @@ class SongOutput(base.OrmModel):
     id: int
     title: str
     description: str
+    lyrics: str
     disc: Optional[pydantic.PositiveInt]
     track: Optional[pydantic.PositiveInt]
     year: Optional[int]
