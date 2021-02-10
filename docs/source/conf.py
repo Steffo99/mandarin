@@ -74,6 +74,7 @@ intersphinx_mapping = {
     "celery": ("https://docs.celeryproject.org/en/stable/", None),
     "click": ("https://click.palletsprojects.com/en/7.x/", None),
     "royalnet": ("https://royalnet-6.readthedocs.io/en/latest/", None),
+    "lyricsgenius": ("https://lyricsgenius.readthedocs.io/en/master/", None),
 }
 
 # -- Setup function ----------------------------------------------------------
