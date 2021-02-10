@@ -7,7 +7,6 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 
 from mandarin import exc
-from mandarin.config import lazy_config
 from mandarin.genius import lazy_genius
 from ..base import Base
 
@@ -31,9 +30,7 @@ class Person(Base, a.ColRepr, a.Updatable, a.Makeable):
 
         :raises FetchingError: If the song isn't found on Genius.
         """
-        config = lazy_config.evaluate()
         genius: lyricsgenius.Genius = lazy_genius.evaluate()
-        session: o.Session = o.object_session(self)
 
         # Search for the song on Genius
         data: lyricsgenius.types.Artist = genius.search_artist(artist_name=self.name, max_songs=0)
