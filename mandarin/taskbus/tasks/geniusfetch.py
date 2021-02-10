@@ -16,8 +16,9 @@ from __future__ import annotations
 # External imports
 import logging
 
+import royalnet.typing as t
+
 from ..__main__ import app as celery
-from ... import exc
 # Internal imports
 from ...database import lazy_Session
 
@@ -27,21 +28,15 @@ log = logging.getLogger(__name__)
 
 # Code
 @celery.task
-def genius_fetch(table, primary_keys):
+def genius_fetch(table, id_) -> t.Literal[True]:
     session = lazy_Session.evaluate()()
-    item = session.query(table).get(primary_keys)
+    item = session.query(table).get(id_)
     try:
         item.genius()
-    # TODO: What happens if an item has no Genius method?
-    except AttributeError:
-        raise
-    # TODO: What happens if the Genius retrieval of the file fails?
-    except exc.GeniusError:
-        # Pass Genius errors quietly
-        pass
     finally:
         session.commit()
         session.close()
+    return True
 
 
 # Objects exported by this module
