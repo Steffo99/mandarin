@@ -1,17 +1,16 @@
 from __future__ import annotations
-import starlette.responses
-from royalnet.typing import *
-import fastapi as f
-import sqlalchemy.orm.session
-import celery.exceptions
+
 import io
 
+import celery.exceptions
+import fastapi as f
+import starlette.responses
+
+from .. import dependencies
+from .. import models
+from .. import responses
 from ...database import tables
 from ...taskbus import tasks
-from .. import models
-from .. import dependencies
-from .. import responses
-
 
 router_files = f.APIRouter()
 
@@ -33,7 +32,7 @@ def upload_layer(
                                                        "uploaded file.")
 ):
     """
-    Upload a new track to the database.
+    Upload a new track to the database, and start a task to process the uploaded track.
     """
     # file.file can't be directly pickled, transfer it to a bytesio object
     stream = io.BytesIO()
@@ -48,9 +47,9 @@ def upload_layer(
     )
 
     try:
-        _, layer_id = task.get(timeout=5)
+        _, layer_id = task.get(timeout=15)
     except celery.exceptions.TimeoutError:
-        raise f.HTTPException(202, "Task queued, but didn't finish in less than 5 seconds")
+        raise f.HTTPException(202, "Task queued, but didn't finish in less than 15 seconds")
 
     layer = ls.session.query(tables.Layer).get(layer_id)
     return layer

@@ -24,7 +24,7 @@ click = "^7.1.2"
 validators = "^0.18.2"
 semver = "^2.13.0"
 coloredlogs = "^15.0"
-lyricsgenius = "^3.0.0"
+lyricsgenius = { git = "https://github.com/Steffo99/LyricsGenius" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"

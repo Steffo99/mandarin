@@ -1,13 +1,12 @@
 from __future__ import annotations
-from royalnet.typing import *
+
+import royalnet.alchemist as a
 import sqlalchemy as s
 import sqlalchemy.orm as o
-import sqlalchemy.orm.collections as c
-import royalnet.alchemist as a
 
-from ..base import Base
-from .songgenres import songgenres
 from .albumgenres import albumgenres
+from .songgenres import songgenres
+from ..base import Base
 
 
 class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
@@ -27,6 +26,10 @@ class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
 
     songs = o.relationship("Song", secondary=songgenres, back_populates="genres")
     albums = o.relationship("Album", secondary=albumgenres, back_populates="genres")
+
+    __table_args__ = (
+
+    )
 
 
 __all__ = ("Genre",)

@@ -4,9 +4,11 @@ Input models are :class:`.OrmModel` that represent **editable data** of database
 They are mainly used in ``PUT`` methods of the API, which edit the properties of the specified object.
 """
 
-from royalnet.typing import *
 import datetime
+
 import pydantic
+from royalnet.typing import *
+
 from . import a_base as base
 
 
@@ -63,6 +65,7 @@ class SongInvolvementInput(base.OrmModel):
 class SongInput(base.OrmModel):
     title: str
     description: str
+    lyrics: str
     disc: Optional[pydantic.PositiveInt]
     track: Optional[pydantic.PositiveInt]
     year: Optional[int]

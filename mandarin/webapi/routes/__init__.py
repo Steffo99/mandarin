@@ -6,5 +6,6 @@ from .files import *
 from .genres import *
 from .layers import *
 from .people import *
+from .search import *
 from .songs import *
 from .version import *

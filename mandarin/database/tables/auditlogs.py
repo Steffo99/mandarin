@@ -1,5 +1,5 @@
 from __future__ import annotations
-from royalnet.typing import *
+
 import sqlalchemy as s
 import sqlalchemy.orm as o
 
@@ -21,6 +21,10 @@ class AuditLog(Base):
     timestamp = s.Column(s.DateTime, nullable=False)
 
     obj = s.Column(s.Integer)
+
+    __table_args__ = (
+
+    )
 
 
 __all__ = ("AuditLog",)

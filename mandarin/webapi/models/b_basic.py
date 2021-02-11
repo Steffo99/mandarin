@@ -3,9 +3,11 @@ Basic models are :class:`.OrmModel` that represent **database tables**, and cont
 the database; therefore, these models completely ignore table :func:`sqlalchemy.orm.relationship`.
 """
 
-from royalnet.typing import *
 import datetime
+
 import pydantic
+from royalnet.typing import *
+
 from . import a_base as base
 
 
@@ -70,6 +72,7 @@ class Song(base.OrmModel):
     id: int
     title: str
     description: str
+    lyrics: str
     disc: Optional[pydantic.PositiveInt]
     track: Optional[pydantic.PositiveInt]
     year: Optional[int]

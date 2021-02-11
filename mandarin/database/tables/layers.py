@@ -1,7 +1,6 @@
-from royalnet.typing import *
+import royalnet.alchemist as a
 import sqlalchemy as s
 import sqlalchemy.orm as o
-import royalnet.alchemist as a
 
 from ..base import Base
 
@@ -21,6 +20,10 @@ class Layer(Base, a.ColRepr, a.Updatable):
 
     file_id = s.Column(s.Integer, s.ForeignKey("files.id"), nullable=False)
     file = o.relationship("File", back_populates="used_as_layer")
+
+    __table_args__ = (
+
+    )
 
 
 __all__ = ("Layer",)

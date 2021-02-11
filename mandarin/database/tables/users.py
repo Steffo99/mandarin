@@ -1,11 +1,12 @@
-from royalnet.typing import *
-import sqlalchemy as s
-import sqlalchemy.orm as o
-import royalnet.alchemist as a
 import datetime
 
-from ..base import Base
+import royalnet.alchemist as a
+import sqlalchemy as s
+import sqlalchemy.orm as o
+from royalnet.typing import *
+
 from .auditlogs import AuditLog
+from ..base import Base
 
 
 class User(Base, a.ColRepr, a.Updatable):
@@ -26,6 +27,10 @@ class User(Base, a.ColRepr, a.Updatable):
 
     uploads = o.relationship("File", back_populates="uploader")
     audit_logs = o.relationship("AuditLog", back_populates="user")
+
+    __table_args__ = (
+
+    )
 
     def log(self, action: str, obj: Optional[int]) -> AuditLog:
         """

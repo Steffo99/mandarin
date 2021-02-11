@@ -1,13 +1,13 @@
 from __future__ import annotations
-from royalnet.typing import *
+
 import fastapi as f
 import sqlalchemy.orm
+from royalnet.typing import *
 
-from ...database import tables, lazy_Session
-from ...taskbus import tasks
-from .. import models
 from .. import dependencies
+from .. import models
 from .. import responses
+from ...database import tables
 
 router_songs = f.APIRouter()
 
@@ -173,6 +173,7 @@ def edit_multiple_uninvolve(
         tables.SongInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
         ls.user.log("song.edit.multiple.uninvolve", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -200,6 +201,7 @@ def edit_multiple_classify(
         song.genres.append(genre)
         ls.user.log("song.edit.multiple.classify", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -227,6 +229,7 @@ def edit_multiple_declassify(
         song.genres.remove(genre)
         ls.user.log("song.edit.multiple.declassify", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -250,6 +253,7 @@ def edit_multiple_group(
         song.disc = disc_number
         ls.user.log("song.edit.multiple.group", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -272,6 +276,7 @@ def edit_multiple_calendarize(
         song.year = year
         ls.user.log("song.edit.multiple.calendarize", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -315,6 +320,7 @@ def merge(
     ss.close()
 
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.get(
@@ -327,8 +333,8 @@ def merge(
     response_model=models.SongOutput
 )
 def get_single(
-    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-    song_id: int = f.Path(..., description="The id of the song to be retrieved.")
+        ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+        song_id: int = f.Path(..., description="The id of the song to be retrieved.")
 ):
     """
     Get full information for the song with the specified `song_id`.
@@ -382,6 +388,7 @@ def delete(
     ls.session.delete(song)
     ls.user.log("song.delete", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 __all__ = (

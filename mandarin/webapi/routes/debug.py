@@ -1,12 +1,9 @@
 from __future__ import annotations
-from royalnet.typing import *
+
 import fastapi as f
 
-from ...database import tables, Base, lazy_engine
-from ...taskbus import tasks
-from .. import models
 from .. import dependencies
-from .. import responses
+from ...database import create_all, Base, lazy_engine
 
 router_debug = f.APIRouter()
 
@@ -16,14 +13,16 @@ router_debug = f.APIRouter()
     summary="Drop and recreate all database tables.",
     status_code=204,
 )
-def database_reset():
+def database_reset(
+        ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+):
     """
     **Drop** and **recreate** all tables declared using the `DeclarativeBase` in `mandarin.database.base`.
 
-    **THIS DELETES ALL DATA FROM THE DATABASE!**
+    # THIS DELETES ALL DATA FROM THE DATABASE!
     """
     Base.metadata.drop_all(bind=lazy_engine.evaluate())
-    Base.metadata.create_all(bind=lazy_engine.evaluate())
+    create_all()
     return f.Response(status_code=204)
 
 

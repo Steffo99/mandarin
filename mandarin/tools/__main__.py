@@ -5,16 +5,19 @@ from __future__ import annotations
 import logging
 import os
 import pathlib
+import time
 import typing as t
 
 import click
 import coloredlogs
+import lyricsgenius
 import requests
 import toml
 
 from .utils import MandarinAuth, LocalConfig
 # Internal imports
 from .utils import MandarinInstance, MANDARIN_INSTANCE_TYPE
+from .utils import old_to_new
 
 # Special global objects
 log = logging.getLogger(__name__)
@@ -131,7 +134,7 @@ def _group_auth(
         if not auth:
             raise click.ClickException("Failed to authenticate.")
 
-        storage_data[instance.url] = auth.data
+        storage_data[instance.url] = auth.data.dict()
         toml.dump(storage_data, file)
 
     ctx.ensure_object(dict)
@@ -190,6 +193,162 @@ def _(
             log.debug(f"Parsed response: {j!r}")
 
     click.echo("Success!")
+
+
+@_group_auth.command("genius")
+@click.option(
+    "-g", "--genius-token", "token",
+    required=True,
+    help="The Genius access token to use for data retrieval.",
+    type=str,
+)
+@click.option(
+    "--scrape-title/--keep-title",
+    default=True,
+    help="Whether the original song title should be kept or scraped from Genius.",
+    type=bool,
+)
+@click.option(
+    "--scrape-description/--keep-description",
+    default=True,
+    help="Whether the original song description should be kept or scraped from Genius.",
+    type=bool,
+)
+@click.option(
+    "--scrape-lyrics/--keep-lyrics",
+    default=False,
+    help="Whether the original song lyrics should be kept or scraped from Genius.",
+    type=bool,
+)
+@click.option(
+    "--scrape-year/--keep-year",
+    default=True,
+    help="Whether the original song year should be kept or scraped from Genius.",
+    type=bool,
+)
+@click.option(
+    "-d", "--delay",
+    default=1.0,
+    help="The delay to use between Genius info fetches. Don't get rate limited!",
+    type=float,
+)
+@click.option(
+    "--artist-role-name",
+    default="Artist",
+    help="The name of the role artists have on your Mandarin instance.",
+    type=str,
+)
+@click.option(
+    "--page-size",
+    default=500,
+    help="The maximum page size for requests on your Mandarin instance.",
+    type=int,
+)
+@click.option(
+    "--interactive/--automatic",
+    default=True,
+    help="Whether this tool should prompt for confirmation on every song processed.",
+    type=bool,
+)
+@click.pass_context
+def _(
+        ctx: click.Context,
+        token: str,
+        scrape_title: bool,
+        scrape_description: bool,
+        scrape_lyrics: bool,
+        scrape_year: bool,
+        delay: float,
+        artist_role_name: str,
+        page_size: int,
+        interactive: bool,
+):
+    instance: MandarinInstance = ctx.obj["INSTANCE"]
+    auth: MandarinAuth = ctx.obj["AUTH"]
+    genius = lyricsgenius.Genius(token, verbose=False)
+
+    count = instance.get("/songs/count").json()
+
+    offset = 0
+    while True:
+        songs: t.List[t.Dict[str, t.Any]] = instance.get("/songs/", params={
+            "limit": page_size,
+            "offset": offset,
+        }, headers=auth.data.token.access_header()).json()
+
+        for song in songs:
+            try:
+                offset += 1
+                click.echo(f"Song {offset} / {count}")
+
+                full_song: t.Dict[str, t.Any] = instance.get(
+                    f"/songs/{song['id']}",
+                    headers=auth.data.token.access_header()
+                ).json()
+
+                # Search for the song on Genius
+                artist = " ".join([
+                    involvement["person"]["name"]
+                    for involvement in full_song["involvements"]
+                    if involvement["role"] == artist_role_name
+                ])
+                data = genius.search_song(title=full_song["title"], artist=artist)
+
+                new_title = data.title if data.title else None
+                new_description = data._body["description"]["plain"] if "description" in data._body else None
+                new_lyrics = data.lyrics if data.lyrics else None
+                new_year = int(data.release_date.split("-")[0]) if data.release_date else None
+
+                changes = False
+
+                if scrape_title:
+                    changes |= old_to_new(full_song["title"], new_title)
+                    song["title"] = new_title
+
+                if scrape_description:
+                    changes |= old_to_new(full_song["description"], new_description)
+                    song["description"] = new_description
+
+                if scrape_lyrics:
+                    changes |= old_to_new(full_song["lyrics"], new_lyrics)
+                    song["lyrics"] = data.lyrics
+
+                if scrape_year:
+                    changes |= old_to_new(full_song["year"], new_year)
+                    song["year"] = new_year
+
+                if not changes:
+                    click.echo("Nothing to change, skipping...")
+                    continue
+
+                if interactive:
+                    while True:
+                        click.echo("Proceed? (y/n) ", nl=False)
+                        choice = click.getchar(echo=True).lower()
+
+                        if choice == "y":
+                            instance.put(
+                                f"/songs/{song['id']}",
+                                json=song,
+                                headers=auth.data.token.access_header()
+                            )
+                            break
+                        elif choice == "n":
+                            break
+                else:
+                    instance.put(
+                        f"/songs/{song['id']}",
+                        json=song,
+                        headers=auth.data.token.access_header()
+                    )
+
+            finally:
+                time.sleep(delay)
+
+        if len(songs) <= page_size:
+            break
+
+        click.echo("All songs processed!")
 
 
 if __name__ == "__main__":
