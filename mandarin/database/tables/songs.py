@@ -42,7 +42,7 @@ class Song(Base, a.ColRepr, a.Updatable):
     __table_args__ = (
         to_tsvector(
             a=[title],
-            b=[description],
+            b=[description,str(year)],
             c=[lyrics],
         )
     )
