@@ -7,6 +7,7 @@ from .roles import Role
 from .songgenres import songgenres
 from .songinvolvements import SongInvolvement
 from ..base import Base
+"""from sqlalchemy.dialects import postgresql"""
 
 if t.TYPE_CHECKING:
     from .people import Person
@@ -40,6 +41,7 @@ class Song(Base, a.ColRepr, a.Updatable):
 
     __table_args__ = (
 
+        """Index('íd_songs_fts',__ts_vector__,postgresql_using='gin')"""
     )
 
     def involve(self, people: t.Iterable["Person"], role: "Role") -> t.Set[SongInvolvement]:
