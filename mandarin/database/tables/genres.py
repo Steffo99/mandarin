@@ -7,7 +7,7 @@ import sqlalchemy.orm as o
 from .albumgenres import albumgenres
 from .songgenres import songgenres
 from ..base import Base
-
+from mandarin.database.utils import to_tsvector
 
 class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
@@ -28,7 +28,10 @@ class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
     albums = o.relationship("Album", secondary=albumgenres, back_populates="genres")
 
     __table_args__ = (
-
+        to_tsvector(
+            a=[name],
+            b=[description],
+        )
     )
 
 

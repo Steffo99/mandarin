@@ -3,7 +3,7 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 
 from ..base import Base
-
+from mandarin.database.utils import to_tsvector
 
 class Role(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
@@ -20,7 +20,10 @@ class Role(Base, a.ColRepr, a.Updatable, a.Makeable):
     song_involvements = o.relationship("SongInvolvement", back_populates="role", cascade="all, delete")
 
     __table_args__ = (
-
+        to_tsvector(
+            a=[name],
+            b=[description],
+        )
     )
 
 

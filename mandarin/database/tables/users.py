@@ -7,7 +7,7 @@ from royalnet.typing import *
 
 from .auditlogs import AuditLog
 from ..base import Base
-
+from mandarin.database.utils import to_tsvector
 
 class User(Base, a.ColRepr, a.Updatable):
     """
@@ -29,7 +29,7 @@ class User(Base, a.ColRepr, a.Updatable):
     audit_logs = o.relationship("AuditLog", back_populates="user")
 
     __table_args__ = (
-
+        """do we want to implement the search of the users ?"""
     )
 
     def log(self, action: str, obj: Optional[int]) -> AuditLog:

@@ -10,7 +10,7 @@ from ..base import Base
 if TYPE_CHECKING:
     from .people import Person
     from .roles import Role
-
+    from mandarin.database.utils import to_tsvector
 
 class Album(Base, a.ColRepr, a.Updatable):
     """
@@ -27,7 +27,10 @@ class Album(Base, a.ColRepr, a.Updatable):
     genres = o.relationship("Genre", secondary=albumgenres, back_populates="albums")
 
     __table_args__ = (
-
+        to_tsvector(
+            a=[title],
+            b=[description],
+        )
     )
 
     def involve(self, people: Iterable["Person"], role: "Role") -> List[AlbumInvolvement]:
