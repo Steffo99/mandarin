@@ -354,7 +354,8 @@ def get_single(
         **responses.login_error,
         404: {"description": "Song not found"},
     },
-    response_model=models.SongInput
+    response_model=models.SongInput,
+    deprecated=True,
 )
 def get_genius(
         ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),

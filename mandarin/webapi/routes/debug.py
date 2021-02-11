@@ -31,6 +31,7 @@ def database_reset(
     "/songs/genius",
     summary="Fetch data from Genius for all songs in the database.",
     status_code=204,
+    deprecated=True,
 )
 def songs_genius(
         ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
