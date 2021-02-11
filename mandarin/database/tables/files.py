@@ -5,7 +5,7 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 
 from ..base import Base
-
+from mandarin.database.utils import to_tsvector
 
 class File(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
@@ -25,7 +25,10 @@ class File(Base, a.ColRepr, a.Updatable, a.Makeable):
     used_as_layer = o.relationship("Layer", back_populates="file")
 
     __table_args__ = (
-
+        to_tsvector(
+            a=[name],
+            b=[mime_type,mime_software],
+        )
     )
 
 

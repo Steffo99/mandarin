@@ -4,7 +4,7 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 
 from ..base import Base
-
+from mandarin.database.utils import to_tsvector
 
 class AuditLog(Base):
     """
@@ -23,7 +23,12 @@ class AuditLog(Base):
     obj = s.Column(s.Integer)
 
     __table_args__ = (
-
+        to_tsvector(
+            a=[],
+            b=[],
+            c=[action],
+            d=[],
+        )
     )
 
 

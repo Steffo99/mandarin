@@ -7,13 +7,11 @@ from .roles import Role
 from .songgenres import songgenres
 from .songinvolvements import SongInvolvement
 from ..base import Base
-
-"""from sqlalchemy.dialects import postgresql"""
+from mandarin.database.utils import to_tsvector
 
 if t.TYPE_CHECKING:
     from .people import Person
     from .roles import Role
-
 
 
 class Song(Base, a.ColRepr, a.Updatable):
@@ -41,7 +39,11 @@ class Song(Base, a.ColRepr, a.Updatable):
     genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
     __table_args__ = (
-
+        to_tsvector(
+            a=[title],
+            b=[description, str(year)],
+            c=[lyrics],
+        ),
     )
 
     def involve(self, people: t.Iterable["Person"], role: "Role") -> t.Set[SongInvolvement]:

@@ -3,7 +3,7 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 
 from ..base import Base
-
+from mandarin.database.utils import to_tsvector
 
 class Layer(Base, a.ColRepr, a.Updatable):
     """
@@ -22,7 +22,10 @@ class Layer(Base, a.ColRepr, a.Updatable):
     file = o.relationship("File", back_populates="used_as_layer")
 
     __table_args__ = (
-
+        to_tsvector(
+            a=[name],
+            b=[description],
+        )
     )
 
 

@@ -5,7 +5,7 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 
 from ..base import Base
-
+from mandarin.database.utils import to_tsvector
 
 class Person(Base, a.ColRepr, a.Updatable, a.Makeable):
     """
@@ -21,7 +21,10 @@ class Person(Base, a.ColRepr, a.Updatable, a.Makeable):
     album_involvements = o.relationship("AlbumInvolvement", back_populates="person", cascade="all, delete")
 
     __table_args__ = (
-
+        to_tsvector(
+            a=[name],
+            b=[description],
+        )
     )
 
 
