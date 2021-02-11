@@ -3,11 +3,10 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 from royalnet.typing import *
 
-
+from mandarin.database.utils import to_tsvector, gin_index
 from .albumgenres import albumgenres
 from .albuminvolvements import AlbumInvolvement
 from ..base import Base
-from mandarin.database.utils import to_tsvector
 
 if TYPE_CHECKING:
     from .people import Person
@@ -20,21 +19,22 @@ class Album(Base, a.ColRepr, a.Updatable):
     """
     __tablename__ = "albums"
 
-    id = s.Column(s.Integer, primary_key=True)
-    title = s.Column(s.String, nullable=False, default="")
-    description = s.Column(s.Text, nullable=False, default="")
+    id = s.Column("id", s.Integer, primary_key=True)
+    title = s.Column("title", s.String, nullable=False, default="")
+    description = s.Column("description", s.Text, nullable=False, default="")
 
     involvements: List[AlbumInvolvement] = o.relationship("AlbumInvolvement", back_populates="album")
     songs = o.relationship("Song", back_populates="album")
     genres = o.relationship("Genre", secondary=albumgenres, back_populates="albums")
 
+    # noinspection PyTypeChecker
+    search = s.Column("search", to_tsvector(
+        a=[title],
+        b=[description],
+    ))
+
     __table_args__ = (
-        to_tsvector(
-            a=[title],
-            b=[description],
-            c=[],
-            d=[],
-        ),
+        gin_index("albums_gin_index", search),
     )
 
     def involve(self, people: Iterable["Person"], role: "Role") -> List[AlbumInvolvement]:

@@ -3,11 +3,11 @@ import royalnet.typing as t
 import sqlalchemy as s
 import sqlalchemy.orm as o
 
+from mandarin.database.utils import to_tsvector, gin_index
 from .roles import Role
 from .songgenres import songgenres
 from .songinvolvements import SongInvolvement
 from ..base import Base
-from mandarin.database.utils import to_tsvector
 
 if t.TYPE_CHECKING:
     from .people import Person
@@ -20,17 +20,17 @@ class Song(Base, a.ColRepr, a.Updatable):
     """
     __tablename__ = "songs"
 
-    id = s.Column(s.Integer, primary_key=True)
+    id = s.Column("id", s.Integer, primary_key=True)
 
-    title = s.Column(s.String, nullable=False, default="")
-    description = s.Column(s.Text, nullable=False, default="")
+    title = s.Column("title", s.String, nullable=False, default="")
+    description = s.Column("description", s.Text, nullable=False, default="")
 
-    disc = s.Column(s.Integer)
-    track = s.Column(s.Integer)
-    year = s.Column(s.Integer)
-    lyrics = s.Column(s.Text, nullable=False, default="")
+    disc = s.Column("disc", s.Integer)
+    track = s.Column("track", s.Integer)
+    year = s.Column("year", s.Integer)
+    lyrics = s.Column("lyrics", s.Text, nullable=False, default="")
 
-    album_id = s.Column(s.Integer, s.ForeignKey("albums.id"))
+    album_id = s.Column("album_id", s.Integer, s.ForeignKey("albums.id"))
     album = o.relationship("Album", back_populates="songs")
 
     layers = o.relationship("Layer", back_populates="song")
@@ -38,12 +38,15 @@ class Song(Base, a.ColRepr, a.Updatable):
                                                            cascade="all, delete")
     genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
+    # noinspection PyTypeChecker
+    search = s.Column("search", to_tsvector(
+        a=[title],
+        b=[description, year],
+        c=[lyrics],
+    ))
+
     __table_args__ = (
-        to_tsvector(
-            a=[title],
-            b=[description, str(year)],
-            c=[lyrics],
-        ),
+        gin_index("songs_gin_index", search),
     )
 
     def involve(self, people: t.Iterable["Person"], role: "Role") -> t.Set[SongInvolvement]:

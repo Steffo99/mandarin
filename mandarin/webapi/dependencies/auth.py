@@ -1,3 +1,4 @@
+import expiringdict
 import fastapi as f
 import fastapi.openapi.models as fom
 import fastapi.security.base as fsb
@@ -52,13 +53,21 @@ class LazyAuthorizationCodeBearer(fsb.SecurityBase):
         ))
 
 
+# TODO: is max_len mandatory?
+USER_INFO_CACHE = expiringdict.ExpiringDict(max_len=100, max_age_seconds=60 * 60 * 24)
+
+
 def dependency_access_token(
         token: str = f.Security(LazyAuthorizationCodeBearer(lazy_config=lazy_config))
 ) -> JSON:
-    # May want to cache this
-    return requests.get(lazy_config.e["auth.userinfo"], headers={
-        "Authorization": f"Bearer {token}"
-    }).json()
+    if token not in USER_INFO_CACHE:
+        user_info = requests.get(lazy_config.e["auth.userinfo"], headers={
+            "Authorization": f"Bearer {token}"
+        }).json()
+        USER_INFO_CACHE[token] = user_info
+    else:
+        user_info = USER_INFO_CACHE[token]
+    return user_info
 
 
 def dependency_login_session(

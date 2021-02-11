@@ -9,10 +9,9 @@ from __future__ import annotations
 # External imports
 import logging
 import typing as t
-from functools import reduce
 
 import sqlalchemy as s
-import sqlalchemy.sql.operators as so
+import sqlalchemy_utils as su
 
 # Internal imports
 # from . import something
@@ -23,37 +22,43 @@ log = logging.getLogger(__name__)
 
 # Code
 # noinspection PyPep8Naming
-def to_tsvector(a: t.List, b: t.List, c: t.List, d: t.List, *, language: str = "english"):
+def to_tsvector(
+        *,
+        a: t.Optional[t.List[s.Column]] = None,
+        b: t.Optional[t.List[s.Column]] = None,
+        c: t.Optional[t.List[s.Column]] = None,
+        d: t.Optional[t.List[s.Column]] = None,
+        regconfig: str = "pg_catalog.english"
+) -> su.TSVectorType:
     """
-    Create a new weighted tsvector.
+    Create a new weighted tsvector type.
 
     :param a: A :class:`list` of columns that should be in the ``A`` weighting group.
     :param b: A :class:`list` of columns that should be in the ``B`` weighting group.
     :param c: A :class:`list` of columns that should be in the ``C`` weighting group.
     :param d: A :class:`list` of columns that should be in the ``D`` weighting group.
-    :param language: The language to use in the tsvector conversion.
-    :return: The created tsvector.
+    :param regconfig: The dictionary to use in the tsvector conversion.
+    :return: The created :class:`sqlalchemy_utils.TSVectorType`.
     """
-    # Coalesce null strings
-    a = map(lambda column: s.func.coalesce(column, ""), a)
-    b = map(lambda column: s.func.coalesce(column, ""), b)
-    c = map(lambda column: s.func.coalesce(column, ""), c)
-    d = map(lambda column: s.func.coalesce(column, ""), d)
+    # Set non-mutable args
+    if a is None:
+        a = []
+    if b is None:
+        b = []
+    if c is None:
+        c = []
+    if d is None:
+        d = []
 
-    # Convert everything to tsvectors
-    a = map(lambda column: s.func.to_tsvector(language, column), a)
-    b = map(lambda column: s.func.to_tsvector(language, column), b)
-    c = map(lambda column: s.func.to_tsvector(language, column), c)
-    d = map(lambda column: s.func.to_tsvector(language, column), d)
+    column_names = map(lambda column: column.name, [*a, *b, *c, *d])
+    column_weights = {
+        **{column.name: "A" for column in a},
+        **{column.name: "B" for column in b},
+        **{column.name: "C" for column in c},
+        **{column.name: "D" for column in d},
+    }
 
-    # Assign weight to the tsvectors
-    a = map(lambda vec: s.func.setweight(vec, "A"), a)
-    b = map(lambda vec: s.func.setweight(vec, "B"), b)
-    c = map(lambda vec: s.func.setweight(vec, "C"), c)
-    d = map(lambda vec: s.func.setweight(vec, "D"), d)
-
-    # Concatenate all weighted tsvectors
-    return reduce(lambda x, y: so.op(x, "||", y), [*a, *b, *c, *d])
+    return su.TSVectorType(*column_names, weights=column_weights, regconfig=regconfig)
 
 
 def gin_index(name, tsvector):
