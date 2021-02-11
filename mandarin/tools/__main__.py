@@ -1,6 +1,7 @@
 # Special imports
 from __future__ import annotations
 
+import json
 # External imports
 import logging
 import os
@@ -17,7 +18,7 @@ import toml
 from .utils import MandarinAuth, LocalConfig
 # Internal imports
 from .utils import MandarinInstance, MANDARIN_INSTANCE_TYPE
-from .utils import old_to_new
+from .utils import prints
 
 # Special global objects
 log = logging.getLogger(__name__)
@@ -302,19 +303,19 @@ def _(
                 changes = False
 
                 if scrape_title:
-                    changes |= old_to_new(full_song["title"], new_title)
+                    changes |= prints.old_to_new(full_song["title"], new_title)
                     song["title"] = new_title
 
                 if scrape_description:
-                    changes |= old_to_new(full_song["description"], new_description)
+                    changes |= prints.old_to_new(full_song["description"], new_description)
                     song["description"] = new_description
 
                 if scrape_lyrics:
-                    changes |= old_to_new(full_song["lyrics"], new_lyrics)
+                    changes |= prints.old_to_new(full_song["lyrics"], new_lyrics)
                     song["lyrics"] = data.lyrics
 
                 if scrape_year:
-                    changes |= old_to_new(full_song["year"], new_year)
+                    changes |= prints.old_to_new(full_song["year"], new_year)
                     song["year"] = new_year
 
                 if not changes:
@@ -349,6 +350,60 @@ def _(
             break
 
         click.echo("All songs processed!")
+
+
+@_group_auth.command("thesaurus")
+@click.option(
+    "-d", "--delay",
+    help="The delay between two Mandarin requests.",
+    default=1.0,
+    type=float,
+)
+@click.argument(
+    "file",
+    type=click.File(mode="r", lazy=True),
+    nargs=1
+)
+@click.pass_context
+def _(
+        ctx: click.Context,
+        delay: float,
+        file: t.TextIO,
+):
+    instance: MandarinInstance = ctx.obj["INSTANCE"]
+    auth: MandarinAuth = ctx.obj["AUTH"]
+
+    j = json.load(file)
+
+    def genre_dfs(supergenre: int, genre: str, children: dict, indent: int):
+        prints.tree(indent, genre, has_children=len(children) > 0)
+
+        r = instance.post(
+            f"/genres/",
+            json={
+                "name": genre,
+                "description": "",
+                "supergenre_id": supergenre
+            },
+            headers=auth.data.token.access_header()
+        )
+        rj = r.json()
+
+        if 200 <= r.status_code < 400:
+            genre_id = rj["id"]
+            prints.id_(genre_id, success=True)
+        else:
+            genre_id = rj["detail"]["id"]
+            prints.id_(genre_id, success=False)
+        click.echo()
+
+        time.sleep(delay)
+
+        for key, value in children.items():
+            genre_dfs(supergenre=genre_id, genre=key, children=value, indent=indent + 1)
+
+    for _key, _value in j.items():
+        genre_dfs(supergenre=0, genre=_key, children=_value, indent=0)
 
 
 if __name__ == "__main__":

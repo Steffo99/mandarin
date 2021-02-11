@@ -19,6 +19,21 @@ def old_to_new(old, new) -> bool:
         return False
 
 
+def tree(indent: int, text: str, has_children: bool) -> None:
+    click.secho("    " * indent, nl=False)
+    click.secho("- ", nl=False)
+    if has_children:
+        click.secho(f"{text} ", fg="cyan", bold=True, nl=False)
+    else:
+        click.secho(f"{text} ", fg="blue", nl=False)
+
+
+def id_(number, success: bool):
+    click.secho("[", nl=False)
+    click.secho(f"{number}", fg="green" if success else "red", nl=False)
+    click.secho("] ", nl=False)
+
+
 __all__ = (
     "old_to_new",
 )

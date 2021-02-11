@@ -1,0 +1,19 @@
+{
+    "Metal": {
+        "Classic Metal": {},
+        "Power Metal": {},
+        "Progressive Metal": {}
+    },
+    "Rock": {},
+    "Pop": {},
+    "Blues": {},
+    "Reggae": {},
+    "Rap": {},
+    "Electronic": {},
+    "Ambient": {},
+    "Industrial": {},
+    "Utility": {},
+    "Folk": {},
+    "Classical": {},
+    "World": {}
+}

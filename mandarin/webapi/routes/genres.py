@@ -55,7 +55,10 @@ def create(
     """
     genre = ls.session.query(tables.Genre).filter_by(name=data.name).one_or_none()
     if genre is not None:
-        raise f.HTTPException(409, f"The genre '{data.name}' already exists.")
+        raise f.HTTPException(409, {
+            "text": f"The genre '{data.name}' already exists",
+            "id": genre.id
+        })
 
     genre = tables.Genre.make(session=ls.session, **data.dict())
     ls.user.log("genre.create", obj=genre.id)
