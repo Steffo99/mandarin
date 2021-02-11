@@ -1,13 +1,13 @@
 from __future__ import annotations
-from royalnet.typing import *
+
 import fastapi as f
 import sqlalchemy.orm
+from royalnet.typing import *
 
-from ...database import tables
-from ...taskbus import tasks
-from .. import models
 from .. import dependencies
+from .. import models
 from .. import responses
+from ...database import tables
 
 router_layers = f.APIRouter()
 
@@ -72,6 +72,7 @@ def edit_multiple_move(
         layer.song = song
         ls.user.log("layer.edit.multiple.move", obj=layer.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_layers.patch(
@@ -96,6 +97,7 @@ def edit_multiple_rename(
         ls.user.log("layer.edit.multiple.rename", obj=layer.id)
 
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_layers.get(

@@ -1,13 +1,13 @@
 from __future__ import annotations
-from royalnet.typing import *
+
 import fastapi as f
 import sqlalchemy.orm
+from royalnet.typing import *
 
-from ...database import tables, lazy_Session
-from ...taskbus import tasks
-from .. import models
 from .. import dependencies
+from .. import models
 from .. import responses
+from ...database import tables
 
 router_genres = f.APIRouter()
 
@@ -170,6 +170,7 @@ def edit_multiple_move(
         child.supergenre = parent
         ls.user.log("genre.edit.multiple.group", obj=child.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_genres.get(

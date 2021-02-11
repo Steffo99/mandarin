@@ -178,6 +178,7 @@ def edit_multiple_uninvolve(
         tables.SongInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
         ls.user.log("song.edit.multiple.uninvolve", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -205,6 +206,7 @@ def edit_multiple_classify(
         song.genres.append(genre)
         ls.user.log("song.edit.multiple.classify", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -232,6 +234,7 @@ def edit_multiple_declassify(
         song.genres.remove(genre)
         ls.user.log("song.edit.multiple.declassify", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -255,6 +258,7 @@ def edit_multiple_group(
         song.disc = disc_number
         ls.user.log("song.edit.multiple.group", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -277,6 +281,7 @@ def edit_multiple_calendarize(
         song.year = year
         ls.user.log("song.edit.multiple.calendarize", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.patch(
@@ -320,6 +325,7 @@ def merge(
     ss.close()
 
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_songs.get(
@@ -447,6 +453,7 @@ def delete(
     ls.session.delete(song)
     ls.user.log("song.delete", obj=song.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 __all__ = (

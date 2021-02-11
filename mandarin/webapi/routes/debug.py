@@ -58,6 +58,7 @@ def songs_genius(
             song_id=song.id,
             data=response
         )
+    return f.Response(status_code=204)
 
 
 __all__ = (
