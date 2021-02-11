@@ -1,7 +1,6 @@
-from royalnet.typing import *
+import royalnet.alchemist as a
 import sqlalchemy as s
 import sqlalchemy.orm as o
-import royalnet.alchemist as a
 
 from ..base import Base
 
@@ -20,6 +19,10 @@ class AlbumInvolvement(Base, a.ColRepr, a.Updatable, a.Makeable):
 
     role_id = s.Column(s.Integer, s.ForeignKey("roles.id"), primary_key=True)
     role = o.relationship("Role", back_populates="album_involvements")
+
+    __table_args__ = (
+
+    )
 
 
 __all__ = ("AlbumInvolvement",)

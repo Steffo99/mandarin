@@ -26,6 +26,10 @@ class Album(Base, a.ColRepr, a.Updatable):
     songs = o.relationship("Song", back_populates="album")
     genres = o.relationship("Genre", secondary=albumgenres, back_populates="albums")
 
+    __table_args__ = (
+
+    )
+
     def involve(self, people: Iterable["Person"], role: "Role") -> List[AlbumInvolvement]:
         """Involve a list of people with this album, and return the resulting involvements."""
         # TODO: should it check for duplicate involvements?

@@ -24,6 +24,10 @@ class Person(Base, a.ColRepr, a.Updatable, a.Makeable):
     song_involvements = o.relationship("SongInvolvement", back_populates="person", cascade="all, delete")
     album_involvements = o.relationship("AlbumInvolvement", back_populates="person", cascade="all, delete")
 
+    __table_args__ = (
+
+    )
+
     def genius(self):
         """
         Update the fields of the song with information from Genius.

@@ -1,9 +1,8 @@
 from __future__ import annotations
-from royalnet.typing import *
+
+import royalnet.alchemist as a
 import sqlalchemy as s
 import sqlalchemy.orm as o
-import royalnet.alchemist as a
-import mimetypes
 
 from ..base import Base
 
@@ -24,6 +23,10 @@ class File(Base, a.ColRepr, a.Updatable, a.Makeable):
     uploader = o.relationship("User", back_populates="uploads")
 
     used_as_layer = o.relationship("Layer", back_populates="file")
+
+    __table_args__ = (
+
+    )
 
 
 __all__ = ("File",)

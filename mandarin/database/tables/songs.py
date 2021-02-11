@@ -38,6 +38,10 @@ class Song(Base, a.ColRepr, a.Updatable):
                                                            cascade="all, delete")
     genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
+    __table_args__ = (
+
+    )
+
     def involve(self, people: t.Iterable["Person"], role: "Role") -> t.Set[SongInvolvement]:
         """
         Involve people with this song, assigning them the specified role, and return all the resulting involvements.
