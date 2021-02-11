@@ -1,12 +1,11 @@
 import fastapi as f
-import uvicorn
 import pkg_resources
+import uvicorn
 
 from mandarin import database
 from mandarin.config import lazy_config
-from ...routes import *
 from .description import description
-
+from ...routes import *
 
 app = f.FastAPI(
     debug=True,
@@ -17,6 +16,7 @@ app = f.FastAPI(
 app.include_router(router_version, prefix="/version", tags=["Version"])
 app.include_router(router_debug, prefix="/debug", tags=["Debug"])
 app.include_router(router_auth, prefix="/auth", tags=["Authentication"])
+app.include_router(router_search, prefix="/search", tags=["Search"])
 app.include_router(router_files, prefix="/files", tags=["Files"])
 app.include_router(router_layers, prefix="/layers", tags=["Layers"])
 app.include_router(router_songs, prefix="/songs", tags=["Songs"])
