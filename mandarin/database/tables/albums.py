@@ -3,14 +3,16 @@ import sqlalchemy as s
 import sqlalchemy.orm as o
 from royalnet.typing import *
 
+
 from .albumgenres import albumgenres
 from .albuminvolvements import AlbumInvolvement
 from ..base import Base
+from mandarin.database.utils import to_tsvector
 
 if TYPE_CHECKING:
     from .people import Person
     from .roles import Role
-    from mandarin.database.utils import to_tsvector
+
 
 class Album(Base, a.ColRepr, a.Updatable):
     """
@@ -30,7 +32,9 @@ class Album(Base, a.ColRepr, a.Updatable):
         to_tsvector(
             a=[title],
             b=[description],
-        )
+            c=[],
+            d=[],
+        ),
     )
 
     def involve(self, people: Iterable["Person"], role: "Role") -> List[AlbumInvolvement]:

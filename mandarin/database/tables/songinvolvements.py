@@ -23,7 +23,7 @@ class SongInvolvement(Base, a.ColRepr, a.Updatable, a.Makeable):
     role = o.relationship("Role", back_populates="song_involvements")
 
     __table_args__ = (
-        """nothing here"""
+
     )
 
 

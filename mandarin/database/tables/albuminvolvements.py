@@ -21,7 +21,7 @@ class AlbumInvolvement(Base, a.ColRepr, a.Updatable, a.Makeable):
     role = o.relationship("Role", back_populates="album_involvements")
 
     __table_args__ = (
-        """nothing here"""
+
     )
 
 

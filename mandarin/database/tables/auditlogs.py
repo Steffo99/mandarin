@@ -24,7 +24,10 @@ class AuditLog(Base):
 
     __table_args__ = (
         to_tsvector(
+            a=[],
+            b=[],
             c=[action],
+            d=[],
         )
     )
 
