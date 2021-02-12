@@ -16,69 +16,88 @@ import fastapi as f
 from .. import dependencies
 from .. import models
 from .. import responses
+from ...database import tables
 
 # Special global objects
 log = logging.getLogger(__name__)
 router_search = f.APIRouter()
 
+SEARCHABLE_ELEMENT_TABLES = {
+    models.SearchableElementType.albums: [tables.Album],
+    models.SearchableElementType.genres: [tables.Genre],
+    models.SearchableElementType.layers: [tables.Layer],
+    models.SearchableElementType.people: [tables.Person],
+    models.SearchableElementType.roles: [tables.Role],
+    models.SearchableElementType.songs: [tables.Song],
+    models.SearchableElementType.all: [
+        tables.Album,
+        tables.Genre,
+        tables.Layer,
+        tables.Person,
+        tables.Role,
+        tables.Song
+    ]
+}
+
+SEARCHABLE_ELEMENT_VECTORS = {
+    models.SearchableElementType.albums: tables.Album.search,
+    models.SearchableElementType.genres: tables.Genre.search,
+    models.SearchableElementType.layers: tables.Layer.search,
+    models.SearchableElementType.people: tables.Person.search,
+    models.SearchableElementType.roles: tables.Role.search,
+    models.SearchableElementType.songs: tables.Song.search,
+    models.SearchableElementType.all: (
+            tables.Album.search |
+            tables.Genre.search |
+            tables.Layer.search |
+            tables.Person.search |
+            tables.Role.search |
+            tables.Song.search
+    )
+}
+
 
 # Routes
 @router_search.get(
-    "/songs",
-    summary="Search for one or more songs.",
+    "/autocomplete",
+    summary="Prompt possible autocompletitions for a query.",
     response_model=t.List[models.SongOutput],
     responses={
         **responses.login_error,
     }
 )
-def search_songs(
+def search_autocomplete(
         ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-        query: str = f.Query(..., description="The query to pass to the search engine.")
+        element_type: models.SearchableElementType = f.Query(
+            ...,
+            description="The type of object that is being searched."
+        ),
+        query: str = f.Query(..., description="The query that is being written."),
 ):
     """
-    Search for one or more songs using Mandarin's PostgreSQL-based search engine.
-
-    _Doesn't do anything yet._
+    Prompt possible autocompletitions for a query.
     """
     raise NotImplementedError("Not available yet.")
 
 
 @router_search.get(
-    "/people",
-    summary="Search for one or more people.",
-    response_model=t.List[models.PersonOutput],
+    "/results",
+    summary="Search for one or more entities in the database.",
+    response_model=t.List[models.SongOutput],
     responses={
         **responses.login_error,
     }
 )
-def search_people(
+def search_results(
         ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-        query: str = f.Query(..., description="The query to pass to the search engine.")
+        element_type: models.SearchableElementType = f.Query(
+            ...,
+            description="The type of object that is being retrieved."
+        ),
+        query: str = f.Query(..., description="The submitted query."),
 ):
     """
-    Search for one or more people using Mandarin's PostgreSQL-based search engine.
-
-    _Doesn't do anything yet._
-    """
-    raise NotImplementedError("Not available yet.")
-
-
-@router_search.get(
-    "/albums",
-    summary="Search for one or more albums.",
-    response_model=t.List[models.PersonOutput],
-    responses={
-        **responses.login_error,
-    }
-)
-def search_albums(
-        ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-        query: str = f.Query(..., description="The query to pass to the search engine.")
-):
-    """
-    Search for one or more albums using Mandarin's PostgreSQL-based search engine.
-
-    _Doesn't do anything yet._
+    Search for one or more entities in the database.
     """
     raise NotImplementedError("Not available yet.")
 
