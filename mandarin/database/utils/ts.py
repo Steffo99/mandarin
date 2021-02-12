@@ -11,6 +11,7 @@ import logging
 import typing as t
 
 import sqlalchemy as s
+import sqlalchemy.sql.schema
 import sqlalchemy_utils as su
 
 # Internal imports
@@ -61,7 +62,7 @@ def to_tsvector(
     return su.TSVectorType(*column_names, weights=column_weights, regconfig=regconfig)
 
 
-def gin_index(name, tsvector):
+def gin_index(name: str, tsvector: su.TSVectorType) -> s.sql.schema.Index:
     """
     Create a new GIN index.
 
@@ -76,7 +77,7 @@ def gin_index(name, tsvector):
     )
 
 
-def gist_index(name, tsvector):
+def gist_index(name: str, tsvector: su.TSVectorType) -> s.sql.schema.Index:
     """
     Create a new GiST index.
 
