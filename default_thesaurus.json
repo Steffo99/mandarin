@@ -4,16 +4,101 @@
         "Power Metal": {},
         "Progressive Metal": {}
     },
-    "Rock": {},
-    "Pop": {},
-    "Blues": {},
-    "Reggae": {},
-    "Rap": {},
-    "Electronic": {},
-    "Ambient": {},
-    "Industrial": {},
-    "Utility": {},
-    "Folk": {},
-    "Classical": {},
+    "Country": {
+        "Alternative country": {},
+        "Americana": {},
+        "Cajun": {},
+        "Cowboy": {},
+        "Texas country": {},
+        "Traditional country": {}
+    },
+    "Rock": {
+        "Alternative Rock": {},
+        "Electronic Rock": {},
+        "Experimental Rock": {},
+        "Hard Rock": {},
+        "Jazz Rock": {},
+        "Pop Rock": {},
+        "Rock and Roll": {}
+    },
+    "Pop": {
+        "Country pop": {},
+        "C pop": {},
+        "Dance pop": {},
+        "Electro pop": {},
+        "Europop": {},
+        "J pop": {},
+        "K pop": {},
+        "Lofi": {},
+        "Pop rock": {},
+        "P pop": {}
+    },
+    "House": {
+        "Bass house": {},
+        "Deep house": {},
+        "Electro house": {},
+        "Electro swing": {},
+        "Euro house": {},
+        "Hip house": {},
+        "Jazz house": {},
+        "Tropical house": {},
+        "Progressive house": {}
+    },
+    "Blues": {
+        "Blues rock": {},
+        "Electric blues": {},
+        "Punk blues": {},
+        "Soul blues": {},
+        "Gospel blues": {},
+        "Country blues": {}
+    },
+    "Hip hop": {
+        "Rap": {},
+        "Chap hop": {},
+        "Electro": {},
+        "Hardcore hip hop": {},
+        "Hip pop": {},
+        "Trap": {},
+        "Snap": {},
+        "Ragga": {},
+        "Raggaeton": {}
+    },
+    "Electronic": {
+        "Ambient": {},
+        "Bass Music": {},
+        "Disco": {},
+        "Drum and bass": {},
+        "Dub": {},
+        "Electronic rock": {},
+        "Jungle": {},
+        "Hardcore": {},
+        "Industrial": {},
+        "Techno": {},
+        "UK garage": {}
+    },
+    "Jazz": {
+        "Acid jazz": {},
+        "Bepop": {},
+        "Cool jazz": {},
+        "Hard bop": {},
+        "Jazz rap": {},
+        "Jazz rock": {},
+        "Latin jazz": {},
+        "Punk jazz": {},
+        "Soul jazz": {}
+    },
+    "Folk": {
+        "Indie folk": {},
+        "Celtic": {},
+        "Neofolk": {},
+        "Progressive folk": {},
+        "Skiffle": {},
+        "Western music": {}
+    },
+    "Classical": {
+        "Symphony": {},
+        "Opera": {},
+        "Classical romantic": {}
+    },
     "World": {}
 }
