@@ -1,21 +1,21 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Taskbus: run" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="Tool: genius" type="PythonConfigurationType" factoryName="Python">
     <module name="Mandarin" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
-    <option name="SDK_HOME" value="" />
+    <option name="SDK_HOME" value="$USER_HOME$/.cache/pypoetry/virtualenvs/mandarin-D8nbnBIP-py3.9/bin/python" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="celery" />
-    <option name="PARAMETERS" value="-A mandarin.taskbus.__main__ worker --loglevel=DEBUG" />
+    <option name="SCRIPT_NAME" value="mandarin.tools" />
+    <option name="PARAMETERS" value="-D -i http://lo.steffo.eu:30009 auth --client-id OGRdHAUDzny1ioTv8RwcbphzOFOaO6pC --audience mandarin-api genius -g R03QMjdxjFleMByxvjJ5TONPUv_JrIAG8v5gD4HMZbsnOzuezXOO228c_zmmjKBq" />
     <option name="SHOW_COMMAND_LINE" value="false" />
-    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="EMULATE_TERMINAL" value="true" />
     <option name="MODULE_MODE" value="true" />
     <option name="REDIRECT_INPUT" value="false" />
     <option name="INPUT_FILE" value="" />
