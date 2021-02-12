@@ -18,7 +18,6 @@
         "Experimental Rock": {},
         "Hard Rock": {},
         "Jazz Rock": {},
-        "Pop Rock": {},
         "Rock and Roll": {}
     },
     "Pop": {
@@ -26,11 +25,22 @@
         "C pop": {},
         "Dance pop": {},
         "Electro pop": {},
-        "Europop": {},
+        "Europop": {
+            "Eurobeat": {},
+            "Italo dance": {},
+            "Italo disco": {},
+            "Latin pop": {}
+        },
         "J pop": {},
         "K pop": {},
         "Lofi": {},
-        "Pop rock": {},
+        "Pop rock": {
+            "Power pop": {},
+            "Pop punk": {
+                "Neon pop": {},
+                "Emo pop": {}
+            }
+        },
         "P pop": {}
     },
     "House": {
@@ -64,7 +74,11 @@
         "Raggaeton": {}
     },
     "Electronic": {
-        "Ambient": {},
+        "Ambient": {
+            "Ambient dub": {},
+            "Dark ambient": {},
+            "New age": {}
+        },
         "Bass Music": {},
         "Disco": {},
         "Drum and bass": {},
