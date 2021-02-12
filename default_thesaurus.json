@@ -5,12 +5,12 @@
         "Progressive Metal": {}
     },
     "Country": {
-        "Alternative country": {},
+        "Alternative Country": {},
         "Americana": {},
         "Cajun": {},
         "Cowboy": {},
-        "Texas country": {},
-        "Traditional country": {}
+        "Texas Country": {},
+        "Traditional Country": {}
     },
     "Rock": {
         "Alternative Rock": {},
@@ -18,56 +18,56 @@
         "Experimental Rock": {},
         "Hard Rock": {},
         "Jazz Rock": {},
-        "Rock and Roll": {}
+        "Rock 'n' Roll": {}
     },
     "Pop": {
-        "Country pop": {},
-        "C pop": {},
-        "Dance pop": {},
-        "Electro pop": {},
+        "Country Pop": {},
+        "C-Pop": {},
+        "Dance Pop": {},
+        "Electro Pop": {},
         "Europop": {
             "Eurobeat": {},
-            "Italo dance": {},
-            "Italo disco": {},
-            "Latin pop": {}
+            "Italo Dance": {},
+            "Italo Disco": {},
+            "Latin Pop": {}
         },
-        "J pop": {},
-        "K pop": {},
+        "J-Pop": {},
+        "K-Pop": {},
         "Lofi": {},
-        "Pop rock": {
-            "Power pop": {},
-            "Pop punk": {
-                "Neon pop": {},
-                "Emo pop": {}
+        "Pop Rock": {
+            "Power Pop": {},
+            "Pop Punk": {
+                "Neon Pop": {},
+                "Emo Pop": {}
             }
         },
-        "P pop": {}
+        "P-Pop": {}
     },
     "House": {
-        "Bass house": {},
-        "Deep house": {},
-        "Electro house": {},
-        "Electro swing": {},
-        "Euro house": {},
-        "Hip house": {},
-        "Jazz house": {},
-        "Tropical house": {},
-        "Progressive house": {}
+        "Bass House": {},
+        "Deep House": {},
+        "Electro House": {},
+        "Electro Swing": {},
+        "Euro House": {},
+        "Hip House": {},
+        "Jazz House": {},
+        "Tropical House": {},
+        "Progressive House": {}
     },
     "Blues": {
-        "Blues rock": {},
-        "Electric blues": {},
-        "Punk blues": {},
-        "Soul blues": {},
-        "Gospel blues": {},
-        "Country blues": {}
+        "Blues Rock": {},
+        "Electric Blues": {},
+        "Punk Blues": {},
+        "Soul Blues": {},
+        "Gospel Blues": {},
+        "Country Blues": {}
     },
-    "Hip hop": {
+    "Hip Hop": {
         "Rap": {},
-        "Chap hop": {},
+        "Chap Hop": {},
         "Electro": {},
-        "Hardcore hip hop": {},
-        "Hip pop": {},
+        "Hardcore Hip Hop": {},
+        "Hip Pop": {},
         "Trap": {},
         "Snap": {},
         "Ragga": {},
@@ -75,44 +75,44 @@
     },
     "Electronic": {
         "Ambient": {
-            "Ambient dub": {},
-            "Dark ambient": {},
-            "New age": {}
+            "Ambient Dub": {},
+            "Dark Ambient": {},
+            "New Age": {}
         },
         "Bass Music": {},
         "Disco": {},
-        "Drum and bass": {},
+        "Drum 'n' Bass": {},
         "Dub": {},
-        "Electronic rock": {},
+        "Electronic Rock": {},
         "Jungle": {},
         "Hardcore": {},
         "Industrial": {},
         "Techno": {},
-        "UK garage": {}
+        "UK Garage": {}
     },
     "Jazz": {
-        "Acid jazz": {},
-        "Bepop": {},
-        "Cool jazz": {},
-        "Hard bop": {},
-        "Jazz rap": {},
-        "Jazz rock": {},
-        "Latin jazz": {},
-        "Punk jazz": {},
-        "Soul jazz": {}
+        "Acid Jazz": {},
+        "Bebop": {},
+        "Cool Jazz": {},
+        "Hard Bop": {},
+        "Jazz Rap": {},
+        "Jazz Rock": {},
+        "Latin Jazz": {},
+        "Punk Jazz": {},
+        "Soul Jazz": {}
     },
     "Folk": {
-        "Indie folk": {},
+        "Indie Folk": {},
         "Celtic": {},
         "Neofolk": {},
-        "Progressive folk": {},
+        "Progressive Folk": {},
         "Skiffle": {},
-        "Western music": {}
+        "Western Music": {}
     },
     "Classical": {
         "Symphony": {},
         "Opera": {},
-        "Classical romantic": {}
+        "Classical Romantic": {}
     },
     "World": {}
 }
