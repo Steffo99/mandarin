@@ -61,7 +61,7 @@ SEARCHABLE_ELEMENT_VECTORS = {
 @router_search.get(
     "/autocomplete",
     summary="Prompt possible autocompletitions for a query.",
-    response_model=t.List[models.SongOutput],
+    response_model=t.List,
     responses={
         **responses.login_error,
     }
@@ -83,7 +83,7 @@ def search_autocomplete(
 @router_search.get(
     "/results",
     summary="Search for one or more entities in the database.",
-    response_model=t.List[models.SongOutput],
+    response_model=t.List,
     responses={
         **responses.login_error,
     }
