@@ -46,15 +46,12 @@ def get_all(
 )
 def create(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-    album_id: Optional[int] = f.Query(None,
-                                      description="The album to attach the new song to.\nCan be null for no album."),
     data: models.SongInput = f.Body(..., description="The data for the new song."),
 ):
     """
     Create a new song with no layers and the data specified in the body of the request.
     """
-    album = ls.get(tables.Album, album_id)
-    song = tables.Song(album=album, **data.__dict__)
+    song = tables.Song(**data.__dict__)
     ls.session.add(song)
     ls.session.commit()
     ls.user.log("song.create", obj=song.id)

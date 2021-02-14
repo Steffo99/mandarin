@@ -41,7 +41,7 @@ class Song(Base, a.ColRepr, a.Updatable):
     # noinspection PyTypeChecker
     search = s.Column("search", to_tsvector(
         a=[title],
-        b=[description, year],
+        b=[description],
         c=[lyrics],
     ))
 
