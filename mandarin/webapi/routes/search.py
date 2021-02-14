@@ -40,23 +40,6 @@ SEARCHABLE_ELEMENT_TABLES = {
     ]
 }
 
-SEARCHABLE_ELEMENT_VECTORS = {
-    models.SearchableElementType.albums: tables.Album.search,
-    models.SearchableElementType.genres: tables.Genre.search,
-    models.SearchableElementType.layers: tables.Layer.search,
-    models.SearchableElementType.people: tables.Person.search,
-    models.SearchableElementType.roles: tables.Role.search,
-    models.SearchableElementType.songs: tables.Song.search,
-    models.SearchableElementType.all: (
-            tables.Album.search |
-            tables.Genre.search |
-            tables.Layer.search |
-            tables.Person.search |
-            tables.Role.search |
-            tables.Song.search
-    )
-}
-
 SEARCHABLE_ELEMENT_MODELS: t.Dict[models.SearchableElementType, t.Optional[models.OrmModel]] = {
     models.SearchableElementType.albums: models.AlbumOutput,
     models.SearchableElementType.genres: models.GenreOutput,
