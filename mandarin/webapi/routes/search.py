@@ -53,28 +53,6 @@ SEARCHABLE_ELEMENT_MODELS: t.Dict[models.SearchableElementType, t.Optional[model
 
 # Routes
 @router_search.get(
-    "/autocomplete",
-    summary="Prompt possible autocompletitions for a query.",
-    response_model=list,
-    responses={
-        **responses.login_error,
-    }
-)
-def search_autocomplete(
-        ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-        element_type: models.SearchableElementType = f.Query(
-            ...,
-            description="The type of object that is being searched."
-        ),
-        query: str = f.Query(..., description="The query that is being written."),
-):
-    """
-    Prompt possible autocompletitions for a query.
-    """
-    raise NotImplementedError("Not available yet.")
-
-
-@router_search.get(
     "/results",
     summary="Search for one or more entities in the database.",
     response_model=list,
