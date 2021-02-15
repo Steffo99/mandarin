@@ -10,7 +10,7 @@ Documentation
    :maxdepth: 1
 
    installation/index
-   tools/index
+   cli/index
    autodoc/index
 
 
