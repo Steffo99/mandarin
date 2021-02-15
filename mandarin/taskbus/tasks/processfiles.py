@@ -282,7 +282,7 @@ def process_music(stream: t.IO[bytes],
     if os.path.exists(destination):
         file = session.query(tables.File).filter_by(name=str(destination)).one_or_none()
     else:
-        os.makedirs(destination.stem, exist_ok=True)
+        os.makedirs(destination.parent, exist_ok=True)
         with open(destination, "wb") as f:
             while data := stream.read(READ_CHUNK_SIZE):
                 f.write(data)
