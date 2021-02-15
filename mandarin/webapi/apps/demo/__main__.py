@@ -26,4 +26,4 @@ app.include_router(router_auditlogs, prefix="/audit-logs", tags=["Audit Logs"])
 
 if __name__ == "__main__":
     database.create_all()
-    uvicorn.run(app, port=lazy_config.e["apps.files.port"])
+    uvicorn.run(app, port=lazy_config.e["apps.demo.port"])
