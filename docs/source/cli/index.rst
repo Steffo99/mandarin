@@ -53,6 +53,6 @@ Available commands
 .. toctree::
    :maxdepth: 1
 
-   requirements
-   dev_installation
-   dev_run
+   thesaurus
+   upload
+   genius
