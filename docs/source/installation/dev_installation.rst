@@ -47,6 +47,21 @@ You can generate one using Poetry by entering the project's directory and runnin
     poetry install
 
 
+Create the PostgreSQL user and database
+------------------------------
+
+Mandarin must be allowed to write to a PostgreSQL database to run properly.
+
+On most Linux systems, you can create it with:
+
+.. code-block:: bash
+
+    systemctl start postgresql
+    ME=$(whoami)
+    sudo -u postgresql createuser ${ME}
+    sudo -u postgresql createdb --owner=${ME} mandarin
+
+
 Create a configuration file
 ---------------------------
 
@@ -56,6 +71,9 @@ A sample config file is as follows:
 
 .. code-block:: toml
 
+    # OAuth2 authentication parameters
+    # If you want to use the demo authentication database, leave them untouched
+    # Otherwise, get them from your OAuth2 IDP
     [auth]
     authorization = "https://mandarin.eu.auth0.com/authorize"
     device = "https://mandarin.eu.auth0.com/oauth/device/code"
@@ -65,27 +83,36 @@ A sample config file is as follows:
     openidcfg = "https://mandarin.eu.auth0.com/.well-known/openid-configuration"
     jwks = "https://mandarin.eu.auth0.com/.well-known/jwks.json"
 
+    # The database uri, in SQLAlchemy format
+    # More info here: https://docs.sqlalchemy.org/en/14/core/engines.html
     [database]
-    uri = "postgres://steffo@/mandarin_dev"
+    uri = "postgres://mandarin@/mandarin"
 
+    # The broker and backend to use as a task bus, in Celery format
+    # More info here: https://docs.celeryproject.org/en/stable/getting-started/brokers/index.html
+    [taskbus]
+    broker = "redis://localhost"
+    backend = "redis://localhost"
+
+    # The directories where data should be stored
     [storage]
     [storage.music]
     dir = "./data/music"
     [storage.tmp]
     dir = "./data/tmp"
 
+    # The TCP ports that the web API should bind itself to
     [apps]
-    [apps.files]
+    [apps.debug]
+    port = 30009
+    [apps.demo]
     port = 30009
 
+    # The names that the roles generated from song ID3 metadata should have
+    # Don't change them once if the database already has elements
     [apps.files.roles]
     artist = "Artist"
     composer = "Composer"
     performer = "Performer"
 
-    [taskbus]
-    broker = "redis://localhost"
-    backend = "redis://localhost"
-
-
-.. todo:: Document the config file options.
+.. important:: Do not use the demo authentication database in a production instance!
