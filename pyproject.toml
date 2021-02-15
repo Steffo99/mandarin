@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mandarin"
-version = "0.2.0"
+version = "0.3.0"
 description = "A cloud music library"
 authors = [
     "Stefano Pigozzi <ste.pigozzi@gmail.com>",
