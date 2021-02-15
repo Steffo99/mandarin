@@ -47,21 +47,6 @@ You can generate one using Poetry by entering the project's directory and runnin
     poetry install
 
 
-Create the PostgreSQL user and database
-------------------------------
-
-Mandarin must be allowed to write to a PostgreSQL database to run properly.
-
-On most Linux systems, you can create it with:
-
-.. code-block:: bash
-
-    systemctl start postgresql
-    ME=$(whoami)
-    sudo -u postgresql createuser ${ME}
-    sudo -u postgresql createdb --owner=${ME} mandarin
-
-
 Create a configuration file
 ---------------------------
 
