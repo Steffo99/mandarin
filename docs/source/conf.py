@@ -19,12 +19,11 @@
 
 project = 'mandarin'
 # noinspection PyShadowingBuiltins
-copyright = '2020, Stefano Pigozzi'
-author = 'Stefano Pigozzi'
+copyright = '2021, Stefano Pigozzi e Alberto Meschieri'
+author = 'Stefano Pigozzi e Alberto Meschieri'
 
 # The full version, including alpha/beta/rc tags
 release = '0.2.0'
-
 
 # -- General configuration ---------------------------------------------------
 

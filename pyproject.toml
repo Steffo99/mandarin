@@ -2,7 +2,10 @@
 name = "mandarin"
 version = "0.2.0"
 description = "A cloud music library"
-authors = ["Stefano Pigozzi <ste.pigozzi@gmail.com>"]
+authors = [
+    "Stefano Pigozzi <ste.pigozzi@gmail.com>",
+    "Alberto Meschieri <meschio94@gmail.com>",
+]
 license = "AGPL-3.0-or-later"
 
 [tool.poetry.dependencies]
