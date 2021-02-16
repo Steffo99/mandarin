@@ -1,19 +1,20 @@
 from __future__ import annotations
-from royalnet.typing import *
-from typing import IO
+
+import hashlib
+import logging
+import mimetypes
 import os
 import pathlib
-import hashlib
-import mimetypes
-import sqlalchemy.orm
+from typing import IO
+
 import mutagen
-import logging
+import sqlalchemy.orm
+from royalnet.typing import *
 
 from ..__main__ import app as celery
 from ..utils import MutagenParse
 from ...config import lazy_config
 from ...database import tables, lazy_Session
-
 
 log = logging.getLogger(__name__)
 
@@ -133,6 +134,7 @@ def find_album_from_tag(session: sqlalchemy.orm.session.Session,
     """
     role_artist = tables.Role.make(session=session, name=lazy_config["apps.files.roles.artist"])
 
+    # FIXME: this query doesn't work properly in some edge cases
     query = None
     for artist in mp.album.artists:
         subquery = (
@@ -166,6 +168,7 @@ def find_song_from_tag(session: sqlalchemy.orm.session.Session,
     """
     role_artist = tables.Role.make(session=session, name=lazy_config["apps.files.roles.artist"])
 
+    # FIXME: this query doesn't work properly in some edge cases
     query = None
     for artist in mp.song.artists:
         subquery = (

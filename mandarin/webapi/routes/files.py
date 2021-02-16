@@ -1,17 +1,16 @@
 from __future__ import annotations
-import starlette.responses
-from royalnet.typing import *
-import fastapi as f
-import sqlalchemy.orm.session
-import celery.exceptions
+
 import io
 
+import celery.exceptions
+import fastapi as f
+import starlette.responses
+
+from .. import dependencies
+from .. import models
+from .. import responses
 from ...database import tables
 from ...taskbus import tasks
-from .. import models
-from .. import dependencies
-from .. import responses
-
 
 router_files = f.APIRouter()
 
@@ -34,6 +33,9 @@ def upload_layer(
 ):
     """
     Upload a new track to the database.
+
+    **If `generate_entries` is selected, ensure the song has something in the Artist and Album Artist fields, or the
+    generation will behave strangely due to a bug.**
     """
     # file.file can't be directly pickled, transfer it to a bytesio object
     stream = io.BytesIO()
