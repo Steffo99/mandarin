@@ -66,6 +66,7 @@ def tag_process(stream: t.IO[bytes]) -> MutagenParse:
     tag_strip(file)
     stream.seek(0)
     tag_save(file=file, destination_stream=stream)
+    stream.seek(0)
     return MutagenParse.from_tags(tag)
 
 
