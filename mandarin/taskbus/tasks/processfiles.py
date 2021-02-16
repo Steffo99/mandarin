@@ -133,26 +133,18 @@ def find_album_from_tag(session: sqlalchemy.orm.session.Session,
     """
     role_artist = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.artist"])
 
-    # FIXME: this query doesn't work properly in some edge cases
-    query = None
-    for artist in mp.album.artists:
-        subquery = (
-            session.query(tables.AlbumInvolvement)
-                   .filter(tables.AlbumInvolvement.role == role_artist)
-                   .join(tables.Person)
-                   .filter(tables.Person.name == artist)
-                   .join(tables.Album)
-                   .filter(tables.Album.title == mp.album.title)
-        )
-        if query is None:
-            query = subquery
-        else:
-            query = subquery.filter(tables.AlbumInvolvement.person_id.in_([person.id for person in query.all()]))
+    query = session.query(tables.Album).filter(tables.Album.title == mp.album.title)
 
-    album_involvement: t.Optional[tables.AlbumInvolvement] = query.one_or_none() if query else None
-    if album_involvement:
-        return album_involvement.album
-    return None
+    # TODO: this seems to be working, but may still be broken in some edge cases
+    for artist in mp.album.artists:
+        query = (
+            query.join(tables.AlbumInvolvement)
+                .filter(tables.AlbumInvolvement.role == role_artist)
+                .join(tables.Person)
+                .filter(tables.Person.name == artist)
+        ).from_self()
+
+    return query.first()
 
 
 def find_song_from_tag(session: sqlalchemy.orm.session.Session,
@@ -167,28 +159,23 @@ def find_song_from_tag(session: sqlalchemy.orm.session.Session,
     """
     role_artist = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.artist"])
 
-    # FIXME: this query doesn't work properly in some edge cases
-    query = None
-    for artist in mp.song.artists:
-        subquery = (
-            session.query(tables.SongInvolvement)
-                   .filter(tables.SongInvolvement.role == role_artist)
-                   .join(tables.Person)
-                   .filter(tables.Person.name == artist)
-                   .join(tables.Song)
-                   .filter(tables.Song.title == mp.song.title)
-                   .join(tables.Album)
-                   .filter(tables.Album.title == mp.album.title)
-        )
-        if query is None:
-            query = subquery
-        else:
-            query = subquery.filter(tables.SongInvolvement.person_id.in_([person.id for person in query.all()]))
+    # TODO: this seems to be working, but may still be broken in some edge cases
+    query = (
+        session.query(tables.Song)
+            .filter(tables.Song.title == mp.song.title)
+            .join(tables.Album)
+            .filter(tables.Album.title == mp.album.title)
+    )
 
-    song_involvement: tables.SongInvolvement = query.one_or_none() if query else None
-    if song_involvement:
-        return song_involvement.song
-    return None
+    for artist in mp.song.artists:
+        query = (
+            query.join(tables.SongInvolvement)
+                .filter(tables.SongInvolvement.role == role_artist)
+                .join(tables.Person)
+                .filter(tables.Person.name == artist)
+        ).from_self()
+
+    return query.first()
 
 
 def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
