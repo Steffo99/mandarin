@@ -115,7 +115,8 @@ def search_results(
     result = ss.search(
         query=ls.session.query(*SEARCHABLE_ELEMENT_TABLES[element_type]),
         search_query=query,
-        weights=(weight_d, weight_c, weight_b, weight_a),
+        sort=True,
+        weights=[weight_d, weight_c, weight_b, weight_a],
         normalization=(
             1 if norm_1 else 0 |
             2 if norm_2 else 0 |
