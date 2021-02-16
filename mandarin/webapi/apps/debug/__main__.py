@@ -1,4 +1,5 @@
 import fastapi as f
+import fastapi.middleware.cors as cors
 import pkg_resources
 import uvicorn
 
@@ -24,6 +25,13 @@ app.include_router(router_albums, prefix="/albums", tags=["Albums"])
 app.include_router(router_genres, prefix="/genres", tags=["Genres"])
 app.include_router(router_people, prefix="/people", tags=["People"])
 app.include_router(router_auditlogs, prefix="/audit-logs", tags=["Audit Logs"])
+app.add_middleware(
+    cors.CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 
 if __name__ == "__main__":
