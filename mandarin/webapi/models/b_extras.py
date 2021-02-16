@@ -24,7 +24,6 @@ class SearchableElementType(str, enum.Enum):
     people = "people"
     roles = "roles"
     songs = "songs"
-    all = "all"
 
 
 __all__ = (

@@ -30,24 +30,15 @@ SEARCHABLE_ELEMENT_TABLES = {
     models.SearchableElementType.people: [tables.Person],
     models.SearchableElementType.roles: [tables.Role],
     models.SearchableElementType.songs: [tables.Song],
-    models.SearchableElementType.all: [
-        tables.Album,
-        tables.Genre,
-        tables.Layer,
-        tables.Person,
-        tables.Role,
-        tables.Song
-    ]
 }
 
-SEARCHABLE_ELEMENT_MODELS: t.Dict[models.SearchableElementType, t.Optional[models.OrmModel]] = {
+SEARCHABLE_ELEMENT_MODELS: t.Dict[models.SearchableElementType, t.Type] = {
     models.SearchableElementType.albums: models.AlbumOutput,
     models.SearchableElementType.genres: models.GenreOutput,
     models.SearchableElementType.layers: models.LayerOutput,
     models.SearchableElementType.people: models.PersonOutput,
     models.SearchableElementType.roles: models.RoleOutput,
     models.SearchableElementType.songs: models.SongOutput,
-    models.SearchableElementType.all: None
 }
 
 
