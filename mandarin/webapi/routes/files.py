@@ -58,26 +58,6 @@ def upload_layer(
     return layer
 
 
-@router_files.get(
-    "/{file_id}",
-    summary="Download a file.",
-    response_class=starlette.responses.FileResponse,
-    responses={
-        **responses.login_error,
-        404: {"description": "File not found"},
-    }
-)
-async def download_single(
-    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-    file_id: int = f.Path(..., description="The id of the file to be downloaded.")
-):
-    """
-    Download a single raw file from the database, without any tags applied.
-    """
-    file = ls.get(tables.File, file_id)
-    return starlette.responses.FileResponse(file.name, media_type=file.mime_type)
-
-
 __all__ = (
     "router_files",
 )

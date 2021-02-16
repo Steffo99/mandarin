@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import fastapi as f
 import sqlalchemy.orm
+import starlette.responses
+import os
 from royalnet.typing import *
 
 from .. import dependencies
@@ -117,6 +119,30 @@ def get_single(
     Get full information for the layer with the specified `layer_id`.
     """
     return ls.get(tables.Layer, layer_id)
+
+
+@router_layers.get(
+    "/{layer_id}/download",
+    summary="Download the layer file.",
+    response_class=starlette.responses.FileResponse,
+    responses={
+        **responses.login_error,
+        404: {"description": "File not found"},
+    }
+)
+async def download(
+        ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
+        layer_id: int = f.Path(..., description="The id of the layer to be downloaded.")
+):
+    """
+    Download a single raw file from the database, without any tags applied.
+    """
+    layer = ls.get(tables.Layer, layer_id)
+    if layer.file is None:
+        raise f.HTTPException(404, "Layer doesn't have an associated file.")
+    if not os.path.exists(layer.file.name):
+        raise f.HTTPException(404, "File doesn't exist on the server filesystem.")
+    return starlette.responses.FileResponse(layer.file.name, media_type=layer.file.mime_type)
 
 
 @router_layers.put(
