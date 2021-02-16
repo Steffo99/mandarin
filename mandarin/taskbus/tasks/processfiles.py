@@ -133,6 +133,7 @@ def find_album_from_tag(session: sqlalchemy.orm.session.Session,
     """
     role_artist = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.artist"])
 
+    # FIXME: this query doesn't work properly in some edge cases
     query = None
     for artist in mp.album.artists:
         subquery = (
@@ -166,6 +167,7 @@ def find_song_from_tag(session: sqlalchemy.orm.session.Session,
     """
     role_artist = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.artist"])
 
+    # FIXME: this query doesn't work properly in some edge cases
     query = None
     for artist in mp.song.artists:
         subquery = (

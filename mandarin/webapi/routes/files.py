@@ -33,6 +33,9 @@ def upload_layer(
 ):
     """
     Upload a new track to the database, and start a task to process the uploaded track.
+
+    **If `generate_entries` is selected, ensure the song has something in the Artist and Album Artist fields, or the
+    generation will behave strangely due to a bug.**
     """
     # file.file can't be directly pickled, transfer it to a bytesio object
     stream = io.BytesIO()
