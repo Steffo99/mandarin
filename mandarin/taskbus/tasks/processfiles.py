@@ -107,6 +107,7 @@ def determine_filename(stream: t.IO[bytes], original_path: t.Union[os.PathLike, 
     :return: A :class:`pathlib.Path` object representing the path that the file should have.
     """
     filename = hash_file(stream).hexdigest()
+    stream.seek(0)
     musicdir = pathlib.Path(lazy_config.e["storage.music.dir"])
     extension = determine_extension(original_path)
     return musicdir.joinpath(f"{filename}{extension}")
