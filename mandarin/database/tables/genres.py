@@ -22,7 +22,7 @@ class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
     description = s.Column("description", s.Text, nullable=False, default="")
 
     supergenre_id = s.Column("supergenre_id", s.Integer, s.ForeignKey("genres.id"))
-    supergenre = o.relationship("Genre", back_populates="subgenres", remote_side=id)
+    supergenre = o.relationship("Genre", back_populates="subgenres", remote_side=id, default=0)
     subgenres = o.relationship("Genre", back_populates="supergenre", remote_side=supergenre_id)
 
     songs = o.relationship("Song", secondary=songgenres, back_populates="genres")
