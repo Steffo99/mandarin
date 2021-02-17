@@ -190,7 +190,7 @@ def search_results(
         ),
         norm_16: bool = f.Query(
             False,
-            description="Divide the rank by 1 + the logarithm of the number of unique words in document"
+            description="Divide the rank by 1 + the logarithm of the number of unique words in document."
         ),
         norm_32: bool = f.Query(
             False,
