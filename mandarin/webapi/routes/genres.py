@@ -82,23 +82,6 @@ def count(
     return session.query(tables.Genre).count()
 
 
-@router_genres.get(
-    "/tree",
-    summary="Get a tree of all genres.",
-    responses={
-        **responses.login_error,
-    },
-    response_model=models.GenreTreeOutput
-)
-def get_tree(
-    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session)
-):
-    """
-    Get all genres in the form of a tree structure, where the root nodes are the ones without a `supergenre_id`.
-    """
-    return ls.session.query(tables.Genre).get(0)
-
-
 @router_genres.patch(
     "/merge",
     summary="Merge two or more genres.",
@@ -183,7 +166,7 @@ def edit_multiple_move(
         **responses.login_error,
         404: {"description": "Genre not found"},
     },
-    response_model=models.GenreOutput
+    response_model=models.GenreWithLayers
 )
 def get_single(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),

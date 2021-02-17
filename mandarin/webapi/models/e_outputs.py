@@ -54,14 +54,7 @@ class GenreOutput(base.OrmModel):
     songs: List[basic.Song]
     albums: List[basic.Album]
     supergenre: Optional[basic.Genre]
-    subgenres: List[basic.Genre]
-
-
-class GenreTreeOutput(base.OrmModel):
-    id: int
-    name: str
-    description: str
-    subgenres: List[involvements.GenreTree2]
+    subgenres: List[involvements.GenreTree1]
 
 
 class LayerOutput(base.OrmModel):
@@ -125,7 +118,6 @@ __all__ = (
     "AuditLogOutput",
     "FileOutput",
     "GenreOutput",
-    "GenreTreeOutput",
     "LayerOutput",
     "PersonOutput",
     "RoleOutput",

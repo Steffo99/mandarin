@@ -58,6 +58,7 @@ class GenreTree2(base.OrmModel):
 GenreTree1.update_forward_refs()
 GenreTree2.update_forward_refs()
 
+
 __all__ = (
     "AlbumInvolvementFromPerson",
     "AlbumInvolvementFromRole",
@@ -66,5 +67,4 @@ __all__ = (
     "SongInvolvementFromRole",
     "SongInvolvementFromSong",
     "GenreTree1",
-    "GenreTree2",
 )
