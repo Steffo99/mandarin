@@ -26,7 +26,13 @@ class SearchableElementType(str, enum.Enum):
     songs = "songs"
 
 
+class ThesaurusableElementType(str, enum.Enum):
+    albums = "albums"
+    songs = "songs"
+
+
 __all__ = (
     "AuthConfig",
     "SearchableElementType",
+    "ThesaurusableElementType",
 )
