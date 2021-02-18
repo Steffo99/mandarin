@@ -406,5 +406,9 @@ def _(
         genre_dfs(supergenre=0, genre=_key, children=_value, indent=0)
 
 
-if __name__ == "__main__":
+def main():
     _group_mandarin(auto_envvar_prefix="MANDARIN")
+
+
+if __name__ == "__main__":
+    main()
