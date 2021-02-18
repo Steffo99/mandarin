@@ -41,18 +41,18 @@ class SongInvolvementFromSong(base.OrmModel):
     role: basic.Role
 
 
-class GenreTree1(base.OrmModel):
-    id: int
-    name: str
-    description: str
-    subgenres: List[GenreTree2]
-
-
 class GenreTree2(base.OrmModel):
     id: int
     name: str
     description: str
     subgenres: List[basic.Genre]
+
+
+class GenreTree1(base.OrmModel):
+    id: int
+    name: str
+    description: str
+    subgenres: List[GenreTree2]
 
 
 __all__ = (
