@@ -32,4 +32,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 database.create_all()
-uvicorn.run(app, port=lazy_config.e["apps.demo.port"])
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, port=lazy_config.e["apps.demo.port"])
