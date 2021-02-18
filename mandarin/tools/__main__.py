@@ -148,13 +148,38 @@ def _group_auth(
     type=click.File(mode="rb", lazy=True),
     nargs=-1,
 )
+@click.option(
+    "-e", "--extension",
+    help="If files are not specified, find all files with this extension in the current directory and upload them.",
+    type=str,
+    required=False,
+)
 @click.pass_context
 def _(
         ctx: click.Context,
-        files: t.Collection[t.BinaryIO]
+        files: t.Collection[t.BinaryIO],
+        extension: t.Optional[str],
 ):
     instance: MandarinInstance = ctx.obj["INSTANCE"]
     auth: MandarinAuth = ctx.obj["AUTH"]
+
+    def get_files(base_path) -> t.List[pathlib.Path]:
+        f = []
+        for obj in base_path.iterdir():
+            obj: pathlib.Path
+            if obj.is_dir():
+                log.debug(f"Recursing into dir...")
+                contents = get_files(obj)
+                log.debug(f"Found {len(contents)} files.")
+                f += contents
+            elif obj.is_file():
+                if obj.name.endswith(extension):
+                    log.debug(f"Found new file: {obj}")
+                    f.append(obj)
+        return f
+
+    if len(files) == 0 and extension:
+        files = get_files(pathlib.Path("."))
 
     log.debug("Creating progress bar...")
     with click.progressbar(
