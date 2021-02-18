@@ -1,4 +1,6 @@
 from . import eng, base, tables
+import sqlalchemy_searchable
+import sqlalchemy.orm
 
 
 def create_all() -> None:
@@ -6,6 +8,9 @@ def create_all() -> None:
     session = eng.lazy_Session.evaluate()()
     # Create all tables
     base.Base.metadata.create_all(bind=eng.lazy_engine.evaluate())
+    # Initialize search mappers
+    sqlalchemy_searchable.make_searchable(metadata=base.Base.metadata)
+    sqlalchemy.orm.configure_mappers()
     # Create the root genre
     root_genre = session.query(tables.Genre).get(0)
     if root_genre is None:
