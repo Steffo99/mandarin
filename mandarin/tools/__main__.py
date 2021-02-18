@@ -192,8 +192,7 @@ def _(
     ) as bar:
         log.debug("Iterating over all files...")
         for path in bar:
-            with open(path, mode="rb"):
-                file: t.BinaryIO
+            with open(path, mode="rb") as file:
                 log.debug(f"Uploading: {file.name!r}")
 
                 try:
