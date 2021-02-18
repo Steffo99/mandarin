@@ -145,7 +145,7 @@ def _group_auth(
 @_group_auth.command("upload")
 @click.argument(
     "files",
-    type=click.File(mode="rb", lazy=True),
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
     nargs=-1,
 )
 @click.option(
@@ -157,7 +157,7 @@ def _group_auth(
 @click.pass_context
 def _(
         ctx: click.Context,
-        files: t.Collection[t.BinaryIO],
+        files: t.Collection[str],
         extension: t.Optional[str],
 ):
     instance: MandarinInstance = ctx.obj["INSTANCE"]
@@ -180,7 +180,6 @@ def _(
 
     if len(files) == 0 and extension:
         files = get_files(pathlib.Path("."))
-        files = [click.utils.LazyFile(file, mode="rb") for file in files]
 
     log.debug("Creating progress bar...")
     with click.progressbar(
@@ -189,35 +188,37 @@ def _(
             show_eta=True,
             show_percent=True,
             show_pos=True,
+            item_show_func=lambda i: str(i)
     ) as bar:
         log.debug("Iterating over all files...")
-        for file in bar:
-            file: t.BinaryIO
-            log.debug(f"Uploading: {file.name!r}")
+        for path in bar:
+            with open(path, mode="rb"):
+                file: t.BinaryIO
+                log.debug(f"Uploading: {file.name!r}")
 
-            try:
-                r = instance.post(
-                    "/files/layer",
-                    params={
-                        "generate_entries": True,
-                    },
-                    files={
-                        "file": (file.name, file)
-                    },
-                    headers=auth.data.token.access_header(),
-                )
-            except requests.exceptions.ConnectionError as e:
-                log.info(f"Could not connect to the upload endpoint: {e!r}")
-                raise click.ClickException(f"Could not connect to the upload endpoint: {e}")
+                try:
+                    r = instance.post(
+                        "/files/layer",
+                        params={
+                            "generate_entries": True,
+                        },
+                        files={
+                            "file": (file.name, file)
+                        },
+                        headers=auth.data.token.access_header(),
+                    )
+                except requests.exceptions.ConnectionError as e:
+                    log.info(f"Could not connect to the upload endpoint: {e!r}")
+                    raise click.ClickException(f"Could not connect to the upload endpoint: {e}")
 
-            log.debug(f"Response status: {r.status_code!r}")
-            if r.status_code >= 400:
-                log.info(f"File upload returned HTTP status: {r.status_code!r}")
-                raise click.ClickException(f"File upload returned HTTP status: {r.status_code!r}")
+                log.debug(f"Response status: {r.status_code!r}")
+                if r.status_code >= 400:
+                    log.info(f"File upload returned HTTP status: {r.status_code!r}")
+                    raise click.ClickException(f"File upload returned HTTP status: {r.status_code!r}")
 
-            log.debug(f"Parsing response JSON...")
-            j: str = r.json()
-            log.debug(f"Parsed response: {j!r}")
+                log.debug(f"Parsing response JSON...")
+                j: str = r.json()
+                log.debug(f"Parsed response: {j!r}")
 
     click.echo("Success!")
 
