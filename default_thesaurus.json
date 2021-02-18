@@ -112,5 +112,13 @@
         "Opera": {},
         "Classical Romantic": {}
     },
-    "World": {}
+    "World": {
+        "Cuban": {},
+        "Latin": {}
+    },
+    "Soundtrack": {
+        "Anime": {},
+        "Game": {},
+        "Movie": {}
+    }
 }
