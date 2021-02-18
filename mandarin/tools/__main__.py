@@ -321,6 +321,10 @@ def _(
                 ])
                 data = genius.search_song(title=full_song["title"], artist=artist)
 
+                if data is None:
+                    click.echo("Not found")
+                    continue
+
                 new_title = data.title if data.title else None
                 new_description = data._body["description"]["plain"] if "description" in data._body else None
                 new_lyrics = data.lyrics if data.lyrics else None
