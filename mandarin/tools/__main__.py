@@ -332,20 +332,20 @@ def _(
 
                 changes = False
 
+                changes |= prints.old_to_new("Title", full_song["title"], new_title, active=scrape_title)
                 if scrape_title:
-                    changes |= prints.old_to_new(full_song["title"], new_title)
                     song["title"] = new_title
 
+                changes |= prints.old_to_new("Description", full_song["description"], new_description, active=scrape_description)
                 if scrape_description:
-                    changes |= prints.old_to_new(full_song["description"], new_description)
                     song["description"] = new_description
 
+                changes |= prints.old_to_new("Lyrics", full_song["lyrics"], new_lyrics, active=scrape_lyrics)
                 if scrape_lyrics:
-                    changes |= prints.old_to_new(full_song["lyrics"], new_lyrics)
                     song["lyrics"] = data.lyrics
 
+                changes |= prints.old_to_new("Year", full_song["year"], new_year, active=scrape_year)
                 if scrape_year:
-                    changes |= prints.old_to_new(full_song["year"], new_year)
                     song["year"] = new_year
 
                 if not changes:

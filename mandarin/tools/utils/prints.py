@@ -1,16 +1,26 @@
 import click
 
 
-def old_to_new(old, new) -> bool:
+def old_to_new(title, old, new, active=False) -> bool:
     old_display = f"{old}".split("\n")[0]
     new_display = f"{new}".split("\n")[0]
 
+    click.secho(title, nl=False)
+    click.secho(": ", nl=False)
+
     if old != new:
-        click.secho(old_display, fg="red", nl=False)
-        click.secho(" -> ", nl=False)
-        click.secho(new_display, fg="green", bold=True, nl=False)
-        click.secho()
-        return True
+        if active:
+            click.secho(old_display, fg="red", nl=False)
+            click.secho(" -> ", nl=False)
+            click.secho(new_display, fg="green", bold=True, nl=False)
+            click.secho()
+            return True
+        else:
+            click.secho(old_display, fg="yellow", bold=True, nl=False)
+            click.secho(" != ", nl=False)
+            click.secho(new_display, fg="red", nl=False)
+            click.secho()
+            return True
     else:
         click.secho(old_display, fg="blue", nl=False)
         click.secho(" == ", nl=False)
