@@ -166,7 +166,7 @@ def edit_multiple_move(
         **responses.login_error,
         404: {"description": "Genre not found"},
     },
-    response_model=models.GenreWithLayers
+    response_model=models.GenreOutput
 )
 def get_single(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
