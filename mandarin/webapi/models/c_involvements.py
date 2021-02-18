@@ -41,18 +41,22 @@ class SongInvolvementFromSong(base.OrmModel):
     role: basic.Role
 
 
-class GenreTree2(base.OrmModel):
-    id: int
-    name: str
-    description: str
-    subgenres: List[basic.Genre]
-
-
-class GenreTree1(base.OrmModel):
+class GenreTree(base.OrmModel):
     id: int
     name: str
     description: str
     subgenres: List[GenreTree2]
+
+
+class GenreTree2(base.OrmModel):
+    id: int
+    name: str
+    description: str
+    subgenres: List[GenreTree]
+
+
+GenreTree.update_forward_refs()
+GenreTree2.update_forward_refs()
 
 
 __all__ = (
@@ -62,5 +66,5 @@ __all__ = (
     "SongInvolvementFromPerson",
     "SongInvolvementFromRole",
     "SongInvolvementFromSong",
-    "GenreTree1",
+    "GenreTree",
 )

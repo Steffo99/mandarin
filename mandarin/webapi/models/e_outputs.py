@@ -54,7 +54,7 @@ class GenreOutput(base.OrmModel):
     songs: List[basic.Song]
     albums: List[basic.Album]
     supergenre: Optional[basic.Genre]
-    subgenres: List[involvements.GenreTree1]
+    subgenres: List[involvements.GenreTree]
 
 
 class LayerOutput(base.OrmModel):

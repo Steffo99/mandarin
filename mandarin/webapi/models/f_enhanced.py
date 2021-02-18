@@ -57,7 +57,7 @@ class GenreWithLayers(base.OrmModel):
     songs: List[SongFromGenre]
     albums: List[basic.Album]
     supergenre: Optional[basic.Genre]
-    subgenres: List[involvements.GenreTree1]
+    subgenres: List[involvements.GenreTree]
 
 
 __all__ = (

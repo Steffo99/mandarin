@@ -18,9 +18,10 @@ def create_all() -> None:
             id=0,
             name="Root",
             description="The root genre. All genres are subgenres of this.",
-            supergenre_id=None,
         )
         session.add(root_genre)
+        session.commit()
+        root_genre.supergenre_id = None
         session.commit()
     # Close the session
     session.close()
