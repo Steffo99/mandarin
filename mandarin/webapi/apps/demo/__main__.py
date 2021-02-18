@@ -24,14 +24,14 @@ app.include_router(router_albums, prefix="/albums", tags=["Albums"])
 app.include_router(router_genres, prefix="/genres", tags=["Genres"])
 app.include_router(router_people, prefix="/people", tags=["People"])
 app.include_router(router_auditlogs, prefix="/audit-logs", tags=["Audit Logs"])
-app.add_middleware(
-    cors.CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
 
 if __name__ == "__main__":
     database.create_all()
+    app.add_middleware(
+        cors.CORSMiddleware,
+        allow_origins=lazy_config.e["apps.demo.origins"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"]
+    )
     uvicorn.run(app, port=lazy_config.e["apps.demo.port"])
