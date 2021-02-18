@@ -180,6 +180,7 @@ def _(
 
     if len(files) == 0 and extension:
         files = get_files(pathlib.Path("."))
+        files = [click.utils.LazyFile(file, mode="rb") for file in files]
 
     log.debug("Creating progress bar...")
     with click.progressbar(
