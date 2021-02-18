@@ -52,11 +52,7 @@ class GenreTree2(base.OrmModel):
     id: int
     name: str
     description: str
-    subgenres: List[GenreTree1]
-
-
-GenreTree1.update_forward_refs()
-GenreTree2.update_forward_refs()
+    subgenres: List[basic.Genre]
 
 
 __all__ = (
