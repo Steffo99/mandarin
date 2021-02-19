@@ -323,7 +323,7 @@ def _(
             artist = " ".join([
                 involvement["person"]["name"]
                 for involvement in full_song["involvements"]
-                if involvement["role"] == artist_role_name
+                if involvement["role"]["name"] == artist_role_name
             ])
             album = full_song["album"].get("title", "") if full_song.get("album") else ""
 
