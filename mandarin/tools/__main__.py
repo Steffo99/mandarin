@@ -277,6 +277,12 @@ def _(
     help="Whether this tool should prompt for confirmation on every song processed.",
     type=bool,
 )
+@click.option(
+    "--start-from",
+    default=0,
+    help="All song ids below this one will be skipped.",
+    type=int,
+)
 @click.pass_context
 def _(
         ctx: click.Context,
@@ -289,6 +295,7 @@ def _(
         artist_role_name: str,
         page_size: int,
         interactive: bool,
+        start_from: int,
 ):
     instance: MandarinInstance = ctx.obj["INSTANCE"]
     auth: MandarinAuth = ctx.obj["AUTH"]
@@ -297,6 +304,7 @@ def _(
     count = instance.get("/songs/count").json()
 
     offset = 0
+    last_time = time.time()
     while True:
         songs: t.List[t.Dict[str, t.Any]] = instance.get("/songs/", params={
             "limit": page_size,
@@ -304,77 +312,91 @@ def _(
         }, headers=auth.data.token.access_header()).json()
 
         for song in songs:
+            offset += 1
+
+            if song["id"] < start_from:
+                continue
+
+            full_song: t.Dict[str, t.Any] = instance.get(
+                f"/songs/{song['id']}",
+                headers=auth.data.token.access_header()
+            ).json()
+
+            artist = " ".join([
+                involvement["person"]["name"]
+                for involvement in full_song["involvements"]
+                if involvement["role"] == artist_role_name
+            ])
+            album = full_song["album"].get("title", "") if full_song.get("album") else ""
+
+            click.secho(f"================================================================================")
+            click.secho(f"{song['id']} | {full_song.get('title', '')} | {artist} | {album}")
+            click.secho(f"--------------------------------------------------------------------------------")
+
+            new_time = time.time()
+            elapsed_time = new_time - last_time
+            if elapsed_time <= delay:
+                time.sleep(delay - elapsed_time)
+            last_time = new_time
+
             try:
-                offset += 1
-                click.echo(f"Song {offset} / {count}")
-
-                full_song: t.Dict[str, t.Any] = instance.get(
-                    f"/songs/{song['id']}",
-                    headers=auth.data.token.access_header()
-                ).json()
-
-                # Search for the song on Genius
-                artist = " ".join([
-                    involvement["person"]["name"]
-                    for involvement in full_song["involvements"]
-                    if involvement["role"] == artist_role_name
-                ])
                 data = genius.search_song(title=full_song["title"], artist=artist)
+            except Exception as e:
+                click.secho(f"{e}", bold=True, bg="red", fg="white")
+                continue
 
-                if data is None:
-                    click.echo("Not found")
-                    continue
+            if data is None:
+                click.secho("Not found", fg="red", dim=True)
+                continue
 
-                new_title = data.title if data.title else None
-                new_description = data._body["description"]["plain"] if data._body.get("description") else None
-                new_lyrics = data.lyrics if data.lyrics else None
-                new_year = int(data._body["release_date"].split("-")[0]) if data._body.get("release_date") else None
+            new_title = data.title if data.title else None
+            new_description = data._body["description"]["plain"] if data._body.get("description") else None
+            new_lyrics = data.lyrics if data.lyrics else None
+            new_year = int(data._body["release_date"].split("-")[0]) if data._body.get("release_date") else None
 
-                changes = False
+            changes = False
 
-                changes |= prints.old_to_new("Title", full_song["title"], new_title, active=scrape_title)
-                if scrape_title:
-                    song["title"] = new_title
+            changes |= prints.old_to_new("Title", full_song["title"], new_title, active=scrape_title)
+            if scrape_title:
+                song["title"] = new_title
 
-                changes |= prints.old_to_new("Description", full_song["description"], new_description, active=scrape_description)
-                if scrape_description:
-                    song["description"] = new_description
+            changes |= prints.old_to_new("Description", full_song["description"], new_description, active=scrape_description)
+            if scrape_description:
+                song["description"] = new_description
 
-                changes |= prints.old_to_new("Lyrics", full_song["lyrics"], new_lyrics, active=scrape_lyrics)
-                if scrape_lyrics:
-                    song["lyrics"] = data.lyrics
+            changes |= prints.old_to_new("Lyrics", full_song["lyrics"], new_lyrics, active=scrape_lyrics)
+            if scrape_lyrics:
+                song["lyrics"] = data.lyrics
 
-                changes |= prints.old_to_new("Year", full_song["year"], new_year, active=scrape_year)
-                if scrape_year:
-                    song["year"] = new_year
+            changes |= prints.old_to_new("Year", full_song["year"], new_year, active=scrape_year)
+            if scrape_year:
+                song["year"] = new_year
 
-                if not changes:
-                    click.echo("Nothing to change, skipping...")
-                    continue
+            if not changes:
+                click.echo("Nothing to change, skipping...")
+                continue
 
-                if interactive:
-                    while True:
-                        click.echo("Proceed? (y/n) ", nl=False)
-                        choice = click.getchar(echo=True).lower()
+            if interactive:
+                while True:
+                    click.echo("Proceed? (y/n) ", nl=False)
+                    choice = click.getchar(echo=True).lower()
+                    click.echo()
 
-                        if choice == "y":
-                            instance.put(
-                                f"/songs/{song['id']}",
-                                json=song,
-                                headers=auth.data.token.access_header()
-                            )
-                            break
-                        elif choice == "n":
-                            break
-                else:
-                    instance.put(
-                        f"/songs/{song['id']}",
-                        json=song,
-                        headers=auth.data.token.access_header()
-                    )
-
-            finally:
-                time.sleep(delay)
+                    if choice == "y":
+                        instance.put(
+                            f"/songs/{song['id']}",
+                            json=song,
+                            headers=auth.data.token.access_header()
+                        )
+                        break
+                    elif choice == "n":
+                        break
+            else:
+                instance.put(
+                    f"/songs/{song['id']}",
+                    json=song,
+                    headers=auth.data.token.access_header()
+                )
 
         if len(songs) <= page_size:
             break

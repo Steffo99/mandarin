@@ -14,13 +14,12 @@ def old_to_new(title, old, new, active=False) -> bool:
             click.secho(" -> ", nl=False)
             click.secho(new_display, fg="green", bold=True, nl=False)
             click.secho()
-            return True
         else:
             click.secho(old_display, fg="yellow", bold=True, nl=False)
             click.secho(" != ", nl=False)
             click.secho(new_display, fg="red", nl=False)
             click.secho()
-            return True
+        return True
     else:
         click.secho(old_display, fg="blue", nl=False)
         click.secho(" == ", nl=False)
