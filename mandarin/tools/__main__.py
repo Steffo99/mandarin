@@ -301,8 +301,6 @@ def _(
     auth: MandarinAuth = ctx.obj["AUTH"]
     genius = lyricsgenius.Genius(token, verbose=False)
 
-    count = instance.get("/songs/count").json()
-
     offset = 0
     last_time = time.time()
     while True:
