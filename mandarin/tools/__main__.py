@@ -396,7 +396,7 @@ def _(
                     headers=auth.data.token.access_header()
                 )
 
-        if len(songs) <= page_size:
+        if len(songs) < page_size:
             break
 
         click.echo("All songs processed!")
