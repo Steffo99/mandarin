@@ -348,7 +348,7 @@ def _(
                 continue
 
             new_title = data.title if data.title else None
-            new_description = data._body["description"]["plain"] if data._body.get("description") and data._body["description"]["plain"] != "?" else None
+            new_description = data._body["description"]["plain"] if data._body.get("description") and data._body["description"]["plain"] != "?" else ""
             new_lyrics = data.lyrics if data.lyrics else None
             new_year = int(data._body["release_date"].split("-")[0]) if data._body.get("release_date") else None
 
