@@ -23,7 +23,11 @@ class Album(Base, a.ColRepr, a.Updatable):
     title = s.Column("title", s.String, nullable=False, default="")
     description = s.Column("description", s.Text, nullable=False, default="")
 
-    involvements: List[AlbumInvolvement] = o.relationship("AlbumInvolvement", back_populates="album")
+    involvements: List[AlbumInvolvement] = o.relationship(
+        "AlbumInvolvement",
+        back_populates="album",
+        cascade="all, delete-orphan"
+    )
     songs = o.relationship("Song", back_populates="album")
     genres = o.relationship("Genre", secondary=albumgenres, back_populates="albums")
 

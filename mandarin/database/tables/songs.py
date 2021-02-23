@@ -34,8 +34,11 @@ class Song(Base, a.ColRepr, a.Updatable):
     album = o.relationship("Album", back_populates="songs")
 
     layers = o.relationship("Layer", back_populates="song")
-    involvements: t.List[SongInvolvement] = o.relationship("SongInvolvement", back_populates="song",
-                                                           cascade="all, delete")
+    involvements: t.List[SongInvolvement] = o.relationship(
+        "SongInvolvement",
+        back_populates="song",
+        cascade="all, delete-orphan"
+    )
     genres = o.relationship("Genre", secondary=songgenres, back_populates="songs")
 
     # noinspection PyTypeChecker

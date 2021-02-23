@@ -18,8 +18,8 @@ class Person(Base, a.ColRepr, a.Updatable, a.Makeable):
     name = s.Column("name", s.String, nullable=False)
     description = s.Column("description", s.Text, nullable=False, default="")
 
-    song_involvements = o.relationship("SongInvolvement", back_populates="person", cascade="all, delete")
-    album_involvements = o.relationship("AlbumInvolvement", back_populates="person", cascade="all, delete")
+    song_involvements = o.relationship("SongInvolvement", back_populates="person", cascade="all, delete-orphan")
+    album_involvements = o.relationship("AlbumInvolvement", back_populates="person", cascade="all, delete-orphan")
 
     # noinspection PyTypeChecker
     search = s.Column("search", to_tsvector(
