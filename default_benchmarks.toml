@@ -1,0 +1,103 @@
+[parameters]
+
+[[parameters.weight]]
+name = "Only A"
+a = 1.0
+b = 0.0
+c = 0.0
+d = 0.0
+
+[[parameters.weight]]
+name = "Only B"
+a = 0.0
+b = 1.0
+c = 0.0
+d = 0.0
+
+[[parameters.weight]]
+name = "Only C"
+a = 0.0
+b = 0.0
+c = 1.0
+d = 0.0
+
+[[parameters.weight]]
+name = "Only D"
+a = 0.0
+b = 0.0
+c = 0.0
+d = 1.0
+
+[[parameters.weight]]
+name = "All 1.0"
+a = 1.0
+b = 1.0
+c = 1.0
+d = 1.0
+
+[[parameters.weight]]
+name = "Postgres defaults"
+a = 1.0
+b = 0.4
+c = 0.2
+d = 0.1
+
+[[parameters.weight]]
+name = "Title and others"
+a = 1.0
+b = 0.4
+c = 0.4
+d = 0.4
+
+[[parameters.weight]]
+name = "Lyrics priority"
+a = 0.4
+b = 0.2
+c = 1.0
+d = 0.1
+
+[[parameters.normalization]]
+name = "No normalization"
+mode = 0
+
+[[parameters.normalization]]
+name = "Logarithmic"
+mode = 1
+
+[[parameters.normalization]]
+name = "Linear"
+mode = 2
+
+[[parameters.normalization]]
+name = "Harmonic"
+mode = 4
+
+[[parameters.normalization]]
+name = "Linear unique"
+mode = 8
+
+[[parameters.normalization]]
+name = "Logarithmic unique"
+mode = 16
+
+[[parameters.normalization]]
+name = "Rescaling"
+mode = 32
+
+[[queries]]
+# Text displayed while performing the benchmark
+uin = "Find the song 'here comes the sun'."
+# Search type
+type = "songs"
+# Query entered in mandarin
+text = "here and comes and sun"
+# Relevant document ids
+relevant = [438]
+# Optional: id of the genre to use as filter
+filter = 12
+
+[[queries]]
+uin = "Find all songs with 'life' in the title."
+type = "songs"
+text = "life"
+relevant = [137, 498, 541, 269, 546, 589]

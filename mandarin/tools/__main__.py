@@ -1,13 +1,13 @@
 # Special imports
 from __future__ import annotations
 
-import json
 # External imports
 import logging
 import os
 import pathlib
 import time
 import typing as t
+import json
 
 import click
 import coloredlogs
@@ -454,6 +454,102 @@ def _(
 
     for _key, _value in j.items():
         genre_dfs(supergenre=0, genre=_key, children=_value, indent=0)
+
+
+@_group_auth.command("benchmark")
+@click.option(
+    "-d", "--delay",
+    help="The delay between two Mandarin requests.",
+    default=1.0,
+    type=float,
+)
+@click.argument(
+    "file",
+    type=click.File(mode="r", lazy=True),
+    nargs=1
+)
+@click.pass_context
+def _(
+        ctx: click.Context,
+        delay: float,
+        file: t.TextIO,
+):
+    instance: MandarinInstance = ctx.obj["INSTANCE"]
+    auth: MandarinAuth = ctx.obj["AUTH"]
+
+    j = toml.load(file)
+
+    queries = j.get("queries", [])
+    if not queries:
+        raise click.ClickException("No queries specified, nothing to do")
+
+    parameters = j.get("parameters", [])
+    if not parameters:
+        raise click.ClickException("No parameters specified, nothing to do")
+
+    weights = parameters.get("weight", [])
+    if not weights:
+        raise click.ClickException("No weights specified, nothing to do")
+
+    normalizations = parameters.get("normalization", [])
+    if not normalizations:
+        raise click.ClickException("No normalizations specified, nothing to do")
+
+    for query in queries:
+        uin = query.get("uin", "")
+        type_ = query["type"]
+        text = query["text"]
+        filter_ = query.get("filter")
+        relevant = query["relevant"]
+
+        click.secho(f"================================================================================")
+        click.secho(uin, nl=False, bold=True)
+        click.secho(f" | {type_!r} | {text!r} | {filter_!r}")
+        click.secho(f"Relevant: {relevant!r}")
+        click.secho(f"--------------------------------------------------------------------------------")
+
+        for weight in weights:
+            for normalization in normalizations:
+
+                try:
+                    params = {
+                        "element_type": type_,
+                        "query": text,
+                        "weight_a": weight.get("a", 0.0),
+                        "weight_b": weight.get("b", 0.0),
+                        "weight_c": weight.get("c", 0.0),
+                        "weight_d": weight.get("d", 0.0),
+                        "norm_1": bool(normalization.get("mode", 0) & 1),
+                        "norm_2": bool(normalization.get("mode", 0) & 2),
+                        "norm_4": bool(normalization.get("mode", 0) & 4),
+                        "norm_8": bool(normalization.get("mode", 0) & 8),
+                        "norm_16": bool(normalization.get("mode", 0) & 16),
+                        "norm_32": bool(normalization.get("mode", 0) & 32),
+                        **({"filter_genre_id": filter_} if filter_ else {})
+                    }
+
+                    results: t.Dict[str, t.Any] = instance.get(
+                        "/search/results" if filter_ is None else "/search/thesaurus",
+                        params=params,
+                        headers=auth.data.token.access_header()
+                    ).json()
+
+                    count = len(results)
+
+                    if count >= 10:
+                        click.secho("+ ", fg="green", nl=False)
+                    elif count > 0:
+                        click.secho(f"{count} ", fg="green", nl=False)
+                    else:
+                        click.secho("0 ", fg="yellow", nl=False)
+
+                except Exception:
+                    click.secho("X ", bg="red", fg="white", nl=False)
+
+                finally:
+                    time.sleep(delay)
+
+            click.echo()
 
 
 def main():
