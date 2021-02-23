@@ -22,13 +22,6 @@ c = 1.0
 d = 0.0
 
 [[parameters.weight]]
-name = "Only D"
-a = 0.0
-b = 0.0
-c = 0.0
-d = 1.0
-
-[[parameters.weight]]
 name = "All 1.0"
 a = 1.0
 b = 1.0
@@ -80,18 +73,23 @@ mode = 8
 name = "Logarithmic unique"
 mode = 16
 
-[[parameters.normalization]]
-name = "Rescaling"
-mode = 32
-
 
 [[queries]]
+filename = "life"
+uin = "Find all songs with 'life' in the title."
+type = "songs"
+text = "life"
+relevant = [137, 498, 541, 600, 269, 546, 589, 623, 631, 739, 745]
+
+[[queries]]
+filename = "specific"
 uin = "Find the specific song 'here comes the sun'."
 type = "songs"
-text = "here cmoes the snu"
+text = "here comes the sun"
 relevant = [438]
 
 [[queries]]
+filename = "specific_thesaurus"
 uin = "Find the specific song 'here comes the sun' using the genre thesaurus."
 type = "songs"
 text = "here and comes and sun"
@@ -99,51 +97,46 @@ relevant = [438]
 filter = 12
 
 [[queries]]
+filename = "specific_typo"
 uin = "Accidentaly make a typo while searching 'here comes the sun'."
 type = "songs"
 text = "here cmoes the snu"
 relevant = [438]
 
 [[queries]]
-uin = "Find all songs with 'life' in the title."
-type = "songs"
-text = "life"
-relevant = [137, 498, 541, 600, 269, 546, 589, 623, 631, 739, 745]
-
-[[queries]]
+filename = "and"
 uin = "Find all songs with 'sky' and 'blue' in the lyrics."
 type = "songs"
 text = "sky and blue"
 relevant = [484, 114, 258, 324, 441, 472, 524, 528, 692]
 
 [[queries]]
+filename = "and_or"
 uin = "Find all lyrics with 'pain' or 'love' about 'life'."
 type = "songs"
 text = "(pain or love) and life"
 relevant = [154, 151, 194, 235, 282, 316, 326, 328, 333, 404, 416, 454, 458, 496, 594, 716, 719, 745, 780]
 
 [[queries]]
-uin = "Find all song with 'life' but not 'love' in the title."
+filename = "and not"
+uin = "Find all songs with a title related to girls who don't cry."
 type = "songs"
-text = "life and -love"
-relevant = [137, 498, 541, 600, 269, 546, 589, 623, 631, 739, 745]
+text = "girl and -cry"
+relevant = [
+    154,
+    292,
+    351,
+    195,
+    308,
+    366,
+    549,
+]
 
 [[queries]]
-uin = "Find all songs about small or little hearts."
-type = "songs"
-text = "(little or small) and heart"
-relevant = []
-
-[[queries]]
-uin = "Find all songs about girls who don't cry."
-type = "songs"
-text = "girl -cry"
-relevant = []
-
-[[queries]]
+filename = "album_as_query"
 uin = "Find songs about 'Jet Set Radio'."
 type = "songs"
-text = "Jet Set Radio"
+text = "jet set radio"
 relevant = [
     776,
     756,
@@ -180,3 +173,10 @@ relevant = [
     788,
     789,
 ]
+
+[[queries]]
+filename = "artist_name"
+uin = "Find the profile page of The Beatles."
+type = "people"
+text = "the beatles"
+relevant = [307]

@@ -31,6 +31,7 @@ lyricsgenius = { git = "https://github.com/Steffo99/LyricsGenius" }
 expiringdict = "^1.2.1"
 SQLAlchemy-Utils = "^0.36.8"
 sqlalchemy-searchable = { git = "https://github.com/Steffo99/sqlalchemy-searchable" }
+matplotlib = "^3.3.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"

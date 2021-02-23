@@ -14,6 +14,8 @@ import coloredlogs
 import lyricsgenius
 import requests
 import toml
+import numpy
+import matplotlib.pyplot as plt
 
 from .utils import MandarinAuth, LocalConfig
 # Internal imports
@@ -463,6 +465,12 @@ def _(
     default=1.0,
     type=float,
 )
+@click.option(
+    "-x", "--x-points",
+    help="The number of points to create on the x axis.",
+    default=25,
+    type=int,
+)
 @click.argument(
     "file",
     type=click.File(mode="r", lazy=True),
@@ -472,6 +480,7 @@ def _(
 def _(
         ctx: click.Context,
         delay: float,
+        x_points: int,
         file: t.TextIO,
 ):
     instance: MandarinInstance = ctx.obj["INSTANCE"]
@@ -495,12 +504,18 @@ def _(
     if not normalizations:
         raise click.ClickException("No normalizations specified, nothing to do")
 
-    for query in queries:
+    r_precisions = numpy.zeros((len(queries), len(weights), len(normalizations), x_points))
+    r_interpolated = numpy.zeros((len(queries), len(weights), len(normalizations), x_points))
+
+    for query_number, query in enumerate(queries):
         uin = query.get("uin", "")
         type_ = query["type"]
         text = query["text"]
         filter_ = query.get("filter")
         relevant = query["relevant"]
+
+        fig, axs = plt.subplots(len(weights), len(normalizations), figsize=(48, 27), constrained_layout=True)
+        fig.suptitle(uin, fontsize=20)
 
         click.secho(f"================================================================================")
         click.secho(uin, nl=False, bold=True)
@@ -508,8 +523,8 @@ def _(
         click.secho(f"Relevant: {relevant!r}")
         click.secho(f"--------------------------------------------------------------------------------")
 
-        for weight in weights:
-            for normalization in normalizations:
+        for weight_number, weight in enumerate(weights):
+            for normalization_number, normalization in enumerate(normalizations):
 
                 try:
                     params = {
@@ -528,7 +543,7 @@ def _(
                         **({"filter_genre_id": filter_} if filter_ else {})
                     }
 
-                    results: t.Dict[str, t.Any] = instance.get(
+                    results: t.List[t.Dict] = instance.get(
                         "/search/results" if filter_ is None else "/search/thesaurus",
                         params=params,
                         headers=auth.data.token.access_header()
@@ -545,11 +560,91 @@ def _(
 
                 except Exception:
                     click.secho("X ", bg="red", fg="white", nl=False)
+                    continue
 
                 finally:
                     time.sleep(delay)
 
-            click.echo()
+                # Create a graph
+                relev_docs = 0
+                total_docs = 0
+                for result in results[:x_points]:
+                    if result["id"] in relevant:
+                        relev_docs += 1
+                    total_docs += 1
+                    r_precisions[query_number, weight_number, normalization_number, total_docs - 1] = \
+                        relev_docs / total_docs
+
+                for x in range(x_points):
+                    r_interpolated[
+                        query_number,
+                        weight_number,
+                        normalization_number,
+                        x
+                    ] = max(r_precisions[query_number, weight_number, normalization_number, x:])
+
+                ax = axs[weight_number, normalization_number]
+                ax.grid(b=True)
+                ax.set_xticks(numpy.arange(0, x_points+5, 5))
+                ax.set_xticks(numpy.arange(0, x_points+1, 1), minor=True)
+                ax.set_yticks(numpy.arange(0, 1.25, 0.25))
+                ax.set_yticks(numpy.arange(0, 1.05, 0.05), minor=True)
+                ax.set_xlim([1, x_points])
+                ax.set_ylim([0, 1.0])
+                ax.plot(
+                    [x+1 for x in range(x_points)],
+                    r_precisions[query_number, weight_number, normalization_number, :],
+                    label="Standard"
+                )
+                ax.plot(
+                    [x+1 for x in range(x_points)],
+                    r_interpolated[query_number, weight_number, normalization_number, :],
+                    label="Interpolated"
+                )
+                ax.set_title(f"{weight['name']} + {normalization['name']}")
+                ax.set_ylabel("Precision")
+
+            click.secho()
+
+        click.secho("Building plot...")
+        fig.show()
+        click.secho("Done!", fg="green")
+
+    click.secho("Building average plot...")
+    r_average = numpy.average(r_precisions, (0,))
+    fig, axs = plt.subplots(len(weights), len(normalizations), figsize=(48, 27), constrained_layout=True)
+    fig.suptitle("Average precision", fontsize=20)
+    for weight_number in range(len(weights)):
+        for normalization_number in range(len(normalizations)):
+            ax = axs[weight_number, normalization_number]
+            ax.grid(b=True)
+            ax.set_xticks(numpy.arange(0, x_points+5, 5))
+            ax.set_xticks(numpy.arange(0, x_points+1, 1), minor=True)
+            ax.set_yticks(numpy.arange(0, 1.25, 0.25))
+            ax.set_yticks(numpy.arange(0, 1.05, 0.05), minor=True)
+            ax.set_xlim([1, x_points])
+            ax.set_ylim([0, 1.0])
+            ax.plot(
+                [x+1 for x in range(x_points)],
+                r_average[weight_number, normalization_number, :],
+                label="Average"
+            )
+    fig.show()
+    click.secho("Done!", fg="green")
+
+    click.secho("Building mean average table...")
+    fig, ax = plt.subplots(figsize=(13, 9))
+    fig.suptitle("Mean average precision", fontsize=20)
+    r_mean_average = numpy.average(r_average, (2,))
+    ax.table(
+        numpy.around(r_mean_average, 3),
+        loc="center",
+        rowLabels=list(map(lambda w: w["name"], weights)),
+        colLabels=list(map(lambda n: n["name"], normalizations)),
+    ),
+    ax.axis("off")
+    fig.show()
+    click.secho("Done!", fg="green")
 
 
 def main():
