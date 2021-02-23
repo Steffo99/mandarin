@@ -84,68 +84,99 @@ mode = 16
 name = "Rescaling"
 mode = 32
 
+
 [[queries]]
-# Text displayed while performing the benchmark
-uin = "Find the song 'here comes the sun'."
-# Search type
+uin = "Find the specific song 'here comes the sun'."
 type = "songs"
-# Query entered in mandarin
-text = "here and comes and sun"
-# Relevant document ids
+text = "here cmoes the snu"
 relevant = [438]
-# Optional: id of the genre to use as filter
+
+[[queries]]
+uin = "Find the specific song 'here comes the sun' using the genre thesaurus."
+type = "songs"
+text = "here and comes and sun"
+relevant = [438]
 filter = 12
+
+[[queries]]
+uin = "Accidentaly make a typo while searching 'here comes the sun'."
+type = "songs"
+text = "here cmoes the snu"
+relevant = [438]
 
 [[queries]]
 uin = "Find all songs with 'life' in the title."
 type = "songs"
 text = "life"
-relevant = [137, 498, 541, 269, 546, 589]
+relevant = [137, 498, 541, 600, 269, 546, 589, 623, 631, 739, 745]
 
 [[queries]]
-uin = "Find all genres with 'electro' in the title."
-type = "genres"
-text = "electro"
-relevant = []
-
-[[queries]]
-uin = "Find all lyrics with 'sky' and 'blue' in the text."
+uin = "Find all songs with 'sky' and 'blue' in the lyrics."
 type = "songs"
 text = "sky and blue"
-relevant = []
+relevant = [484, 114, 258, 324, 441, 472, 524, 528, 692]
 
 [[queries]]
-uin = "Find all lyrics with 'pain' or 'love' about life."
+uin = "Find all lyrics with 'pain' or 'love' about 'life'."
 type = "songs"
 text = "(pain or love) and life"
-relevant = []
+relevant = [154, 151, 194, 235, 282, 316, 326, 328, 333, 404, 416, 454, 458, 496, 594, 716, 719, 745, 780]
 
 [[queries]]
-uin = "Find all song with 'life' and not 'love'in the title."
+uin = "Find all song with 'life' but not 'love' in the title."
 type = "songs"
 text = "life and -love"
-relevant = []
+relevant = [137, 498, 541, 600, 269, 546, 589, 623, 631, 739, 745]
 
 [[queries]]
-uin = "Find all description with 'little' or 'small' about heart."
+uin = "Find all songs about small or little hearts."
 type = "songs"
 text = "(little or small) and heart"
 relevant = []
 
 [[queries]]
-uin = "Find all songs about 'night' and 'dance'."
-type = "songs"
-text = "night and dance"
-relevant = []
-
-[[queries]]
-uin = "Find all songs about 'girls' wich don't 'cry'."
+uin = "Find all songs about girls who don't cry."
 type = "songs"
 text = "girl -cry"
 relevant = []
 
 [[queries]]
-uin = "Find all lyrics about 'raining' ."
+uin = "Find songs about 'Jet Set Radio'."
 type = "songs"
-text = "raining"
-relevant = []
+text = "Jet Set Radio"
+relevant = [
+    776,
+    756,
+    757,
+    758,
+    762,
+    763,
+    764,
+    765,
+    787,
+    786,
+    782,
+    783,
+    773,
+    759,
+    760,
+    761,
+    766,
+    767,
+    774,
+    768,
+    769,
+    770,
+    771,
+    772,
+    775,
+    777,
+    778,
+    779,
+    780,
+    781,
+    784,
+    785,
+    788,
+    789,
+]
