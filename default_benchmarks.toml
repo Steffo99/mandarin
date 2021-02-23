@@ -101,3 +101,51 @@ uin = "Find all songs with 'life' in the title."
 type = "songs"
 text = "life"
 relevant = [137, 498, 541, 269, 546, 589]
+
+[[queries]]
+uin = "Find all genres with 'electro' in the title."
+type = "genres"
+text = "electro"
+relevant = []
+
+[[queries]]
+uin = "Find all lyrics with 'sky' and 'blue' in the text."
+type = "songs"
+text = "sky and blue"
+relevant = []
+
+[[queries]]
+uin = "Find all lyrics with 'pain' or 'love' about life."
+type = "songs"
+text = "(pain or love) and life"
+relevant = []
+
+[[queries]]
+uin = "Find all song with 'life' and not 'love'in the title."
+type = "songs"
+text = "life and -love"
+relevant = []
+
+[[queries]]
+uin = "Find all description with 'little' or 'small' about heart."
+type = "songs"
+text = "(little or small) and heart"
+relevant = []
+
+[[queries]]
+uin = "Find all songs about 'night' and 'dance'."
+type = "songs"
+text = "night and dance"
+relevant = []
+
+[[queries]]
+uin = "Find all songs about 'girls' wich don't 'cry'."
+type = "songs"
+text = "girl -cry"
+relevant = []
+
+[[queries]]
+uin = "Find all lyrics about 'raining' ."
+type = "songs"
+text = "raining"
+relevant = []
