@@ -513,6 +513,7 @@ def _(
         text = query["text"]
         filter_ = query.get("filter")
         relevant = query["relevant"]
+        filename = query["filename"]
 
         fig, axs = plt.subplots(len(weights), len(normalizations), figsize=(48, 27), constrained_layout=True)
         fig.suptitle(uin, fontsize=20)
@@ -607,7 +608,7 @@ def _(
             click.secho()
 
         click.secho("Building plot...")
-        fig.show()
+        fig.figsave(f"{query_number+1}_{filename}.png")
         click.secho("Done!", fg="green")
 
     click.secho("Building average plot...")
@@ -629,7 +630,7 @@ def _(
                 r_average[weight_number, normalization_number, :],
                 label="Average"
             )
-    fig.show()
+    fig.figsave(f"0_averages.png")
     click.secho("Done!", fg="green")
 
     click.secho("Building mean average table...")
@@ -643,7 +644,7 @@ def _(
         colLabels=list(map(lambda n: n["name"], normalizations)),
     ),
     ax.axis("off")
-    fig.show()
+    fig.figsave(f"0_mean_averages.png")
     click.secho("Done!", fg="green")
 
 
