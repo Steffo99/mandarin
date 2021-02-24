@@ -608,7 +608,7 @@ def _(
             click.secho()
 
         click.secho("Building plot...")
-        fig.figsave(f"{query_number+1}_{filename}.png")
+        fig.savefig(f"{query_number+1}_{filename}.png")
         click.secho("Done!", fg="green")
 
     click.secho("Building average plot...")
@@ -630,7 +630,7 @@ def _(
                 r_average[weight_number, normalization_number, :],
                 label="Average"
             )
-    fig.figsave(f"0_averages.png")
+    fig.savefig(f"0_averages.png")
     click.secho("Done!", fg="green")
 
     click.secho("Building mean average table...")
@@ -644,7 +644,7 @@ def _(
         colLabels=list(map(lambda n: n["name"], normalizations)),
     ),
     ax.axis("off")
-    fig.figsave(f"0_mean_averages.png")
+    fig.savefig(f"0_mean_averages.png")
     click.secho("Done!", fg="green")
 
 
