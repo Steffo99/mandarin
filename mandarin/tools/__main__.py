@@ -595,15 +595,18 @@ def _(
                 ax.plot(
                     [x+1 for x in range(x_points)],
                     r_precisions[query_number, weight_number, normalization_number, :],
-                    label="Standard"
+                    color="#FF8500",
+                    label="Standard",
                 )
                 ax.plot(
                     [x+1 for x in range(x_points)],
                     r_interpolated[query_number, weight_number, normalization_number, :],
-                    label="Interpolated"
+                    color="#5F860A",
+                    label="Interpolated",
                 )
                 ax.set_title(f"{weight['name']} + {normalization['name']}")
                 ax.set_ylabel("Precision")
+                ax.legend()
 
             click.secho()
 
@@ -612,7 +615,10 @@ def _(
         click.secho("Done!", fg="green")
 
     click.secho("Building average plot...")
+
     r_average = numpy.average(r_precisions, (0,))
+    r_average_interp = numpy.average(r_interpolated, (0,))
+
     fig, axs = plt.subplots(len(weights), len(normalizations), figsize=(48, 27), constrained_layout=True)
     fig.suptitle("Average precision", fontsize=20)
     for weight_number in range(len(weights)):
@@ -625,11 +631,24 @@ def _(
             ax.set_yticks(numpy.arange(0, 1.05, 0.05), minor=True)
             ax.set_xlim([1, x_points])
             ax.set_ylim([0, 1.0])
+
             ax.plot(
                 [x+1 for x in range(x_points)],
                 r_average[weight_number, normalization_number, :],
-                label="Average"
+                label="Average",
+                color="#FF8500",
+                linestyle="-.",
             )
+
+            ax.plot(
+                [x+1 for x in range(x_points)],
+                r_average_interp[weight_number, normalization_number, :],
+                label="Average of interpolations",
+                color="#5F860A",
+                linestyle="-.",
+            )
+            ax.legend()
+
     fig.savefig(f"0_averages.png")
     click.secho("Done!", fg="green")
 

@@ -2,6 +2,7 @@ config.toml
 data/
 sample/
 **/__deleted__/**/*
+*.png
 
 # Github Codespaces
 pythonenv3.8/
