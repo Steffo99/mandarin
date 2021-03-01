@@ -1,7 +1,8 @@
 config.toml
 data/
 sample/
-**/__deleted__/**/*
+*.iml
+.idea/
 
 # Github Codespaces
 pythonenv3.8/
