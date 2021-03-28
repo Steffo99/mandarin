@@ -14,7 +14,7 @@ router_auth = f.APIRouter()
     responses={
         **responses.login_error,
     },
-    response_model=models.UserOutput
+    response_model=dict
 )
 def access_token(
     payload: dict = f.Depends(dependencies.dependency_access_token)

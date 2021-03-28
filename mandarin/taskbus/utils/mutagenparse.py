@@ -1,7 +1,9 @@
 from __future__ import annotations
-from royalnet.typing import *
+
 import dataclasses
 import logging
+
+from royalnet.typing import *
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ class MutagenParse:
         def from_tags(cls, tag: Dict[str, List[str]]) -> MutagenParse.Album:
             return cls(
                 title=MutagenParse.single_string(tag=tag, key="album"),
-                artists=MutagenParse.multi_string(tag=tag, key="albumartists")
+                artists=MutagenParse.multi_string(tag=tag, key="albumartist")
             )
 
     @dataclasses.dataclass()

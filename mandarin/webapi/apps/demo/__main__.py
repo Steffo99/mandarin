@@ -9,13 +9,12 @@ from .description import description
 from ...routes import *
 
 app = f.FastAPI(
-    debug=True,
-    title="Mandarin [DEBUG]",
+    debug=False,
+    title="Mandarin [DEMO]",
     description=description,
     version=pkg_resources.get_distribution("mandarin").version,
 )
 app.include_router(router_version, prefix="/version", tags=["Version"])
-app.include_router(router_debug, prefix="/debug", tags=["Debug"])
 app.include_router(router_auth, prefix="/auth", tags=["Authentication"])
 app.include_router(router_search, prefix="/search", tags=["Search"])
 app.include_router(router_files, prefix="/files", tags=["Files"])
@@ -27,7 +26,7 @@ app.include_router(router_people, prefix="/people", tags=["People"])
 app.include_router(router_auditlogs, prefix="/audit-logs", tags=["Audit Logs"])
 app.add_middleware(
     cors.CORSMiddleware,
-    allow_origins=["http://127.0.0.1:30009"],
+    allow_origins=lazy_config.e["apps.demo.origins"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -36,4 +35,4 @@ database.create_all()
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=lazy_config.e["apps.debug.port"])
+    uvicorn.run(app, port=lazy_config.e["apps.demo.port"])

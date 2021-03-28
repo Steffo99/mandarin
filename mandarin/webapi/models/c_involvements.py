@@ -3,7 +3,10 @@ Involvement models are :class:`.OrmModel` that represent **junction tables** or 
 cannot be represented properly through :mod:`pydantic`).
 """
 
+from __future__ import annotations
+
 from royalnet.typing import *
+
 from . import a_base as base
 from . import b_basic as basic
 
@@ -38,18 +41,22 @@ class SongInvolvementFromSong(base.OrmModel):
     role: basic.Role
 
 
-class GenreTree1(base.OrmModel):
+class GenreTree(base.OrmModel):
     id: int
     name: str
     description: str
-    subgenres: List
+    subgenres: List[GenreTree2]
 
 
 class GenreTree2(base.OrmModel):
     id: int
     name: str
     description: str
-    subgenres: List[GenreTree1]
+    subgenres: List[GenreTree]
+
+
+GenreTree.update_forward_refs()
+GenreTree2.update_forward_refs()
 
 
 __all__ = (
@@ -59,6 +66,5 @@ __all__ = (
     "SongInvolvementFromPerson",
     "SongInvolvementFromRole",
     "SongInvolvementFromSong",
-    "GenreTree1",
-    "GenreTree2",
+    "GenreTree",
 )

@@ -247,7 +247,7 @@ def merge(
         **responses.login_error,
         404: {"description": "Album not found"},
     },
-    response_model=models.AlbumOutput
+    response_model=models.AlbumWithLayers
 )
 def get_single(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),

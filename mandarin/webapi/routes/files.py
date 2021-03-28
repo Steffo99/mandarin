@@ -32,7 +32,7 @@ def upload_layer(
                                                        "uploaded file.")
 ):
     """
-    Upload a new track to the database.
+    Upload a new track to the database, and start a task to process the uploaded track.
 
     **If `generate_entries` is selected, ensure the song has something in the Artist and Album Artist fields, or the
     generation will behave strangely due to a bug.**
@@ -50,32 +50,12 @@ def upload_layer(
     )
 
     try:
-        _, layer_id = task.get(timeout=5)
+        _, layer_id = task.get(timeout=15)
     except celery.exceptions.TimeoutError:
-        raise f.HTTPException(202, "Task queued, but didn't finish in less than 5 seconds")
+        raise f.HTTPException(202, "Task queued, but didn't finish in less than 15 seconds")
 
     layer = ls.session.query(tables.Layer).get(layer_id)
     return layer
-
-
-@router_files.get(
-    "/{file_id}",
-    summary="Download a file.",
-    response_class=starlette.responses.FileResponse,
-    responses={
-        **responses.login_error,
-        404: {"description": "File not found"},
-    }
-)
-async def download_single(
-    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
-    file_id: int = f.Path(..., description="The id of the file to be downloaded.")
-):
-    """
-    Download a single raw file from the database, without any tags applied.
-    """
-    file = ls.get(tables.File, file_id)
-    return starlette.responses.FileResponse(file.name, media_type=file.mime_type)
 
 
 __all__ = (

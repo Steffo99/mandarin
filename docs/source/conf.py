@@ -19,12 +19,11 @@
 
 project = 'mandarin'
 # noinspection PyShadowingBuiltins
-copyright = '2020, Stefano Pigozzi'
-author = 'Stefano Pigozzi'
+copyright = '2021, Stefano Pigozzi e Alberto Meschieri'
+author = 'Stefano Pigozzi e Alberto Meschieri'
 
 # The full version, including alpha/beta/rc tags
 release = '0.2.0'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -74,6 +73,7 @@ intersphinx_mapping = {
     "celery": ("https://docs.celeryproject.org/en/stable/", None),
     "click": ("https://click.palletsprojects.com/en/7.x/", None),
     "royalnet": ("https://royalnet-6.readthedocs.io/en/latest/", None),
+    "lyricsgenius": ("https://lyricsgenius.readthedocs.io/en/master/", None),
 }
 
 # -- Setup function ----------------------------------------------------------

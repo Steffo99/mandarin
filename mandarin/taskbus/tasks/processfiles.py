@@ -5,11 +5,10 @@ import logging
 import mimetypes
 import os
 import pathlib
-from typing import IO
 
 import mutagen
+import royalnet.typing as t
 import sqlalchemy.orm
-from royalnet.typing import *
 
 from ..__main__ import app as celery
 from ..utils import MutagenParse
@@ -19,14 +18,14 @@ from ...database import tables, lazy_Session
 log = logging.getLogger(__name__)
 
 
-def tag_parse(file: mutagen.File) -> Dict[str, List[str]]:
+def tag_parse(file: mutagen.File) -> t.Dict[str, t.List[str]]:
     """
     Copy the tag of a :class:`mutagen.File` to a :class:`dict`.
 
     :param file: The file to copy the tags from.
     :return: The copied dict.
     """
-    tag: Dict[str, List[str]] = dict(file.tags)
+    tag: t.Dict[str, t.List[str]] = dict(file.tags)
     return tag
 
 
@@ -39,7 +38,7 @@ def tag_strip(file: mutagen.File) -> None:
     file.tags.clear()
 
 
-def tag_save(file: mutagen.File, destination_stream: IO[bytes]) -> IO[bytes]:
+def tag_save(file: mutagen.File, destination_stream: t.IO[bytes]) -> t.IO[bytes]:
     """
     Write the specified :class:`mutagen.File` to the passed destination stream (which can be any writeable file-like
     object), using no padding for the tag section.
@@ -54,7 +53,7 @@ def tag_save(file: mutagen.File, destination_stream: IO[bytes]) -> IO[bytes]:
     return destination_stream
 
 
-def tag_process(stream: IO[bytes]) -> MutagenParse:
+def tag_process(stream: t.IO[bytes]) -> MutagenParse:
     """
     Extract the tag of a file from its contents, creating a :class:`.MutagenParse` object.
 
@@ -63,17 +62,18 @@ def tag_process(stream: IO[bytes]) -> MutagenParse:
     """
     stream.seek(0)
     file: mutagen.File = mutagen.File(fileobj=stream, easy=True)
-    tag: Dict[str, List[str]] = tag_parse(file)
+    tag: t.Dict[str, t.List[str]] = tag_parse(file)
     tag_strip(file)
     stream.seek(0)
     tag_save(file=file, destination_stream=stream)
+    stream.seek(0)
     return MutagenParse.from_tags(tag)
 
 
 HASH_CHUNK_SIZE = 8192
 
 
-def hash_file(stream: IO[bytes]) -> hashlib.sha512:
+def hash_file(stream: t.IO[bytes]) -> hashlib.sha512:
     """
     Calculate the :class:`hashlib.sha512` hash of a file-like object.
 
@@ -98,7 +98,7 @@ def determine_extension(path: os.PathLike) -> str:
     return ext
 
 
-def determine_filename(stream: IO[bytes], original_path: os.PathLike) -> pathlib.Path:
+def determine_filename(stream: t.IO[bytes], original_path: t.Union[os.PathLike, str]) -> pathlib.Path:
     """
     Determine the filename that should be given to a music file, passed as a file-like object.
 
@@ -107,12 +107,13 @@ def determine_filename(stream: IO[bytes], original_path: os.PathLike) -> pathlib
     :return: A :class:`pathlib.Path` object representing the path that the file should have.
     """
     filename = hash_file(stream).hexdigest()
-    musicdir = pathlib.Path(lazy_config["storage.music.dir"])
+    stream.seek(0)
+    musicdir = pathlib.Path(lazy_config.e["storage.music.dir"])
     extension = determine_extension(original_path)
     return musicdir.joinpath(f"{filename}{extension}")
 
 
-def guess_mimetype(original_path: os.PathLike) -> Tuple[Optional[str], Optional[str]]:
+def guess_mimetype(original_path: t.Union[os.PathLike, str]) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """
     Try to guess the mimetype and the mimeapplication from a path-like object.
 
@@ -123,7 +124,7 @@ def guess_mimetype(original_path: os.PathLike) -> Tuple[Optional[str], Optional[
 
 
 def find_album_from_tag(session: sqlalchemy.orm.session.Session,
-                        mp: MutagenParse) -> Optional[tables.Album]:
+                        mp: MutagenParse) -> t.Optional[tables.Album]:
     """
     Try to find in the database the :class:`~mandarin.database.tables.Album` that matches the passed
     :class:`.MutagenParse` object.
@@ -132,32 +133,24 @@ def find_album_from_tag(session: sqlalchemy.orm.session.Session,
     :param mp: The :class:`.MutagenParse` object.
     :return: The found :class:`~mandarin.database.tables.Album`, or :data:`None` if no matches were found.
     """
-    role_artist = tables.Role.make(session=session, name=lazy_config["apps.files.roles.artist"])
+    role_artist = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.artist"])
 
-    # FIXME: this query doesn't work properly in some edge cases
-    query = None
+    query = session.query(tables.Album).filter(tables.Album.title == mp.album.title)
+
+    # TODO: this seems to be working, but may still be broken in some edge cases
     for artist in mp.album.artists:
-        subquery = (
-            session.query(tables.AlbumInvolvement)
-                   .filter(tables.AlbumInvolvement.role == role_artist)
-                   .join(tables.Person)
-                   .filter(tables.Person.name == artist)
-                   .join(tables.Album)
-                   .filter(tables.Album.title == mp.album.title)
-        )
-        if query is None:
-            query = subquery
-        else:
-            query = subquery.filter(tables.AlbumInvolvement.person_id.in_([person.id for person in query.all()]))
+        query = (
+            query.join(tables.AlbumInvolvement)
+                .filter(tables.AlbumInvolvement.role == role_artist)
+                .join(tables.Person)
+                .filter(tables.Person.name == artist)
+        ).from_self()
 
-    album_involvement: Optional[tables.AlbumInvolvement] = query.one_or_none() if query else None
-    if album_involvement:
-        return album_involvement.album
-    return None
+    return query.first()
 
 
 def find_song_from_tag(session: sqlalchemy.orm.session.Session,
-                       mp: MutagenParse) -> Optional[tables.Song]:
+                       mp: MutagenParse) -> t.Optional[tables.Song]:
     """
     Try to find in the database the :class:`~mandarin.database.tables.Song` that matches the passed
     :class:`.MutagenParse` object.
@@ -166,35 +159,30 @@ def find_song_from_tag(session: sqlalchemy.orm.session.Session,
     :param mp: The :class:`.MutagenParse` object.
     :return: The found :class:`~mandarin.database.tables.Song`, or :data:`None` if no matches were found.
     """
-    role_artist = tables.Role.make(session=session, name=lazy_config["apps.files.roles.artist"])
+    role_artist = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.artist"])
 
-    # FIXME: this query doesn't work properly in some edge cases
-    query = None
+    # TODO: this seems to be working, but may still be broken in some edge cases
+    query = (
+        session.query(tables.Song)
+            .filter(tables.Song.title == mp.song.title)
+            .join(tables.Album)
+            .filter(tables.Album.title == mp.album.title)
+    )
+
     for artist in mp.song.artists:
-        subquery = (
-            session.query(tables.SongInvolvement)
-                   .filter(tables.SongInvolvement.role == role_artist)
-                   .join(tables.Person)
-                   .filter(tables.Person.name == artist)
-                   .join(tables.Song)
-                   .filter(tables.Song.title == mp.song.title)
-                   .join(tables.Album)
-                   .filter(tables.Album.title == mp.album.title)
-        )
-        if query is None:
-            query = subquery
-        else:
-            query = subquery.filter(tables.SongInvolvement.person_id.in_([person.id for person in query.all()]))
+        query = (
+            query.join(tables.SongInvolvement)
+                .filter(tables.SongInvolvement.role == role_artist)
+                .join(tables.Person)
+                .filter(tables.Person.name == artist)
+        ).from_self()
 
-    song_involvement: tables.SongInvolvement = query.one_or_none() if query else None
-    if song_involvement:
-        return song_involvement.song
-    return None
+    return query.first()
 
 
 def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
                             layer: tables.Layer,
-                            mp: MutagenParse) -> Tuple[tables.Album, tables.Song]:
+                            mp: MutagenParse) -> t.Tuple[tables.Album, tables.Song]:
     """
     Create :class:`~mandarin.database.tables.Album`, :class:`~mandarin.database.tables.Song`,
     and :class:`~mandarin.database.tables.Person` entries for the specified layer, using the information contained in
@@ -204,9 +192,9 @@ def make_entries_from_layer(session: sqlalchemy.orm.session.Session,
     :param layer: The :class:`~mandarin.database.tables.Layer` to associate the created entities with.
     :param mp: The :class:`.MutagenParse` to source the information from.
     """
-    role_artist = tables.Role.make(session=session, name=lazy_config["apps.files.roles.artist"])
-    role_composer = tables.Role.make(session=session, name=lazy_config["apps.files.roles.composer"])
-    role_performer = tables.Role.make(session=session, name=lazy_config["apps.files.roles.performer"])
+    role_artist = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.artist"])
+    role_composer = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.composer"])
+    role_performer = tables.Role.make(session=session, name=lazy_config.e["apps.files.roles.performer"])
 
     album = find_album_from_tag(session=session, mp=mp)
     if album is None:
@@ -252,11 +240,11 @@ READ_CHUNK_SIZE = 8192
 
 
 @celery.task
-def process_music(stream: IO[bytes],
+def process_music(stream: t.IO[bytes],
                   original_filename: str,
-                  uploader_id: Optional[int] = None,
-                  layer_data: Optional[Dict[str, Any]] = None,
-                  generate_entries: bool = False) -> Tuple[int, int]:
+                  uploader_id: t.Optional[int] = None,
+                  layer_data: t.Optional[t.Dict[str, t.Any]] = None,
+                  generate_entries: bool = False) -> t.Tuple[int, int]:
     """
     A :mod:`celery` task that processes an uploaded music file.
 
@@ -272,19 +260,20 @@ def process_music(stream: IO[bytes],
     """
 
     if layer_data is None:
-        layer_data: Dict[str, Any] = {}
+        layer_data: t.Dict[str, t.Any] = {}
 
-    session = lazy_Session()
+    session = lazy_Session.evaluate()()
     session.connection(execution_options={"isolation_level": "SERIALIZABLE"})
 
     mp: MutagenParse = tag_process(stream=stream)
     destination = determine_filename(stream=stream, original_path=original_filename)
     mime_type, mime_software = guess_mimetype(original_path=original_filename)
 
-    file: Optional[tables.File] = None
+    file: t.Optional[tables.File] = None
     if os.path.exists(destination):
         file = session.query(tables.File).filter_by(name=str(destination)).one_or_none()
     else:
+        os.makedirs(destination.parent, exist_ok=True)
         with open(destination, "wb") as f:
             while data := stream.read(READ_CHUNK_SIZE):
                 f.write(data)

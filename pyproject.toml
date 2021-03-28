@@ -1,8 +1,11 @@
 [tool.poetry]
 name = "mandarin"
-version = "0.2.0"
+version = "0.3.0"
 description = "A cloud music library"
-authors = ["Stefano Pigozzi <ste.pigozzi@gmail.com>"]
+authors = [
+    "Stefano Pigozzi <ste.pigozzi@gmail.com>",
+    "Alberto Meschieri <meschio94@gmail.com>",
+]
 license = "AGPL-3.0-or-later"
 
 [tool.poetry.dependencies]
@@ -24,12 +27,19 @@ click = "^7.1.2"
 validators = "^0.18.2"
 semver = "^2.13.0"
 coloredlogs = "^15.0"
+lyricsgenius = { git = "https://github.com/Steffo99/LyricsGenius" }
+expiringdict = "^1.2.1"
+SQLAlchemy-Utils = "^0.36.8"
+sqlalchemy-searchable = { git = "https://github.com/Steffo99/sqlalchemy-searchable" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
 pytest-celery = "^0.0.0-alpha.1"
 sphinx = "^3.3.1"
 sphinx_rtd_theme = "^0.5.0"
+
+[tool.poetry.scripts]
+mandarin = 'mandarin.tools.__main__:main'
 
 [build-system]
 requires = ["poetry>=0.12"]

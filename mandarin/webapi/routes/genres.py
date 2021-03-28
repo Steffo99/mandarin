@@ -1,13 +1,13 @@
 from __future__ import annotations
-from royalnet.typing import *
+
 import fastapi as f
 import sqlalchemy.orm
+from royalnet.typing import *
 
-from ...database import tables, lazy_Session
-from ...taskbus import tasks
-from .. import models
 from .. import dependencies
+from .. import models
 from .. import responses
+from ...database import tables
 
 router_genres = f.APIRouter()
 
@@ -55,7 +55,10 @@ def create(
     """
     genre = ls.session.query(tables.Genre).filter_by(name=data.name).one_or_none()
     if genre is not None:
-        raise f.HTTPException(409, f"The genre '{data.name}' already exists.")
+        raise f.HTTPException(409, {
+            "text": f"The genre '{data.name}' already exists",
+            "id": genre.id
+        })
 
     genre = tables.Genre.make(session=ls.session, **data.dict())
     ls.user.log("genre.create", obj=genre.id)
@@ -77,23 +80,6 @@ def count(
     Since it doesn't require any login, it can be useful to display some information on an "instance preview" page.
     """
     return session.query(tables.Genre).count()
-
-
-@router_genres.get(
-    "/tree",
-    summary="Get a tree of all genres.",
-    responses={
-        **responses.login_error,
-    },
-    response_model=models.GenreTreeOutput
-)
-def get_tree(
-    ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session)
-):
-    """
-    Get all genres in the form of a tree structure, where the root nodes are the ones without a `supergenre_id`.
-    """
-    return ls.session.query(tables.Genre).get(0)
 
 
 @router_genres.patch(
@@ -170,6 +156,7 @@ def edit_multiple_move(
         child.supergenre = parent
         ls.user.log("genre.edit.multiple.group", obj=child.id)
     ls.session.commit()
+    return f.Response(status_code=204)
 
 
 @router_genres.get(

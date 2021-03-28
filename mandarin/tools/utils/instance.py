@@ -7,7 +7,6 @@ import logging
 import click
 import pydantic
 import requests
-import semver
 import validators
 
 # Special global objects
@@ -17,7 +16,7 @@ log = logging.getLogger(__name__)
 # Code
 class MandarinInstance(pydantic.BaseModel):
     url: str
-    version: semver.VersionInfo
+    version: str
 
     class Config(pydantic.BaseConfig):
         arbitrary_types_allowed = True
@@ -73,10 +72,6 @@ class MandarinInstanceType(click.ParamType):
 
         log.debug(f"Parsing response JSON...")
         version: str = r.json()
-
-        log.debug(f"Parsing with semver: {version!r}")
-        version: semver.VersionInfo = semver.VersionInfo.parse(version)
-        log.debug(f"Version is: {version!r}")
 
         log.debug("Building MandarinInstance...")
         mi = MandarinInstance(url=value, version=version)

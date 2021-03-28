@@ -8,9 +8,12 @@ They are returned by most methods of the API.
 """
 
 from __future__ import annotations
-from royalnet.typing import *
-import pydantic
+
 import datetime
+
+import pydantic
+from royalnet.typing import *
+
 from . import a_base as base
 from . import b_basic as basic
 from . import c_involvements as involvements
@@ -51,14 +54,7 @@ class GenreOutput(base.OrmModel):
     songs: List[basic.Song]
     albums: List[basic.Album]
     supergenre: Optional[basic.Genre]
-    subgenres: List[basic.Genre]
-
-
-class GenreTreeOutput(base.OrmModel):
-    id: int
-    name: str
-    description: str
-    subgenres: List[involvements.GenreTree2]
+    subgenres: List[involvements.GenreTree]
 
 
 class LayerOutput(base.OrmModel):
@@ -94,6 +90,7 @@ class SongOutput(base.OrmModel):
     id: int
     title: str
     description: str
+    lyrics: str
     disc: Optional[pydantic.PositiveInt]
     track: Optional[pydantic.PositiveInt]
     year: Optional[int]
@@ -121,7 +118,6 @@ __all__ = (
     "AuditLogOutput",
     "FileOutput",
     "GenreOutput",
-    "GenreTreeOutput",
     "LayerOutput",
     "PersonOutput",
     "RoleOutput",
