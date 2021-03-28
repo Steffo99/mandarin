@@ -5,8 +5,6 @@ from .albumgenres import albumgenres
 
 if t.TYPE_CHECKING:
     from .albuminvolvements import AlbumInvolvement
-    from .people import Person
-    from .roles import Role
 
 
 class Album(base.Base, a.ColRepr, a.Updatable):
