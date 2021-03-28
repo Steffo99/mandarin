@@ -54,7 +54,7 @@ def create(
     song = tables.Song(**data.__dict__)
     ls.session.add(song)
     ls.session.commit()
-    ls.user.log("song.create", obj=song.id)
+    ls.log("song.create", obj=song.id)
     ls.session.commit()
     return song
 
@@ -99,7 +99,7 @@ def edit_multiple_move(
 
     for song in ls.group(tables.Song, song_ids):
         song.album = album
-        ls.user.log("song.edit.multiple.move", obj=song.id)
+        ls.log("song.edit.multiple.move", obj=song.id)
 
     ls.session.commit()
     return f.Response(status_code=204)
@@ -135,7 +135,7 @@ def edit_multiple_involve(
     person = ls.get(tables.Person, person_id)
     for song in ls.group(tables.Song, song_ids):
         tables.SongInvolvement.make(session=ls.session, role=role, song=song, person=person)
-        ls.user.log("song.edit.multiple.involve", obj=song.id)
+        ls.log("song.edit.multiple.involve", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -168,7 +168,7 @@ def edit_multiple_uninvolve(
     person = ls.get(tables.Person, person_id)
     for song in ls.group(tables.Song, song_ids):
         tables.SongInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
-        ls.user.log("song.edit.multiple.uninvolve", obj=song.id)
+        ls.log("song.edit.multiple.uninvolve", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -196,7 +196,7 @@ def edit_multiple_classify(
     genre = ls.get(tables.Genre, genre_id)
     for song in ls.group(tables.Song, song_ids):
         song.genres.append(genre)
-        ls.user.log("song.edit.multiple.classify", obj=song.id)
+        ls.log("song.edit.multiple.classify", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -224,7 +224,7 @@ def edit_multiple_declassify(
     genre = ls.get(tables.Genre, genre_id)
     for song in ls.group(tables.Song, song_ids):
         song.genres.remove(genre)
-        ls.user.log("song.edit.multiple.declassify", obj=song.id)
+        ls.log("song.edit.multiple.declassify", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -248,7 +248,7 @@ def edit_multiple_group(
     """
     for song in ls.group(tables.Song, song_ids):
         song.disc = disc_number
-        ls.user.log("song.edit.multiple.group", obj=song.id)
+        ls.log("song.edit.multiple.group", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -271,7 +271,7 @@ def edit_multiple_calendarize(
     """
     for song in ls.group(tables.Song, song_ids):
         song.year = year
-        ls.user.log("song.edit.multiple.calendarize", obj=song.id)
+        ls.log("song.edit.multiple.calendarize", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -300,7 +300,7 @@ def merge(
 
     # Get the first genre
     main_song = ss.query(tables.Song).get(song_ids[0])
-    ls.user.log("song.merge.to", obj=main_song.id)
+    ls.log("song.merge.to", obj=main_song.id)
 
     # Get the other genres
     other_songs = ss.query(tables.Song).filter(tables.Song.id.in_(song_ids[1:])).all()
@@ -310,7 +310,7 @@ def merge(
         for layer in merged_song.layers:
             layer.song = main_song
 
-        ls.user.log("song.merge.from", obj=merged_song.id)
+        ls.log("song.merge.from", obj=merged_song.id)
         ss.delete(merged_song)
 
     ss.commit()
@@ -358,7 +358,7 @@ def edit_single(
     """
     song = ls.get(tables.Song, song_id)
     song.update(**data.dict())
-    ls.user.log("song.edit.single", obj=song.id)
+    ls.log("song.edit.single", obj=song.id)
     ls.session.commit()
     return song
 
@@ -383,7 +383,7 @@ def delete(
     """
     song = ls.get(tables.Song, song_id)
     ls.session.delete(song)
-    ls.user.log("song.delete", obj=song.id)
+    ls.log("song.delete", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
 

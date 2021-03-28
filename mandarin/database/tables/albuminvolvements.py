@@ -1,11 +1,8 @@
-import royalnet.alchemist as a
-import sqlalchemy as s
-import sqlalchemy.orm as o
-
-from ..base import Base
+from __future__ import annotations
+from __imports__ import *
 
 
-class AlbumInvolvement(Base, a.ColRepr, a.Updatable, a.Makeable):
+class AlbumInvolvement(base.Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     The involment of a person in an album.
     """
@@ -25,4 +22,6 @@ class AlbumInvolvement(Base, a.ColRepr, a.Updatable, a.Makeable):
     )
 
 
-__all__ = ("AlbumInvolvement",)
+__all__ = (
+    "AlbumInvolvement",
+)

@@ -32,7 +32,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-database.create_all()
+database.utils.create_all()
 
 
 if __name__ == "__main__":

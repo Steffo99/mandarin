@@ -1,9 +1,9 @@
-import sqlalchemy as s
+from __future__ import annotations
+from __imports__ import *
 
-from ..base import Base
 
 songgenres = s.Table(
-    "songgenres", Base.metadata,
+    "songgenres", base.Base.metadata,
     s.Column("song_id", s.Integer, s.ForeignKey("songs.id"), primary_key=True),
     s.Column("genre_id", s.Integer, s.ForeignKey("genres.id"), primary_key=True)
 )
@@ -11,4 +11,6 @@ songgenres = s.Table(
 The classification of an album in a certain genre.
 """
 
-__all__ = ("songgenres",)
+__all__ = (
+    "songgenres",
+)

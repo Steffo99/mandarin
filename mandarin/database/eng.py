@@ -1,13 +1,20 @@
 import sqlalchemy.orm
-import royalnet.lazy as l
+import royalnet.lazy
 
 from ..config import *
 # noinspection PyUnresolvedReferences
-from .tables import *
+from . import tables
 
 
-lazy_engine = l.Lazy(lambda c: sqlalchemy.create_engine(c["database.uri"]), c=lazy_config)
-lazy_Session = l.Lazy(lambda e: sqlalchemy.orm.sessionmaker(bind=e), e=lazy_engine)
+lazy_engine = royalnet.lazy.Lazy(lambda c: sqlalchemy.create_engine(c["database.uri"]), c=lazy_config)
+"""
+The uninitialized sqlalchemy engine.
+"""
+
+lazy_Session = royalnet.lazy.Lazy(lambda e: sqlalchemy.orm.sessionmaker(bind=e), e=lazy_engine)
+"""
+The uninitialized Session.
+"""
 
 
 __all__ = (

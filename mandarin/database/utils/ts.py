@@ -1,28 +1,16 @@
-# Module docstring
 """
 This module defines functions useful to add text search support to PostgreSQL database tables.
 """
 
-# Special imports
 from __future__ import annotations
 
-# External imports
-import logging
 import typing as t
 
 import sqlalchemy as s
 import sqlalchemy.sql.schema
 import sqlalchemy_utils as su
 
-# Internal imports
-# from . import something
 
-# Special global objects
-log = logging.getLogger(__name__)
-
-
-# Code
-# noinspection PyPep8Naming
 def to_tsvector(
         *,
         a: t.Optional[t.List[s.Column]] = None,
@@ -92,7 +80,6 @@ def gist_index(name: str, tsvector: su.TSVectorType) -> s.sql.schema.Index:
     )
 
 
-# Objects exported by this module
 __all__ = (
     "to_tsvector",
     "gin_index",

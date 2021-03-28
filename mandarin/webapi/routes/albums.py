@@ -52,7 +52,7 @@ def create(
     album = tables.Album(**data.__dict__)
     ls.session.add(data)
     ls.session.commit()
-    ls.user.log("album.create", obj=album.id)
+    ls.log("album.create", obj=album.id)
     ls.session.commit()
     return album
 
@@ -103,7 +103,7 @@ def edit_multiple_involve(
     person = ls.get(tables.Person, person_id)
     for album in ls.group(tables.Album, album_ids):
         tables.AlbumInvolvement.make(session=ls.session, role=role, album=album, person=person)
-        ls.user.log("album.edit.multiple.involve", obj=album.id)
+        ls.log("album.edit.multiple.involve", obj=album.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -136,7 +136,7 @@ def edit_multiple_uninvolve(
     person = ls.get(tables.Person, person_id)
     for song in ls.group(tables.Album, album_ids):
         tables.AlbumInvolvement.unmake(session=ls.session, role=role, song=song, person=person)
-        ls.user.log("album.edit.multiple.uninvolve", obj=song.id)
+        ls.log("album.edit.multiple.uninvolve", obj=song.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -164,7 +164,7 @@ def edit_multiple_classify(
     genre = ls.get(tables.Genre, genre_id)
     for album in ls.group(tables.Album, album_ids):
         album.genres.append(genre)
-        ls.user.log("album.edit.multiple.classify", obj=album.id)
+        ls.log("album.edit.multiple.classify", obj=album.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -192,7 +192,7 @@ def edit_multiple_declassify(
     genre = ls.get(tables.Genre, genre_id)
     for album in ls.group(tables.Album, album_ids):
         album.genres.remove(genre)
-        ls.user.log("album.edit.multiple.declassify", obj=album.id)
+        ls.log("album.edit.multiple.declassify", obj=album.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -221,7 +221,7 @@ def merge(
 
     # Get the first album
     main_album = ss.query(tables.Album).get(album_ids[0])
-    ls.user.log("album.merge.to", obj=main_album.id)
+    ls.log("album.merge.to", obj=main_album.id)
 
     # Get the other albums
     other_albums = ss.query(tables.Album).filter(tables.Album.id.in_(album_ids[1:])).all()
@@ -230,7 +230,7 @@ def merge(
     for merged_album in other_albums:
         for song in merged_album.songs:
             song.album = main_album
-        ls.user.log("album.merge.from", obj=merged_album.id)
+        ls.log("album.merge.from", obj=merged_album.id)
         ss.delete(merged_album)
 
     ss.commit()
@@ -278,7 +278,7 @@ def edit_single(
     """
     album = ls.get(tables.Album, album_id)
     album.update(**data.__dict__)
-    ls.user.log("album.edit.single", obj=album.id)
+    ls.log("album.edit.single", obj=album.id)
     ls.session.commit()
     return album
 
@@ -303,7 +303,7 @@ def delete(
     """
     album = ls.get(tables.Album, album_id)
     ls.session.delete(album)
-    ls.user.log("album.delete", obj=album.id)
+    ls.log("album.delete", obj=album.id)
     ls.session.commit()
     return f.Response(status_code=204)
 

@@ -1,16 +1,11 @@
 from __future__ import annotations
+from __imports__ import *
 
-import royalnet.alchemist as a
-import sqlalchemy as s
-import sqlalchemy.orm as o
-
-from mandarin.database.utils import to_tsvector, gin_index
-from .albumgenres import albumgenres
 from .songgenres import songgenres
-from ..base import Base
+from .albumgenres import albumgenres
 
 
-class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
+class Genre(base.Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     A genre of music.
     """
@@ -29,14 +24,16 @@ class Genre(Base, a.ColRepr, a.Updatable, a.Makeable):
     albums = o.relationship("Album", secondary=albumgenres, back_populates="genres")
 
     # noinspection PyTypeChecker
-    search = s.Column("search", to_tsvector(
+    search = s.Column("search", utils.to_tsvector(
         a=[name],
         b=[description],
     ))
 
     __table_args__ = (
-        gin_index("genres_gin_index", search),
+        utils.gin_index("genres_gin_index", search),
     )
 
 
-__all__ = ("Genre",)
+__all__ = (
+    "Genre",
+)

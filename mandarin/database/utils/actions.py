@@ -1,8 +1,12 @@
-from . import eng, base, tables
+from .. import eng, base, tables
 import sqlalchemy.orm
 
 
 def create_all() -> None:
+    """
+    Create all database tables and mandatory items, such as the root genre.
+    """
+
     # Create the session
     session = eng.lazy_Session.evaluate()()
     # Initialize search mappers

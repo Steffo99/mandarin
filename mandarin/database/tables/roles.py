@@ -1,12 +1,8 @@
-import royalnet.alchemist as a
-import sqlalchemy as s
-import sqlalchemy.orm as o
-
-from mandarin.database.utils import to_tsvector, gin_index
-from ..base import Base
+from __future__ import annotations
+from __imports__ import *
 
 
-class Role(Base, a.ColRepr, a.Updatable, a.Makeable):
+class Role(base.Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     A role for a person involved with an album or a song.
     """
@@ -21,14 +17,16 @@ class Role(Base, a.ColRepr, a.Updatable, a.Makeable):
     song_involvements = o.relationship("SongInvolvement", back_populates="role", cascade="all, delete")
 
     # noinspection PyTypeChecker
-    search = s.Column("search", to_tsvector(
+    search = s.Column("search", utils.to_tsvector(
         a=[name],
         b=[description],
     ))
 
     __table_args__ = (
-        gin_index("roles_gin_index", search),
+        utils.gin_index("roles_gin_index", search),
     )
 
 
-__all__ = ("Role",)
+__all__ = (
+    "Role",
+)

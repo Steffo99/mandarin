@@ -1,13 +1,8 @@
 from __future__ import annotations
-
-import royalnet.alchemist as a
-import sqlalchemy as s
-import sqlalchemy.orm as o
-
-from ..base import Base
+from __imports__ import *
 
 
-class File(Base, a.ColRepr, a.Updatable, a.Makeable):
+class File(base.Base, a.ColRepr, a.Updatable, a.Makeable):
     """
     A file that has been uploaded to Mandarin.
     """
@@ -25,4 +20,6 @@ class File(Base, a.ColRepr, a.Updatable, a.Makeable):
     used_as_layer = o.relationship("Layer", back_populates="file")
 
 
-__all__ = ("File",)
+__all__ = (
+    "File",
+)

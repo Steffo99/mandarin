@@ -52,7 +52,7 @@ def create(
     person = tables.Person(**data.__dict__)
     ls.session.add(person)
     ls.session.commit()
-    ls.user.log("person.create", obj=person.id)
+    ls.log("person.create", obj=person.id)
     ls.session.commit()
     return person
 
@@ -97,7 +97,7 @@ def merge(
 
     # Get the first genre
     main_person = ss.query(tables.Person).get(people_ids[0])
-    ls.user.log("person.merge.to", obj=main_person.id)
+    ls.log("person.merge.to", obj=main_person.id)
 
     # Get the other genres
     other_people = ss.query(tables.Person).filter(tables.Person.id.in_(people_ids[1:])).all()
@@ -108,7 +108,7 @@ def merge(
             song_involvement.person = main_person
         for album_involvement in merged_person.album_involvements:
             album_involvement.person = main_person
-        ls.user.log("person.merge.from", obj=merged_person.id)
+        ls.log("person.merge.from", obj=merged_person.id)
         ss.delete(merged_person)
 
     ss.commit()
@@ -156,7 +156,7 @@ def edit_single(
     """
     person = ls.get(tables.Person, person_id)
     person.update(**data.__dict__)
-    ls.user.log("person.edit.single", obj=person.id)
+    ls.log("person.edit.single", obj=person.id)
     ls.session.commit()
     return person
 
@@ -181,7 +181,7 @@ def delete(
     """
     person = ls.get(tables.Person, person_id)
     ls.session.delete(person)
-    ls.user.log("person.delete", obj=person.id)
+    ls.log("person.delete", obj=person.id)
     ls.session.commit()
     return f.Response(status_code=204)
 

@@ -1,8 +1,11 @@
-import sqlalchemy.orm
 import sqlalchemy_searchable
-from sqlalchemy.ext.declarative import declarative_base
+import sqlalchemy.ext.declarative
 
-Base: declarative_base = declarative_base()
+Base: sqlalchemy.ext.declarative.declarative_base = sqlalchemy.ext.declarative.declarative_base()
+"""
+The declarative base for all tables in Mandarin.
+"""
+
 sqlalchemy_searchable.make_searchable(metadata=Base.metadata)
 
 __all__ = (

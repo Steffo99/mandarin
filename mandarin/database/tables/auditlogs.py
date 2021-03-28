@@ -1,12 +1,8 @@
 from __future__ import annotations
-
-import sqlalchemy as s
-import sqlalchemy.orm as o
-
-from ..base import Base
+from __imports__ import *
 
 
-class AuditLog(Base):
+class AuditLog(base.Base, a.ColRepr):
     """
     A record of an action done by an user.
     """
@@ -23,4 +19,6 @@ class AuditLog(Base):
     obj = s.Column("obj", s.Integer)
 
 
-__all__ = ("AuditLog",)
+__all__ = (
+    "AuditLog",
+)

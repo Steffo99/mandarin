@@ -1,12 +1,8 @@
-import royalnet.alchemist as a
-import sqlalchemy as s
-import sqlalchemy.orm as o
-
-from mandarin.database.utils import to_tsvector, gin_index
-from ..base import Base
+from __future__ import annotations
+from __imports__ import *
 
 
-class Layer(Base, a.ColRepr, a.Updatable):
+class Layer(base.Base, a.ColRepr, a.Updatable):
     """
     A single layer of a song.
     """
@@ -23,13 +19,13 @@ class Layer(Base, a.ColRepr, a.Updatable):
     file = o.relationship("File", back_populates="used_as_layer")
 
     # noinspection PyTypeChecker
-    search = s.Column("search", to_tsvector(
+    search = s.Column("search", utils.to_tsvector(
         a=[name],
         b=[description],
     ))
 
     __table_args__ = (
-        gin_index("layers_gin_index", search),
+        utils.gin_index("layers_gin_index", search),
     )
 
 

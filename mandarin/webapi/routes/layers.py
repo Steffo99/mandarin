@@ -72,7 +72,7 @@ def edit_multiple_move(
     song = ls.get(tables.Song, song_id)
     for layer in ls.group(tables.Layer, layer_ids):
         layer.song = song
-        ls.user.log("layer.edit.multiple.move", obj=layer.id)
+        ls.log("layer.edit.multiple.move", obj=layer.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -96,7 +96,7 @@ def edit_multiple_rename(
     """
     for layer in ls.group(tables.Layer, layer_ids):
         layer.name = name
-        ls.user.log("layer.edit.multiple.rename", obj=layer.id)
+        ls.log("layer.edit.multiple.rename", obj=layer.id)
 
     ls.session.commit()
     return f.Response(status_code=204)
@@ -164,7 +164,7 @@ def edit_single(
     """
     layer = ls.get(tables.Layer, layer_id)
     layer.update(**data.__dict__)
-    ls.user.log("layer.edit.single", obj=layer.id)
+    ls.log("layer.edit.single", obj=layer.id)
     ls.session.commit()
     return layer
 
@@ -189,7 +189,7 @@ def delete(
     """
     layer = ls.get(tables.Layer, layer_id)
     ls.session.delete(layer)
-    ls.user.log("layer.delete", obj=layer.id)
+    ls.log("layer.delete", obj=layer.id)
     ls.session.commit()
     return f.Response(status_code=204)
 

@@ -1,3 +1,7 @@
+"""
+This module contains all the database tables made available by Mandarin.
+"""
+
 from .albumgenres import *
 from .albuminvolvements import *
 from .albums import *

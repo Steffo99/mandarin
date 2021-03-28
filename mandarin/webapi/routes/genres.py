@@ -61,7 +61,7 @@ def create(
         })
 
     genre = tables.Genre.make(session=ls.session, **data.dict())
-    ls.user.log("genre.create", obj=genre.id)
+    ls.log("genre.create", obj=genre.id)
     ls.session.commit()
     return genre
 
@@ -106,7 +106,7 @@ def merge(
 
     # Get the first genre
     main_genre = ss.query(tables.Genre).get(genre_ids[0])
-    ls.user.log("genre.merge.to", obj=main_genre.id)
+    ls.log("genre.merge.to", obj=main_genre.id)
 
     # Get the other genres
     other_genres = ss.query(tables.Genre).filter(tables.Genre.id.in_(genre_ids[1:])).all()
@@ -119,7 +119,7 @@ def merge(
         for album in merged_genre.albums:
             album.genres.remove(merged_genre)
             album.genres.append(main_genre)
-        ls.user.log("genre.merge.from", obj=merged_genre.id)
+        ls.log("genre.merge.from", obj=merged_genre.id)
         ss.delete(merged_genre)
 
     ss.commit()
@@ -154,7 +154,7 @@ def edit_multiple_move(
         parent = ls.get(tables.Genre, parent_id)
     for child in ls.group(tables.Genre, child_ids):
         child.supergenre = parent
-        ls.user.log("genre.edit.multiple.group", obj=child.id)
+        ls.log("genre.edit.multiple.group", obj=child.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
@@ -197,7 +197,7 @@ def edit_single(
     """
     genre = ls.get(tables.Genre, genre_id)
     genre.update(**data.dict())
-    ls.user.log("genre.edit.single", obj=genre.id)
+    ls.log("genre.edit.single", obj=genre.id)
     ls.session.commit()
     return genre
 
@@ -220,7 +220,7 @@ def delete(
     """
     genre = ls.get(tables.Genre, genre_id)
     ls.session.delete(genre)
-    ls.user.log("genre.delete", obj=genre.id)
+    ls.log("genre.delete", obj=genre.id)
     ls.session.commit()
     return f.Response(status_code=204)
 
