@@ -2,7 +2,7 @@ from __future__ import annotations
 from __imports__ import *
 
 
-class Role(base.Base, a.ColRepr, a.Updatable, a.Makeable):
+class Role(base.Base, a.ColRepr, a.Updatable):
     """
     A role for a person involved with an album or a song.
     """

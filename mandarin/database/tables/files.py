@@ -2,7 +2,7 @@ from __future__ import annotations
 from __imports__ import *
 
 
-class File(base.Base, a.ColRepr, a.Updatable, a.Makeable):
+class File(base.Base, a.ColRepr, a.Updatable):
     """
     A file that has been uploaded to Mandarin.
     """
@@ -17,7 +17,8 @@ class File(base.Base, a.ColRepr, a.Updatable, a.Makeable):
     uploader_id = s.Column("uploader_id", s.Integer, s.ForeignKey("users.id"))
     uploader = o.relationship("User", back_populates="uploads")
 
-    used_as_layer = o.relationship("Layer", back_populates="file")
+    layer_id = s.Column("layer_id", s.Integer, s.ForeignKey("layers.id"))
+    layer = o.relationship("Layer", back_populates="files")
 
 
 __all__ = (

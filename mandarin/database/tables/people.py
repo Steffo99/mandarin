@@ -2,7 +2,7 @@ from __future__ import annotations
 from __imports__ import *
 
 
-class Person(base.Base, a.ColRepr, a.Updatable, a.Makeable):
+class Person(base.Base, a.ColRepr, a.Updatable):
     """
     A person who is referenced by at least one song in the catalog.
     """

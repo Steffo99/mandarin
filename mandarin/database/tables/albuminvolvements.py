@@ -2,7 +2,7 @@ from __future__ import annotations
 from __imports__ import *
 
 
-class AlbumInvolvement(base.Base, a.ColRepr, a.Updatable, a.Makeable):
+class AlbumInvolvement(base.Base, a.ColRepr, a.Updatable):
     """
     The involment of a person in an album.
     """
