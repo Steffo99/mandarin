@@ -1,5 +1,5 @@
 from __future__ import annotations
-from __imports__ import *
+from .__imports__ import *
 
 from .songgenres import songgenres
 from .albumgenres import albumgenres

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from __imports__ import *
+from .__imports__ import *
 
 
 albumgenres = s.Table(
