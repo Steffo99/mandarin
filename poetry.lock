@@ -15,6 +15,20 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "alembic"
+version = "1.5.8"
+description = "A database migration tool for SQLAlchemy."
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
+
+[package.dependencies]
+Mako = "*"
+python-dateutil = "*"
+python-editor = ">=0.3"
+SQLAlchemy = ">=1.3.0"
+
+[[package]]
 name = "amqp"
 version = "5.0.5"
 description = "Low-level AMQP client for Python (fork of amqplib)."
@@ -421,10 +435,25 @@ reference = "master"
 resolved_reference = "f774e7310f15d933a3f374bb8a44c1edd866d282"
 
 [[package]]
+name = "mako"
+version = "1.1.4"
+description = "A super-fast templating language that borrows the  best ideas from the existing templating languages."
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.dependencies]
+MarkupSafe = ">=0.9.2"
+
+[package.extras]
+babel = ["babel"]
+lingua = ["lingua"]
+
+[[package]]
 name = "markupsafe"
 version = "1.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 
@@ -569,6 +598,25 @@ python-versions = "*"
 
 [package.dependencies]
 celery = ">=4.4.0"
+
+[[package]]
+name = "python-dateutil"
+version = "2.8.1"
+description = "Extensions to the standard Python datetime module"
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+
+[package.dependencies]
+six = ">=1.5"
+
+[[package]]
+name = "python-editor"
+version = "1.0.4"
+description = "Programmatically open an editor, capture the result."
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "python-jose"
@@ -960,7 +1008,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2174d4d8097bd721bb8d32ec57bb53ad42990be15dbb8a593ed1b2a48e16f6ee"
+content-hash = "1877fa5faee77795b0864bfb9760487d69a62f8034a1e2bb6950a8779c13a7f0"
 
 [metadata.files]
 aiofiles = [
@@ -970,6 +1018,10 @@ aiofiles = [
 alabaster = [
     {file = "alabaster-0.7.12-py2.py3-none-any.whl", hash = "sha256:446438bdcca0e05bd45ea2de1668c1d9b032e1a9154c2c259092d77031ddd359"},
     {file = "alabaster-0.7.12.tar.gz", hash = "sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02"},
+]
+alembic = [
+    {file = "alembic-1.5.8-py2.py3-none-any.whl", hash = "sha256:8a259f0a4c8b350b03579d77ce9e810b19c65bf0af05f84efb69af13ad50801e"},
+    {file = "alembic-1.5.8.tar.gz", hash = "sha256:e27fd67732c97a1c370c33169ef4578cf96436fa0e7dcfaeeef4a917d0737d56"},
 ]
 amqp = [
     {file = "amqp-5.0.5-py3-none-any.whl", hash = "sha256:1e759a7f202d910939de6eca45c23a107f6b71111f41d1282c648e9ac3d21901"},
@@ -1175,6 +1227,10 @@ kombu = [
     {file = "kombu-5.0.2.tar.gz", hash = "sha256:f4965fba0a4718d47d470beeb5d6446e3357a62402b16c510b6a2f251e05ac3c"},
 ]
 lyricsgenius = []
+mako = [
+    {file = "Mako-1.1.4-py2.py3-none-any.whl", hash = "sha256:aea166356da44b9b830c8023cd9b557fa856bd8b4035d6de771ca027dfc5cc6e"},
+    {file = "Mako-1.1.4.tar.gz", hash = "sha256:17831f0b7087c313c0ffae2bcbbd3c1d5ba9eeac9c38f2eb7b50e8c99fe9d5ab"},
+]
 markupsafe = [
     {file = "MarkupSafe-1.1.1-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:09027a7803a62ca78792ad89403b1b7a73a01c8cb65909cd876f7fcebd79b161"},
     {file = "MarkupSafe-1.1.1-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:e249096428b3ae81b08327a63a485ad0878de3fb939049038579ac0ef61e17e7"},
@@ -1329,6 +1385,17 @@ pytest = [
 pytest-celery = [
     {file = "pytest-celery-0.0.0a1.tar.gz", hash = "sha256:3e0e0817c2d3f2870dafebd915bf13100fc12920b5d42dfe5fdc35844fe42e62"},
     {file = "pytest_celery-0.0.0a1-py2.py3-none-any.whl", hash = "sha256:2fa8d0ae0d573fb2ee51902bfa220e891044eafadbfb132b28b7087295c3004f"},
+]
+python-dateutil = [
+    {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
+    {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
+]
+python-editor = [
+    {file = "python-editor-1.0.4.tar.gz", hash = "sha256:51fda6bcc5ddbbb7063b2af7509e43bd84bfc32a4ff71349ec7847713882327b"},
+    {file = "python_editor-1.0.4-py2-none-any.whl", hash = "sha256:5f98b069316ea1c2ed3f67e7f5df6c0d8f10b689964a4a811ff64f0106819ec8"},
+    {file = "python_editor-1.0.4-py2.7.egg", hash = "sha256:ea87e17f6ec459e780e4221f295411462e0d0810858e055fc514684350a2f522"},
+    {file = "python_editor-1.0.4-py3-none-any.whl", hash = "sha256:1bf6e860a8ad52a14c3ee1252d5dc25b2030618ed80c022598f00176adc8367d"},
+    {file = "python_editor-1.0.4-py3.5.egg", hash = "sha256:c3da2053dbab6b29c94e43c486ff67206eafbe7eb52dbec7390b5e2fb05aac77"},
 ]
 python-jose = [
     {file = "python-jose-3.2.0.tar.gz", hash = "sha256:4e4192402e100b5fb09de5a8ea6bcc39c36ad4526341c123d401e2561720335b"},
