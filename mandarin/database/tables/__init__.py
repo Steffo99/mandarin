@@ -6,7 +6,7 @@ from .albumgenres import *
 from .albuminvolvements import *
 from .albums import *
 from .auditlogs import *
-from .files import *
+from .encodings import *
 from .genres import *
 from .people import *
 from .roles import *

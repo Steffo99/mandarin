@@ -39,7 +39,7 @@ def to_tsvector(
     if d is None:
         d = []
 
-    column_names = map(lambda column: column.name, [*a, *b, *c, *d])
+    column_names = map(lambda column: column.location, [*a, *b, *c, *d])
     column_weights = {
         **{column.name: "A" for column in a},
         **{column.name: "B" for column in b},
@@ -54,7 +54,7 @@ def gin_index(name: str, tsvector: su.TSVectorType) -> s.sql.schema.Index:
     """
     Create a new GIN index.
 
-    :param name: The name of the index.
+    :param name: The location of the index.
     :param tsvector: The tsvector to use for the index.
     :return: The Index object.
     """
@@ -69,7 +69,7 @@ def gist_index(name: str, tsvector: su.TSVectorType) -> s.sql.schema.Index:
     """
     Create a new GiST index.
 
-    :param name: The name of the index.
+    :param name: The location of the index.
     :param tsvector: The tsvector to use for the index.
     :return: The Index object.
     """

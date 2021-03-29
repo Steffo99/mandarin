@@ -45,7 +45,7 @@ class LazyAuthorizationCodeBearer(fsb.SecurityBase):
                 "tokenUrl": self.lazy_config.evaluate()["auth.token"],
                 "refreshUrl": self.lazy_config.evaluate()["auth.refresh"],
                 "scopes": {
-                    "profile": "[Required] Get name, nickname and picture",
+                    "profile": "[Required] Get location, nickname and picture",
                     "email": "[Required] Get email and email_verified",
                     "openid": "[Required] Additional OpenID Connect info"
                 },

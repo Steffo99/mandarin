@@ -89,10 +89,10 @@ def edit_multiple_move(
 def edit_multiple_rename(
     ls: dependencies.LoginSession = f.Depends(dependencies.dependency_login_session),
     layer_ids: List[int] = f.Query(..., description="The ids of the layers that should be renamed."),
-    name: str = f.Query(...,  description="The name the layers should be renamed to."),
+    name: str = f.Query(...,  description="The location the layers should be renamed to."),
 ):
     """
-    Bulk change the name of all the specified layers.
+    Bulk change the location of all the specified layers.
     """
     for layer in ls.group(tables.Layer, layer_ids):
         layer.name = name
@@ -140,9 +140,9 @@ async def download(
     layer = ls.get(tables.Layer, layer_id)
     if layer.file is None:
         raise f.HTTPException(404, "Layer doesn't have an associated file.")
-    if not os.path.exists(layer.file.name):
+    if not os.path.exists(layer.file.location):
         raise f.HTTPException(404, "File doesn't exist on the server filesystem.")
-    return starlette.responses.FileResponse(layer.file.name, media_type=layer.file.mime_type)
+    return starlette.responses.FileResponse(layer.file.location, media_type=layer.file.mime_type)
 
 
 @router_layers.put(

@@ -131,8 +131,8 @@ class TestProcessMusic:
 
         file: tables.File = session.query(tables.File).get(file_id)
         assert file is not None
-        assert file.name.startswith("data/music/")
-        assert file.name.endswith(".mp3")
+        assert file.location.startswith("data/music/")
+        assert file.location.endswith(".mp3")
         assert file.uploader_id is None
         assert file.mime_type == "audio/mpeg"
 

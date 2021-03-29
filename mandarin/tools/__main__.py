@@ -45,12 +45,12 @@ def _group_mandarin(
 ):
     coloredlogs.install(
         level="DEBUG" if debug else "WARNING",
-        fmt="{asctime} {levelname} {name}: {message}",
+        fmt="{asctime} {levelname} {location}: {message}",
         style="{",
         field_styles={
             "asctime": {"color": "white"},
             "levelname": {"color": "white", "bold": True},
-            "name": {"color": "blue"},
+            "location": {"color": "blue"},
         },
         level_styles={
             "debug": {"color": "white"},
@@ -251,7 +251,7 @@ def _(
         r = instance.post(
             f"/genres/",
             json={
-                "name": genre,
+                "location": genre,
                 "description": "",
                 "supergenre_id": supergenre
             },

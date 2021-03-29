@@ -9,7 +9,7 @@ class Layer(base.Base, a.ColRepr, a.Updatable):
     __tablename__ = "layers"
 
     id = s.Column("id", s.Integer, primary_key=True)
-    name = s.Column("name", s.String, nullable=False, default="Default", server_default="'Default'")
+    name = s.Column("location", s.String, nullable=False, default="Default", server_default="'Default'")
     description = s.Column("description", s.Text, nullable=False, default="")
 
     song_id = s.Column("song_id", s.Integer, s.ForeignKey("songs.id"))

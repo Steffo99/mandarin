@@ -11,7 +11,7 @@ class User(base.Base, a.ColRepr, a.Updatable):
     id = s.Column("id", s.Integer, primary_key=True)
 
     sub = s.Column("sub", s.String, nullable=False)
-    name = s.Column("name", s.String, nullable=False)
+    name = s.Column("location", s.String, nullable=False)
     nickname = s.Column("nickname", s.String, nullable=False)
     picture = s.Column("picture", s.String, nullable=False)
     email = s.Column("email", s.String, nullable=False)

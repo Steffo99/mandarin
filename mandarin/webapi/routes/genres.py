@@ -42,7 +42,7 @@ def get_all(
     summary="Create a new genre.",
     responses={
         **responses.login_error,
-        409: {"description": "Duplicate genre name"}
+        409: {"description": "Duplicate genre location"}
     },
     response_model=models.GenreOutput,
 )

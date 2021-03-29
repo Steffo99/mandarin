@@ -17,11 +17,11 @@ class Song(base.Base, a.ColRepr, a.Updatable):
 
     title = s.Column("title", s.String, nullable=False, default="")
     description = s.Column("description", s.Text, nullable=False, default="")
+    lyrics = s.Column("lyrics", s.Text, nullable=False, default="")
 
     disc = s.Column("disc", s.Integer)
     track = s.Column("track", s.Integer)
     year = s.Column("year", s.Integer)
-    lyrics = s.Column("lyrics", s.Text, nullable=False, default="")
 
     album_id = s.Column("album_id", s.Integer, s.ForeignKey("albums.id"))
     album = o.relationship("Album", back_populates="songs")
