@@ -39,7 +39,8 @@ def to_tsvector(
     if d is None:
         d = []
 
-    column_names = map(lambda column: column.location, [*a, *b, *c, *d])
+    # TODO: check if this actually works
+    column_names = map(lambda column: column.name, [*a, *b, *c, *d])
     column_weights = {
         **{column.name: "A" for column in a},
         **{column.name: "B" for column in b},
