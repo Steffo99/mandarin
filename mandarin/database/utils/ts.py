@@ -13,10 +13,10 @@ import sqlalchemy_utils as su
 
 def to_tsvector(
         *,
-        a: t.Optional[t.List[s.Column]] = None,
-        b: t.Optional[t.List[s.Column]] = None,
-        c: t.Optional[t.List[s.Column]] = None,
-        d: t.Optional[t.List[s.Column]] = None,
+        a: t.Optional[t.List[t.Union[s.Column, str]]] = None,
+        b: t.Optional[t.List[t.Union[s.Column, str]]] = None,
+        c: t.Optional[t.List[t.Union[s.Column, str]]] = None,
+        d: t.Optional[t.List[t.Union[s.Column, str]]] = None,
         regconfig: str = "pg_catalog.english"
 ) -> su.TSVectorType:
     """
@@ -40,12 +40,18 @@ def to_tsvector(
         d = []
 
     # TODO: check if this actually works
-    column_names = map(lambda column: column.name, [*a, *b, *c, *d])
+    def get_name(obj):
+        if isinstance(obj, str):
+            return obj
+        else:
+            return obj.name
+
+    column_names = map(lambda column: get_name(column), [*a, *b, *c, *d])
     column_weights = {
-        **{column.name: "A" for column in a},
-        **{column.name: "B" for column in b},
-        **{column.name: "C" for column in c},
-        **{column.name: "D" for column in d},
+        **{get_name(column): "A" for column in a},
+        **{get_name(column): "B" for column in b},
+        **{get_name(column): "C" for column in c},
+        **{get_name(column): "D" for column in d},
     }
 
     return su.TSVectorType(*column_names, weights=column_weights, regconfig=regconfig)

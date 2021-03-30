@@ -28,7 +28,7 @@ class Album(base.Base, a.ColRepr, a.Updatable):
     ))
 
     __table_args__ = (
-        utils.gin_index("albums_gin_index", search),
+
     )
 
 

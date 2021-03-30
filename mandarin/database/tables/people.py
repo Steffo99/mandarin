@@ -9,7 +9,7 @@ class Person(base.Base, a.ColRepr, a.Updatable):
     __tablename__ = "people"
 
     id = s.Column("id", s.Integer, primary_key=True)
-    name = s.Column("location", s.String, nullable=False)
+    name = s.Column("name", s.String, nullable=False)
     description = s.Column("description", s.Text, nullable=False, default="")
 
     song_involvements = o.relationship("SongInvolvement", back_populates="person", cascade="all, delete")
@@ -22,7 +22,7 @@ class Person(base.Base, a.ColRepr, a.Updatable):
     ))
 
     __table_args__ = (
-        utils.gin_index("people_gin_index", search),
+
     )
 
 

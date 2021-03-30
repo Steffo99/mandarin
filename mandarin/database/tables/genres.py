@@ -13,7 +13,7 @@ class Genre(base.Base, a.ColRepr, a.Updatable):
 
     id = s.Column("id", s.Integer, primary_key=True)
 
-    name = s.Column("location", s.String, nullable=False, unique=True)
+    name = s.Column("name", s.String, nullable=False, unique=True)
     description = s.Column("description", s.Text, nullable=False, default="")
 
     supergenre_id = s.Column("supergenre_id", s.Integer, s.ForeignKey("genres.id"), default=0)
@@ -30,7 +30,7 @@ class Genre(base.Base, a.ColRepr, a.Updatable):
     ))
 
     __table_args__ = (
-        utils.gin_index("genres_gin_index", search),
+
     )
 
 

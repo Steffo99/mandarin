@@ -39,7 +39,7 @@ class Song(base.Base, a.ColRepr, a.Updatable):
     ))
 
     __table_args__ = (
-        utils.gin_index("songs_gin_index", search),
+
     )
 
 
